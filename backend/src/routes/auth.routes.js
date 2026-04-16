@@ -1,0 +1,119 @@
+const express = require('express');
+const { body } = require('express-validator');
+const authController = require('../controllers/auth.controller');
+const { authenticate } = require('../middleware/auth');
+const validate = require('../middleware/validate');
+
+const router = express.Router();
+
+// =====================================================
+// PUBLIC ROUTES
+// =====================================================
+
+/**
+ * @route   POST /api/auth/register
+ * @desc    Register new user
+ * @access  Public
+ */
+router.post(
+  '/register',
+  [
+    body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
+    body('phoneNumber').notEmpty().withMessage('Phone number is required'),
+    body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+    body('firstName').notEmpty().trim().withMessage('First name is required'),
+    body('lastName').notEmpty().trim().withMessage('Last name is required'),
+    validate,
+  ],
+  authController.register
+);
+
+/**
+ * @route   POST /api/auth/login
+ * @desc    Login user
+ * @access  Public
+ */
+router.post(
+  '/login',
+  [
+    body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
+    body('password').notEmpty().withMessage('Password is required'),
+    validate,
+  ],
+  authController.login
+);
+
+/**
+ * @route   POST /api/auth/admin/login
+ * @desc    Admin login
+ * @access  Public
+ */
+router.post(
+  '/admin/login',
+  [
+    body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
+    body('password').notEmpty().withMessage('Password is required'),
+    validate,
+  ],
+  authController.adminLogin
+);
+
+// =====================================================
+// PROTECTED ROUTES
+// =====================================================
+
+/**
+ * @route   GET /api/auth/profile
+ * @desc    Get current user profile
+ * @access  Private
+ */
+router.get('/profile', authenticate, authController.getProfile);
+
+/**
+ * @route   PUT /api/auth/profile
+ * @desc    Update user profile
+ * @access  Private
+ */
+router.put(
+  '/profile',
+  [
+    authenticate,
+    body('firstName').optional().trim(),
+    body('lastName').optional().trim(),
+    body('phoneNumber').optional(),
+    validate,
+  ],
+  authController.updateProfile
+);
+
+/**
+ * @route   POST /api/auth/change-password
+ * @desc    Change user password
+ * @access  Private
+ */
+router.post(
+  '/change-password',
+  [
+    authenticate,
+    body('currentPassword').notEmpty().withMessage('Current password is required'),
+    body('newPassword').isLength({ min: 6 }).withMessage('New password must be at least 6 characters'),
+    validate,
+  ],
+  authController.changePassword
+);
+
+/**
+ * @route   POST /api/auth/logout
+ * @desc    Logout user
+ * @access  Private
+ */
+router.post('/logout', authenticate, authController.logout);
+
+/**
+ * @route   POST /api/auth/refresh-token
+ * @desc    Refresh access token
+ * @access  Public
+ */
+router.post('/refresh-token', authController.refreshToken);
+
+module.exports = router;
