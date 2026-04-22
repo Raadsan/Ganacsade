@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
 /// App Text Styles with Arabic/Somali font support
@@ -8,226 +9,227 @@ class AppTextStyles {
   static const String arabicFontFamily = 'Amiri';
   
   // Display Styles
-  static const TextStyle displayLarge = TextStyle(
+  static TextStyle get displayLarge => GoogleFonts.getFont(
+    primaryFontFamily,
     fontSize: 57,
     fontWeight: FontWeight.w400,
-    fontFamily: primaryFontFamily,
     color: AppColors.textPrimary,
     height: 1.12,
   );
   
-  static const TextStyle displayMedium = TextStyle(
+  static TextStyle get displayMedium => GoogleFonts.getFont(
+    primaryFontFamily,
     fontSize: 45,
     fontWeight: FontWeight.w400,
-    fontFamily: primaryFontFamily,
     color: AppColors.textPrimary,
     height: 1.16,
   );
   
-  static const TextStyle displaySmall = TextStyle(
+  static TextStyle get displaySmall => GoogleFonts.getFont(
+    primaryFontFamily,
     fontSize: 36,
     fontWeight: FontWeight.w400,
-    fontFamily: primaryFontFamily,
     color: AppColors.textPrimary,
     height: 1.22,
   );
   
   // Headline Styles
-  static const TextStyle headlineLarge = TextStyle(
+  static TextStyle get headlineLarge => GoogleFonts.getFont(
+    primaryFontFamily,
     fontSize: 32,
     fontWeight: FontWeight.w700,
-    fontFamily: primaryFontFamily,
     color: AppColors.textPrimary,
     height: 1.25,
   );
   
-  static const TextStyle headlineMedium = TextStyle(
+  static TextStyle get headlineMedium => GoogleFonts.getFont(
+    primaryFontFamily,
     fontSize: 28,
     fontWeight: FontWeight.w600,
-    fontFamily: primaryFontFamily,
     color: AppColors.textPrimary,
     height: 1.29,
   );
   
-  static const TextStyle headlineSmall = TextStyle(
+  static TextStyle get headlineSmall => GoogleFonts.getFont(
+    primaryFontFamily,
     fontSize: 24,
     fontWeight: FontWeight.w600,
-    fontFamily: primaryFontFamily,
     color: AppColors.textPrimary,
     height: 1.33,
   );
   
   // Title Styles
-  static const TextStyle titleLarge = TextStyle(
+  static TextStyle get titleLarge => GoogleFonts.getFont(
+    primaryFontFamily,
     fontSize: 22,
     fontWeight: FontWeight.w600,
-    fontFamily: primaryFontFamily,
     color: AppColors.textPrimary,
     height: 1.27,
   );
   
-  static const TextStyle titleMedium = TextStyle(
+  static TextStyle get titleMedium => GoogleFonts.getFont(
+    primaryFontFamily,
     fontSize: 16,
     fontWeight: FontWeight.w600,
-    fontFamily: primaryFontFamily,
     color: AppColors.textPrimary,
     height: 1.50,
   );
   
-  static const TextStyle titleSmall = TextStyle(
+  static TextStyle get titleSmall => GoogleFonts.getFont(
+    primaryFontFamily,
     fontSize: 14,
     fontWeight: FontWeight.w600,
-    fontFamily: primaryFontFamily,
     color: AppColors.textPrimary,
     height: 1.43,
   );
   
   // Label Styles
-  static const TextStyle labelLarge = TextStyle(
+  static TextStyle get labelLarge => GoogleFonts.getFont(
+    primaryFontFamily,
     fontSize: 14,
     fontWeight: FontWeight.w500,
-    fontFamily: primaryFontFamily,
     color: AppColors.textPrimary,
     height: 1.43,
   );
   
-  static const TextStyle labelMedium = TextStyle(
+  static TextStyle get labelMedium => GoogleFonts.getFont(
+    primaryFontFamily,
     fontSize: 12,
     fontWeight: FontWeight.w500,
-    fontFamily: primaryFontFamily,
     color: AppColors.textPrimary,
     height: 1.33,
   );
   
-  static const TextStyle labelSmall = TextStyle(
+  static TextStyle get labelSmall => GoogleFonts.getFont(
+    primaryFontFamily,
     fontSize: 11,
     fontWeight: FontWeight.w500,
-    fontFamily: primaryFontFamily,
     color: AppColors.textPrimary,
     height: 1.45,
   );
   
   // Body Styles
-  static const TextStyle bodyLarge = TextStyle(
+  static TextStyle get bodyLarge => GoogleFonts.getFont(
+    primaryFontFamily,
     fontSize: 16,
     fontWeight: FontWeight.w400,
-    fontFamily: primaryFontFamily,
     color: AppColors.textPrimary,
     height: 1.50,
   );
   
-  static const TextStyle bodyMedium = TextStyle(
+  static TextStyle get bodyMedium => GoogleFonts.getFont(
+    primaryFontFamily,
     fontSize: 14,
     fontWeight: FontWeight.w400,
-    fontFamily: primaryFontFamily,
     color: AppColors.textPrimary,
     height: 1.43,
   );
   
-  static const TextStyle bodySmall = TextStyle(
+  static TextStyle get bodySmall => GoogleFonts.getFont(
+    primaryFontFamily,
     fontSize: 12,
     fontWeight: FontWeight.w400,
-    fontFamily: primaryFontFamily,
     color: AppColors.textSecondary,
     height: 1.33,
   );
   
   // Custom App Styles
-  static const TextStyle appBarTitle = TextStyle(
+  static TextStyle get appBarTitle => GoogleFonts.getFont(
+    primaryFontFamily,
     fontSize: 20,
     fontWeight: FontWeight.w600,
-    fontFamily: primaryFontFamily,
     color: AppColors.textOnPrimary,
   );
   
-  static const TextStyle buttonText = TextStyle(
+  static TextStyle get buttonText => GoogleFonts.getFont(
+    primaryFontFamily,
     fontSize: 16,
     fontWeight: FontWeight.w600,
-    fontFamily: primaryFontFamily,
     color: AppColors.textOnPrimary,
   );
   
-  static const TextStyle priceText = TextStyle(
+  static TextStyle get priceText => GoogleFonts.getFont(
+    primaryFontFamily,
     fontSize: 18,
     fontWeight: FontWeight.w700,
-    fontFamily: primaryFontFamily,
     color: AppColors.primaryGreen,
   );
   
-  static const TextStyle discountText = TextStyle(
+  static TextStyle get discountText => GoogleFonts.getFont(
+    primaryFontFamily,
     fontSize: 14,
     fontWeight: FontWeight.w500,
-    fontFamily: primaryFontFamily,
     color: AppColors.error,
     decoration: TextDecoration.lineThrough,
   );
   
-  static const TextStyle categoryTitle = TextStyle(
+  static TextStyle get categoryTitle => GoogleFonts.getFont(
+    primaryFontFamily,
     fontSize: 16,
     fontWeight: FontWeight.w600,
-    fontFamily: primaryFontFamily,
     color: AppColors.textPrimary,
   );
   
-  static const TextStyle productTitle = TextStyle(
+  static TextStyle get productTitle => GoogleFonts.getFont(
+    primaryFontFamily,
     fontSize: 16,
     fontWeight: FontWeight.w500,
-    fontFamily: primaryFontFamily,
     color: AppColors.textPrimary,
   );
   
-  static const TextStyle productDescription = TextStyle(
+  static TextStyle get productDescription => GoogleFonts.getFont(
+    primaryFontFamily,
     fontSize: 14,
     fontWeight: FontWeight.w400,
-    fontFamily: primaryFontFamily,
     color: AppColors.textSecondary,
     height: 1.4,
   );
   
   // Arabic/Somali specific styles
-  static const TextStyle arabicHeading = TextStyle(
+  static TextStyle get arabicHeading => GoogleFonts.getFont(
+    arabicFontFamily,
     fontSize: 24,
     fontWeight: FontWeight.w600,
-    fontFamily: arabicFontFamily,
     color: AppColors.textPrimary,
     height: 1.5,
   );
   
-  static const TextStyle arabicBody = TextStyle(
+  static TextStyle get arabicBody => GoogleFonts.getFont(
+    arabicFontFamily,
     fontSize: 16,
     fontWeight: FontWeight.w400,
-    fontFamily: arabicFontFamily,
     color: AppColors.textPrimary,
     height: 1.6,
   );
   
   // Cultural/Religious text styles
-  static const TextStyle islamicText = TextStyle(
+  static TextStyle get islamicText => GoogleFonts.getFont(
+    arabicFontFamily,
     fontSize: 18,
     fontWeight: FontWeight.w500,
-    fontFamily: arabicFontFamily,
     color: AppColors.islamicGreen,
   );
   
   // Error and validation styles
-  static const TextStyle errorText = TextStyle(
+  static TextStyle get errorText => GoogleFonts.getFont(
+    primaryFontFamily,
     fontSize: 12,
     fontWeight: FontWeight.w400,
-    fontFamily: primaryFontFamily,
     color: AppColors.error,
   );
   
-  static const TextStyle successText = TextStyle(
+  static TextStyle get successText => GoogleFonts.getFont(
+    primaryFontFamily,
     fontSize: 12,
     fontWeight: FontWeight.w400,
-    fontFamily: primaryFontFamily,
     color: AppColors.success,
   );
   
   // Helper methods for RTL support
   static TextStyle withRTL(TextStyle style) {
-    return style.copyWith(
-      fontFamily: arabicFontFamily,
+    return GoogleFonts.getFont(
+      arabicFontFamily,
+      textStyle: style,
     );
   }
   

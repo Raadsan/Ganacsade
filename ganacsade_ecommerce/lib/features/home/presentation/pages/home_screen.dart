@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:ganacsade/features/data_packages/presentation/pages/data_packages_screen.dart';
 import 'package:get/get.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_text_styles.dart';
@@ -8,13 +9,16 @@ import '../../../../core/utils/responsive.dart';
 import '../../../../shared/models/product.dart';
 import '../../../../shared/widgets/advertisement_banner.dart';
 import '../widgets/category_card.dart';
+import 'package:iconly/iconly.dart';
 import '../widgets/featured_product_card.dart';
 import '../widgets/home_app_bar.dart';
 import '../widgets/promotional_banner.dart';
 import '../controllers/home_controller.dart';
 import '../../../products/presentation/pages/main_categories_screen.dart';
 import '../../../../shared/widgets/skeleton_loader.dart';
+import '../../../wishlist/presentation/controllers/wishlist_controller.dart';
 import '../../../products/presentation/pages/product_detail_screen.dart';
+import '../../../products/presentation/pages/categories_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -34,8 +38,8 @@ class HomeScreen extends StatelessWidget {
           }
 
           // Show connection error with retry button
-          if (controller.hasConnectionError.value && 
-              controller.categories.isEmpty && 
+          if (controller.hasConnectionError.value &&
+              controller.categories.isEmpty &&
               controller.featuredProducts.isEmpty) {
             return Center(
               child: Padding(
@@ -43,11 +47,7 @@ class HomeScreen extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.cloud_off,
-                      size: 80,
-                      color: AppColors.grey400,
-                    ),
+                    Icon(Icons.cloud_off, size: 80, color: AppColors.grey400),
                     const SizedBox(height: 24),
                     Text(
                       'Cannot connect to server',
@@ -66,8 +66,8 @@ class HomeScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 24),
                     ElevatedButton.icon(
-                      onPressed: controller.isLoading.value 
-                          ? null 
+                      onPressed: controller.isLoading.value
+                          ? null
                           : controller.retryConnection,
                       icon: controller.isLoading.value
                           ? const SizedBox(
@@ -78,12 +78,14 @@ class HomeScreen extends StatelessWidget {
                                 color: Colors.white,
                               ),
                             )
-                          : const Icon(Icons.refresh),
+                          : const Icon(IconlyLight.arrow_right_circle),
                       label: Text(
-                        controller.isLoading.value ? 'Connecting...' : 'Retry Connection'
+                        controller.isLoading.value
+                            ? 'Connecting...'
+                            : 'Retry Connection',
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryGreen,
+                        backgroundColor: AppColors.primaryBlue,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 32,
@@ -96,60 +98,54 @@ class HomeScreen extends StatelessWidget {
               ),
             );
           }
-          
+
           // Show normal content
           return RefreshIndicator(
             onRefresh: controller.refreshData,
             child: CustomScrollView(
               slivers: [
                 // Custom App Bar
+                const SliverToBoxAdapter(child: HomeAppBar()),
+
+                // Categories Section
+                SliverToBoxAdapter(child: _buildCategoriesSection(controller)),
+
+                // Promotional Banners
+                SliverToBoxAdapter(child: _buildPromotionalSection(controller)),
+
+                // Home Banner Advertisement (between categories and featured products)
                 const SliverToBoxAdapter(
-                  child: HomeAppBar(),
+                  child: AdvertisementBanner(
+                    placement: 'home_banner',
+                    height: 140,
+                    margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  ),
                 ),
-              
-              // Promotional Banners
-              SliverToBoxAdapter(
-                child: _buildPromotionalSection(controller),
-              ),
-              
-              // Categories Section
-              SliverToBoxAdapter(
-                child: _buildCategoriesSection(controller),
-              ),
-              
-              // Home Banner Advertisement (between categories and featured products)
-              const SliverToBoxAdapter(
-                child: AdvertisementBanner(
-                  placement: 'home_banner',
-                  height: 120,
-                  margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+
+                // Flash Sales Section (only show if there are active flash sale products)
+                SliverToBoxAdapter(
+                  child: Obx(
+                    () => controller.flashSaleProducts.isNotEmpty
+                        ? _buildFlashSalesSection(controller)
+                        : const SizedBox.shrink(),
+                  ),
                 ),
-              ),
-              
-              // Featured Products Section
-              SliverToBoxAdapter(
-                child: _buildFeaturedProductsSection(controller),
-              ),
-              
-              // Flash Sales Section (only show if there are active flash sale products)
-              SliverToBoxAdapter(
-                child: Obx(() => controller.flashSaleProducts.isNotEmpty
-                    ? _buildFlashSalesSection(controller)
-                    : const SizedBox.shrink()),
-              ),
-              
-              // Recently Viewed Section
-              SliverToBoxAdapter(
-                child: _buildRecentlyViewedSection(controller),
-              ),
-              
-              // Bottom Padding
-              const SliverToBoxAdapter(
-                child: SizedBox(height: 100),
-              ),
-            ],
-          ),
-        );
+
+                // Featured Products Section
+                SliverToBoxAdapter(
+                  child: _buildFeaturedProductsSection(controller),
+                ),
+
+                // Recently Viewed Section
+                SliverToBoxAdapter(
+                  child: _buildRecentlyViewedSection(context, controller),
+                ),
+
+                // Bottom Padding
+                const SliverToBoxAdapter(child: SizedBox(height: 100)),
+              ],
+            ),
+          );
         }),
       ),
     );
@@ -162,24 +158,29 @@ class HomeScreen extends StatelessWidget {
         return Container(
           height: sizing.bannerHeight,
           margin: EdgeInsets.symmetric(vertical: sizing.verticalPadding),
-          child: Obx(() => PageView.builder(
-            controller: controller.bannerPageController,
-            itemCount: controller.promotionalBanners.length,
-            onPageChanged: controller.onBannerPageChanged,
-            itemBuilder: (context, index) {
-              final banner = controller.promotionalBanners[index];
-              return Padding(
-                padding: EdgeInsets.symmetric(horizontal: sizing.horizontalPadding),
-                child: PromotionalBannerWidget(
-                  banner: banner,
-                  onTap: () => controller.onBannerTap(banner),
-                ),
-              );
-            },
-          ))
-              .animate()
-              .fadeIn(delay: 200.ms, duration: 600.ms)
-              .slideY(begin: 0.3, end: 0),
+          child:
+              Obx(
+                    () => PageView.builder(
+                      controller: controller.bannerPageController,
+                      itemCount: controller.promotionalBanners.length,
+                      onPageChanged: controller.onBannerPageChanged,
+                      itemBuilder: (context, index) {
+                        final banner = controller.promotionalBanners[index];
+                        return Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: sizing.horizontalPadding,
+                          ),
+                          child: PromotionalBannerWidget(
+                            banner: banner,
+                            onTap: () => controller.onBannerTap(banner),
+                          ),
+                        );
+                      },
+                    ),
+                  )
+                  .animate()
+                  .fadeIn(delay: 200.ms, duration: 600.ms)
+                  .slideY(begin: 0.3, end: 0),
         );
       },
     );
@@ -194,51 +195,55 @@ class HomeScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: sizing.horizontalPadding),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: sizing.horizontalPadding,
+                  ),
+                  child: Text(
                     'home_categories'.tr,
                     style: AppTextStyles.headlineSmall.copyWith(
-                      color: isDark ? AppColors.darkTextPrimary : null,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: isDark
+                          ? AppColors.darkTextPrimary
+                          : AppColors.textPrimary,
                     ),
                   ),
-                  TextButton(
-                    onPressed: () {
-                      Get.to(() => const MainCategoriesScreen());
-                    },
-                    child: Text('home_see_all'.tr),
-                  ),
-                ],
-              ),
-            )
+                )
                 .animate()
                 .fadeIn(delay: 400.ms, duration: 600.ms)
                 .slideX(begin: -0.2, end: 0),
-            
+
             SizedBox(height: sizing.verticalPadding),
-            
+
             // Center the 2 main categories in a row
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: sizing.horizontalPadding),
-              child: Obx(() => Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: controller.categories.map((category) {
-                  return Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 6),
-                      child: CategoryCard(
-                        category: category,
-                        onTap: () => controller.onCategoryTap(category),
-                      ),
+              padding: EdgeInsets.symmetric(
+                horizontal: sizing.horizontalPadding,
+              ),
+              child: SingleChildScrollView(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildCategoryPill(
+                      label: 'Internet Services',
+                      color: const Color(0xFFD4E6B5), // Light green from image
+                      textColor: Colors.black87,
+                      onTap: () {
+                        Get.to(() => const DataPackagesScreen());
+                      },
                     ),
-                  );
-                }).toList(),
-              ))
-                  .animate()
-                  .fadeIn(delay: 600.ms, duration: 600.ms),
-            ),
+                    _buildCategoryPill(
+                      label: 'Online Market',
+                      color: const Color(0xFF1A3B8E), // Navy blue from image
+                      textColor: Colors.white,
+                      onTap: () {
+                        Get.to(() => const CategoriesScreen());
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ).animate().fadeIn(delay: 600.ms, duration: 600.ms),
           ],
         );
       },
@@ -256,74 +261,84 @@ class HomeScreen extends StatelessWidget {
           children: [
             SizedBox(height: sizing.verticalPadding * 2),
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: sizing.horizontalPadding),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'home_featured'.tr,
-                    style: AppTextStyles.headlineSmall.copyWith(
-                      color: isDark ? AppColors.darkTextPrimary : null,
-                    ),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: sizing.horizontalPadding,
                   ),
-                  TextButton(
-                    onPressed: () {
-                      controller.onSeeAllFeaturedProducts();
-                    },
-                    child: Text('home_see_all'.tr),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'home_featured'.tr,
+                        style: AppTextStyles.headlineSmall.copyWith(
+                          color: isDark ? AppColors.darkTextPrimary : null,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          controller.onSeeAllFeaturedProducts();
+                        },
+                        child: Text('home_see_all'.tr),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            )
+                )
                 .animate()
                 .fadeIn(delay: 800.ms, duration: 600.ms)
                 .slideX(begin: -0.2, end: 0),
-            
+
             SizedBox(height: sizing.verticalPadding),
-            
+
             // Use grid for tablets, horizontal list for phones
             isTablet
                 ? Padding(
-                    padding: EdgeInsets.symmetric(horizontal: sizing.horizontalPadding),
-                    child: Obx(() => GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: sizing.productGridCount,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                        childAspectRatio: 0.68,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: sizing.horizontalPadding,
+                    ),
+                    child: Obx(
+                      () => GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: sizing.productGridCount,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          childAspectRatio: 0.68,
+                        ),
+                        itemCount: controller.featuredProducts.length,
+                        itemBuilder: (context, index) {
+                          return FeaturedProductCard(
+                            product: controller.featuredProducts[index],
+                            onTap: () => controller.onProductTap(
+                              controller.featuredProducts[index],
+                            ),
+                          );
+                        },
                       ),
-                      itemCount: controller.featuredProducts.length,
-                      itemBuilder: (context, index) {
-                        return FeaturedProductCard(
-                          product: controller.featuredProducts[index],
-                          onTap: () => controller.onProductTap(controller.featuredProducts[index]),
-                        );
-                      },
-                    ))
-                        .animate()
-                        .fadeIn(delay: 1000.ms, duration: 600.ms),
+                    ).animate().fadeIn(delay: 1000.ms, duration: 600.ms),
                   )
                 : SizedBox(
-                    height: 230,
-                    child: Obx(() => ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      padding: EdgeInsets.symmetric(horizontal: sizing.horizontalPadding),
-                      itemCount: controller.featuredProducts.length,
-                      itemBuilder: (context, index) {
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 10),
-                          child: FeaturedProductCard(
-                            product: controller.featuredProducts[index],
-                            onTap: () => controller.onProductTap(controller.featuredProducts[index]),
-                          ),
-                        );
-                      },
-                    ))
-                  .animate()
-                  .fadeIn(delay: 1000.ms, duration: 600.ms),
-            ),
+                    height: 280,
+                    child: Obx(
+                      () => ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: sizing.horizontalPadding,
+                        ),
+                        itemCount: controller.featuredProducts.length,
+                        itemBuilder: (context, index) {
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 10),
+                            child: FeaturedProductCard(
+                              product: controller.featuredProducts[index],
+                              onTap: () => controller.onProductTap(
+                                controller.featuredProducts[index],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ).animate().fadeIn(delay: 1000.ms, duration: 600.ms),
+                  ),
           ],
         );
       },
@@ -334,248 +349,306 @@ class HomeScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 32),
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [AppColors.error.withOpacity(0.1), AppColors.warning.withOpacity(0.1)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.error.withOpacity(0.3)),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                Icons.flash_on,
-                color: AppColors.error,
-                size: 24,
-              ),
-              const SizedBox(width: 8),
-              const Text(
-                'Flash Sale',
-                style: AppTextStyles.titleMedium,
-              ),
-              const Spacer(),
-              Obx(() => Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: AppColors.error,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  controller.flashSaleTimeLeft.value,
-                  style: const TextStyle(
-                    color: AppColors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
+        const SizedBox(height: 12),
+        Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  Text(
+                    'Flash Sale',
+                    style: AppTextStyles.headlineSmall.copyWith(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
                   ),
-                ),
-              )),
-            ],
-          ),
-        )
+                  const SizedBox(width: 12),
+                  Obx(
+                    () => Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFF9800), // More vibrant orange
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFFF9800).withOpacity(0.2),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.bolt, color: Colors.white, size: 16),
+                          const SizedBox(width: 4),
+                          Text(
+                            controller.flashSaleTimeLeft.value,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
+                  TextButton(
+                    onPressed: () {},
+                    child: Text(
+                      'home_see_all'.tr,
+                      style: const TextStyle(
+                        color: Color.fromARGB(255, 233, 98, 91),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            )
             .animate()
             .fadeIn(delay: 1200.ms, duration: 600.ms)
             .slideY(begin: 0.3, end: 0),
-        
+
         const SizedBox(height: 16),
-        
+
         SizedBox(
-          height: 200,
-          child: Obx(() => ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: controller.flashSaleProducts.length,
-            itemBuilder: (context, index) {
-              return Padding(
-                padding: const EdgeInsets.only(right: 16),
-                child: _buildFlashSaleCard(controller.flashSaleProducts[index]),
-              );
-            },
-          ))
-              .animate()
-              .fadeIn(delay: 1400.ms, duration: 600.ms),
+          height: 250,
+          child: Obx(
+            () => ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: controller.flashSaleProducts.length,
+              itemBuilder: (context, index) {
+                return Padding(
+                  padding: const EdgeInsets.only(right: 16),
+                  child: _buildFlashSaleCard(
+                    context,
+                    controller.flashSaleProducts[index],
+                  ),
+                );
+              },
+            ),
+          ).animate().fadeIn(delay: 1400.ms, duration: 600.ms),
         ),
       ],
     );
   }
 
-  Widget _buildFlashSaleCard(Product product) {
-    final discountPercentage = ((product.price - product.discountPrice) / product.price * 100).round();
-    
+  Widget _buildCategoryPill({
+    required String label,
+    required Color color,
+    required Color textColor,
+    required VoidCallback onTap,
+  }) {
     return GestureDetector(
-      onTap: () {
-        Get.to(() => ProductDetailScreen(product: product));
-      },
+      onTap: onTap,
       child: Container(
-        width: 160,
-        height: 200,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.shadowLight,
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          color: color,
+          borderRadius: BorderRadius.circular(30),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Product Image with Flash Sale Badge
-            Stack(
-              children: [
-                Container(
-                  height: 100,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: AppColors.grey100,
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                    child: _buildProductImage(product.mainImage),
-                  ),
-                ),
-                
-                // Flash Sale Badge
-                Positioned(
-                  top: 8,
-                  left: 8,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: AppColors.error,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.flash_on,
-                          color: AppColors.white,
-                          size: 12,
-                        ),
-                        const SizedBox(width: 2),
-                        Text(
-                          'FLASH',
-                          style: TextStyle(
-                            color: AppColors.white,
-                            fontSize: 8,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                
-                // Discount Badge
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: AppColors.warning,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      '$discountPercentage% OFF',
-                      style: TextStyle(
-                        color: AppColors.white,
-                        fontSize: 8,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: textColor,
+            fontWeight: FontWeight.w500,
+            fontSize: 14,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFlashSaleCard(BuildContext context, Product product) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return GestureDetector(
+          onTap: () {
+            Get.to(() => ProductDetailScreen(product: product));
+          },
+          child: Container(
+            width: 170,
+            margin: const EdgeInsets.only(bottom: 16, right: 4),
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? AppColors.darkCardBackground
+                  : Colors.grey.shade200,
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: isDark ? Colors.black26 : AppColors.shadowLight,
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
-            
-            // Product Details
-            Padding(
-              padding: const EdgeInsets.all(10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    product.name,
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Image area with soft background and heart button
+                Stack(
+                  children: [
+                    Container(
+                      height: 140,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? Colors.white.withOpacity(0.05)
+                            : const Color(0xFFF9FAFB),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: _buildProductImage(product.mainImage),
+                          ),
+                        ),
+                      ),
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                    
-                    // Rating
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.star,
-                          size: 12,
-                          color: AppColors.warning,
-                        ),
-                        const SizedBox(width: 2),
-                        Text(
-                          '${product.rating}',
-                          style: AppTextStyles.labelSmall.copyWith(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
+                    // Wishlist Toggle
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Obx(() {
+                        final wishlistController =
+                            Get.find<WishlistController>();
+                        final isInWishlist = wishlistController.isInWishlist(
+                          product.id,
+                        );
+
+                        return GestureDetector(
+                          onTap: () async {
+                            await wishlistController.toggleWishlist(product);
+                            final newStatus = wishlistController.isInWishlist(
+                              product.id,
+                            );
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  newStatus
+                                      ? '${product.name} added to wishlist'
+                                      : '${product.name} removed from wishlist',
+                                ),
+                                backgroundColor: newStatus
+                                    ? AppColors.primaryGreen
+                                    : AppColors.error,
+                                behavior: SnackBarBehavior.floating,
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? Colors.black38
+                                  : Colors.white.withOpacity(0.9),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              isInWishlist
+                                  ? IconlyBold.heart
+                                  : IconlyLight.heart,
+                              size: 18,
+                              color: isInWishlist
+                                  ? AppColors.error
+                                  : const Color(0xFF9E9E9E),
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '(${product.reviewCount})',
-                          style: AppTextStyles.labelSmall.copyWith(
-                            color: AppColors.grey600,
-                            fontSize: 9,
-                          ),
-                        ),
-                      ],
-                    ),
-                    
-                    const SizedBox(height: 6),
-                    
-                    // Price
-                    Row(
-                      children: [
-                        Text(
-                          '\$${product.discountPrice.toStringAsFixed(2)}',
-                          style: AppTextStyles.titleSmall.copyWith(
-                            color: AppColors.error,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          '\$${product.price.toStringAsFixed(2)}',
-                          style: AppTextStyles.labelSmall.copyWith(
-                            color: AppColors.grey600,
-                            decoration: TextDecoration.lineThrough,
-                            fontSize: 11,
-                          ),
-                        ),
-                      ],
+                        );
+                      }),
                     ),
                   ],
                 ),
-              ),
-          ],
-        ),
-      ),
-    )
+                const SizedBox(height: 8),
+                // Product Info
+                Text(
+                  product.name,
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    color: isDark
+                        ? AppColors.darkTextPrimary
+                        : const Color(0xFF1A1A1A),
+                    height: 1.2,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                // Price and Rating Row
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '\$${product.price.toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              color: Color(0xFFBDBDBD),
+                              decoration: TextDecoration.lineThrough,
+                              fontSize: 11,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '\$${product.discountPrice.toStringAsFixed(2)}',
+                            style: TextStyle(
+                              color: AppColors.primaryGreen,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Rating
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFB300).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            IconlyBold.star,
+                            color: Color(0xFFFFB300),
+                            size: 12,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${product.rating}',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 12,
+                              color: isDark
+                                  ? AppColors.darkTextPrimary
+                                  : const Color(0xFF424242),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        )
         .animate()
         .fadeIn(duration: 600.ms)
         .slideX(begin: 0.3, end: 0)
@@ -585,10 +658,12 @@ class HomeScreen extends StatelessWidget {
 
   Widget _buildProductImage(String imagePath) {
     // Check if it's a placeholder or invalid path
-    if (imagePath == 'placeholder' || imagePath.isEmpty || imagePath.startsWith('assets/images/flash_')) {
+    if (imagePath == 'placeholder' ||
+        imagePath.isEmpty ||
+        imagePath.startsWith('assets/images/flash_')) {
       return _buildImagePlaceholder();
     }
-    
+
     // Check if it's a network URL or local asset
     if (imagePath.startsWith('http')) {
       return Image.network(
@@ -645,13 +720,17 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildRecentlyViewedSection(HomeController controller) {
+  Widget _buildRecentlyViewedSection(
+    BuildContext context,
+    HomeController controller,
+  ) {
     return Obx(() {
       if (controller.recentlyViewedProducts.isEmpty) {
         return const SizedBox.shrink();
       }
-      
-      return Builder(builder: (context) {
+
+      return Builder(
+        builder: (context) {
           final isDark = Theme.of(context).brightness == Brightness.dark;
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -662,15 +741,17 @@ class HomeScreen extends StatelessWidget {
                 child: Text(
                   'Recently Viewed',
                   style: AppTextStyles.headlineSmall.copyWith(
-                    color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                    color: isDark
+                        ? AppColors.darkTextPrimary
+                        : AppColors.textPrimary,
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               SizedBox(
-                height: 200,
+                height: 280,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -678,207 +759,242 @@ class HomeScreen extends StatelessWidget {
                   itemBuilder: (context, index) {
                     return Padding(
                       padding: const EdgeInsets.only(right: 16),
-                      child: _buildRecentlyViewedCard(controller.recentlyViewedProducts[index], isDark),
+                      child: _buildRecentlyViewedCard(
+                        context,
+                        controller.recentlyViewedProducts[index],
+                        isDark,
+                      ),
                     );
                   },
                 ),
               ),
             ],
           );
-        });
-    })
-        .animate()
-        .fadeIn(delay: 1600.ms, duration: 600.ms);
+        },
+      );
+    }).animate().fadeIn(delay: 1600.ms, duration: 600.ms);
   }
 
-  Widget _buildRecentlyViewedCard(Product product, bool isDark) {
-    final hasDiscount = product.discountPrice < product.price;
-    
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          Get.to(() => ProductDetailScreen(product: product));
-        },
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          width: 140,
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.darkCardBackground : AppColors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: isDark ? Colors.black26 : AppColors.shadowLight,
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Product Image with Recently Viewed Badge
-              Stack(
-                children: [
-                  Container(
-                    height: 100,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: isDark ? AppColors.darkElevatedSurface : AppColors.grey100,
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                      child: _buildProductImage(product.mainImage),
-                    ),
-                  ),
-                  
-                  // Recently Viewed Badge
-                  Positioned(
-                    top: 6,
-                    left: 6,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+  Widget _buildRecentlyViewedCard(
+    BuildContext context,
+    Product product,
+    bool isDark,
+  ) {
+    final hasDiscount = product.hasDiscount;
+
+    return GestureDetector(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            Get.to(() => ProductDetailScreen(product: product));
+          },
+          child: Container(
+            width: 170,
+            margin: const EdgeInsets.only(bottom: 16, right: 4),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? AppColors.darkCardBackground
+                  : Colors.grey.shade200,
+              borderRadius: BorderRadius.circular(5),
+              boxShadow: [
+                BoxShadow(
+                  color: isDark ? Colors.black26 : AppColors.shadowLight,
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Image area with soft background and heart button
+                Stack(
+                  children: [
+                    Container(
+                      height: 140,
+                      width: double.infinity,
                       decoration: BoxDecoration(
-                        color: AppColors.primaryGreen.withOpacity(0.9),
+                        color: isDark
+                            ? Colors.white.withOpacity(0.05)
+                            : const Color(0xFFF9FAFB),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: _buildProductImage(product.mainImage),
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Recent Badge
+                    Positioned(
+                      top: 8,
+                      left: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryGreen.withOpacity(0.9),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Text(
+                          'RECENT',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 8,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Wishlist Toggle
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Obx(() {
+                        final wishlistController =
+                            Get.find<WishlistController>();
+                        final isInWishlist = wishlistController.isInWishlist(
+                          product.id,
+                        );
+
+                        return GestureDetector(
+                          onTap: () async {
+                            await wishlistController.toggleWishlist(product);
+                            final newStatus = wishlistController.isInWishlist(
+                              product.id,
+                            );
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  newStatus
+                                      ? '${product.name} added to wishlist'
+                                      : '${product.name} removed from wishlist',
+                                ),
+                                backgroundColor: newStatus
+                                    ? AppColors.primaryGreen
+                                    : AppColors.error,
+                                behavior: SnackBarBehavior.floating,
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? Colors.black38
+                                  : Colors.white.withOpacity(0.9),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              isInWishlist
+                                  ? IconlyBold.heart
+                                  : IconlyLight.heart,
+                              size: 18,
+                              color: isInWishlist
+                                  ? AppColors.error
+                                  : (isDark
+                                        ? AppColors.grey400
+                                        : const Color(0xFF9E9E9E)),
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                // Product Info
+                Text(
+                  product.name,
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    color: isDark
+                        ? AppColors.darkTextPrimary
+                        : const Color(0xFF1A1A1A),
+                    height: 1.2,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                // Price and Rating Row
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (hasDiscount)
+                            Text(
+                              '\$${product.price.toStringAsFixed(2)}',
+                              style: TextStyle(
+                                color: isDark
+                                    ? AppColors.grey600
+                                    : const Color(0xFFBDBDBD),
+                                decoration: TextDecoration.lineThrough,
+                                fontSize: 11,
+                              ),
+                            ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '\$${product.finalPrice.toStringAsFixed(2)}',
+                            style: TextStyle(
+                              color: AppColors.primaryGreen,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Rating
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFB300).withOpacity(0.1),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Row(
-                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
-                            Icons.history,
-                            color: AppColors.white,
-                            size: 10,
+                          const Icon(
+                            IconlyBold.star,
+                            color: Color(0xFFFFB300),
+                            size: 12,
                           ),
-                          const SizedBox(width: 2),
+                          const SizedBox(width: 4),
                           Text(
-                            'RECENT',
+                            product.rating.toString(),
                             style: TextStyle(
-                              color: AppColors.white,
-                              fontSize: 7,
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 12,
+                              color: isDark
+                                  ? AppColors.darkTextPrimary
+                                  : const Color(0xFF424242),
                             ),
                           ),
                         ],
                       ),
                     ),
-                  ),
-                  
-                  // Discount Badge
-                  if (hasDiscount)
-                    Positioned(
-                      top: 6,
-                      right: 6,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: AppColors.error,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          '${(((product.price - product.discountPrice) / product.price) * 100).round()}%',
-                          style: TextStyle(
-                            color: AppColors.white,
-                            fontSize: 7,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              
-              // Product Details
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(10),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        product.name,
-                        style: AppTextStyles.bodySmall.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      
-                      // Rating
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.star,
-                            size: 10,
-                            color: AppColors.warning,
-                          ),
-                          const SizedBox(width: 2),
-                          Text(
-                            '${product.rating}',
-                            style: AppTextStyles.labelSmall.copyWith(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w600,
-                              color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(width: 2),
-                          Text(
-                            '(${product.reviewCount})',
-                            style: AppTextStyles.labelSmall.copyWith(
-                              color: isDark ? AppColors.darkTextSecondary : AppColors.grey600,
-                              fontSize: 8,
-                            ),
-                          ),
-                        ],
-                      ),
-                      
-                      const SizedBox(height: 4),
-                      
-                      // Price
-                      if (hasDiscount)
-                        Row(
-                          children: [
-                            Text(
-                              '\$${product.discountPrice.toStringAsFixed(2)}',
-                              style: AppTextStyles.priceText.copyWith(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '\$${product.price.toStringAsFixed(2)}',
-                              style: AppTextStyles.labelSmall.copyWith(
-                                color: isDark ? AppColors.darkTextSecondary : AppColors.grey600,
-                                decoration: TextDecoration.lineThrough,
-                                decorationColor: isDark ? AppColors.darkTextSecondary : AppColors.grey600,
-                                fontSize: 10,
-                              ),
-                            ),
-                          ],
-                        )
-                      else
-                        Text(
-                          '\$${product.price.toStringAsFixed(2)}',
-                          style: AppTextStyles.priceText.copyWith(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                    ],
-                  ),
+                  ],
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ),
-    )
+        )
         .animate()
         .fadeIn(duration: 600.ms)
         .slideX(begin: 0.3, end: 0)

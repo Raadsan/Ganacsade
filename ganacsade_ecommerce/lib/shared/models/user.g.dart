@@ -78,7 +78,7 @@ const _$UserGenderEnumMap = {
   UserGender.notSpecified: 'not_specified',
 };
 
-const _$UserStatusEnumMap = { 
+const _$UserStatusEnumMap = {
   UserStatus.active: 'active',
   UserStatus.inactive: 'inactive',
   UserStatus.suspended: 'suspended',

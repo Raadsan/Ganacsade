@@ -60,23 +60,16 @@ class WishlistController extends GetxController {
     return wishlistItems.any((item) => item.id == productId);
   }
 
-  void toggleWishlist(Product product) {
+  Future<void> toggleWishlist(Product product) async {
     if (isInWishlist(product.id)) {
-      removeFromWishlist(product.id);
+      await removeFromWishlist(product.id);
     } else {
-      addToWishlist(product);
+      await addToWishlist(product);
     }
   }
 
   Future<void> addToWishlist(Product product) async {
     if (_authController.user == null) {
-      Get.snackbar(
-        'auth_signin'.tr,
-        'Please sign in to add items to wishlist',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: AppColors.error,
-        colorText: AppColors.white,
-      );
       return;
     }
 
@@ -91,23 +84,7 @@ class WishlistController extends GetxController {
       await _wishlistApiService.addToWishlist(token, product.id);
       
       wishlistItems.add(product);
-      
-      Get.snackbar(
-        'wishlist_added'.tr,
-        '${product.name} ${'wishlist_added_desc'.tr}',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: AppColors.success,
-        colorText: AppColors.white,
-        duration: const Duration(seconds: 2),
-      );
     } catch (e) {
-      Get.snackbar(
-        'error'.tr,
-        'Failed to add to wishlist',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: AppColors.error,
-        colorText: AppColors.white,
-      );
       print('Error adding to wishlist: $e');
     }
   }
@@ -124,23 +101,7 @@ class WishlistController extends GetxController {
       await _wishlistApiService.removeFromWishlist(token, productId);
       
       wishlistItems.removeWhere((item) => item.id == productId);
-      
-      Get.snackbar(
-        'wishlist_removed'.tr,
-        'wishlist_removed_desc'.tr,
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: AppColors.info,
-        colorText: AppColors.white,
-        duration: const Duration(seconds: 2),
-      );
     } catch (e) {
-      Get.snackbar(
-        'error'.tr,
-        'Failed to remove from wishlist',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: AppColors.error,
-        colorText: AppColors.white,
-      );
       print('Error removing from wishlist: $e');
     }
   }
@@ -157,22 +118,7 @@ class WishlistController extends GetxController {
       await _wishlistApiService.clearWishlist(token);
       
       wishlistItems.clear();
-      
-      Get.snackbar(
-        'wishlist_cleared'.tr,
-        'wishlist_cleared_desc'.tr,
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: AppColors.info,
-        colorText: AppColors.white,
-      );
     } catch (e) {
-      Get.snackbar(
-        'error'.tr,
-        'Failed to clear wishlist',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: AppColors.error,
-        colorText: AppColors.white,
-      );
       print('Error clearing wishlist: $e');
     }
   }

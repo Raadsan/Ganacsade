@@ -107,13 +107,7 @@ class AuthController extends GetxController {
       print('   - Email: ${user.email}');
       print('   - Phone: ${user.phoneNumber}');
       
-      Get.snackbar(
-        'Welcome Back!',
-        'Successfully signed in to GANACSADE',
-        backgroundColor: Get.theme.colorScheme.primary,
-        colorText: Get.theme.colorScheme.onPrimary,
-        duration: const Duration(seconds: 2),
-      );
+      return true;
       
       return true;
     } catch (e) {
@@ -197,13 +191,7 @@ class AuthController extends GetxController {
       print('   - Phone: ${user.phoneNumber}');
       print('   - Name: ${user.firstName} ${user.lastName}');
       
-      Get.snackbar(
-        'Account Created!',
-        'Welcome to GANACSADE, $firstName!',
-        backgroundColor: Get.theme.colorScheme.primary,
-        colorText: Get.theme.colorScheme.onPrimary,
-        duration: const Duration(seconds: 2),
-      );
+      return true;
       
       return true;
     } catch (e) {
@@ -228,13 +216,7 @@ class AuthController extends GetxController {
       // Clear any error messages
       errorMessage.value = '';
       
-      Get.snackbar(
-        'Signed Out',
-        'You have been successfully signed out',
-        backgroundColor: Get.theme.colorScheme.secondary,
-        colorText: Get.theme.colorScheme.onSecondary,
-        duration: const Duration(seconds: 2),
-      );
+      // We'll handle navigation and success message in the UI
     } catch (e) {
       print('Error signing out: $e');
     }

@@ -36,9 +36,11 @@ class _FeaturedProductsScreenState extends State<FeaturedProductsScreen> {
     });
 
     try {
-      final response = await _productsApiService.getFeaturedProducts(limit: 100);
+      final response = await _productsApiService.getFeaturedProducts(
+        limit: 100,
+      );
       final productsData = response['products'] as List;
-      
+
       setState(() {
         _products = productsData.map((json) {
           // Parse images array and prepend base URL for local uploads
@@ -52,15 +54,15 @@ class _FeaturedProductsScreenState extends State<FeaturedProductsScreen> {
               return imgPath;
             }).toList();
           }
-          
+
           // If no images, add placeholder
           if (images.isEmpty) {
             images = ['placeholder'];
           }
-          
+
           // Update the json with processed images
           json['images'] = images;
-          
+
           return Product.fromJson(json);
         }).toList();
         _isLoading = false;
@@ -85,7 +87,7 @@ class _FeaturedProductsScreenState extends State<FeaturedProductsScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Featured Products'),
@@ -97,12 +99,14 @@ class _FeaturedProductsScreenState extends State<FeaturedProductsScreen> {
       body: _isLoading
           ? const Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryGreen),
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  AppColors.primaryGreen,
+                ),
               ),
             )
           : _errorMessage != null
-              ? _buildErrorState()
-              : _buildProductsGrid(isDark),
+          ? _buildErrorState()
+          : _buildProductsGrid(isDark),
     );
   }
 
@@ -111,17 +115,11 @@ class _FeaturedProductsScreenState extends State<FeaturedProductsScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.error_outline,
-            size: 80,
-            color: AppColors.grey400,
-          ),
+          Icon(Icons.error_outline, size: 80, color: AppColors.grey400),
           const SizedBox(height: 16),
           Text(
             _errorMessage ?? 'Something went wrong',
-            style: AppTextStyles.titleMedium.copyWith(
-              color: AppColors.grey600,
-            ),
+            style: AppTextStyles.titleMedium.copyWith(color: AppColors.grey600),
           ),
           const SizedBox(height: 24),
           ElevatedButton(
@@ -170,20 +168,20 @@ class _FeaturedProductsScreenState extends State<FeaturedProductsScreen> {
           crossAxisCount: 2,
           crossAxisSpacing: 12,
           mainAxisSpacing: 12,
-          childAspectRatio: 0.68,
+          childAspectRatio: 0.63,
         ),
         itemCount: _products.length,
         itemBuilder: (context, index) {
           return FeaturedProductCard(
-            product: _products[index],
-            onTap: () => _onProductTap(_products[index]),
-          ).animate().fadeIn(
-            duration: 400.ms,
-            delay: Duration(milliseconds: 50 * index),
-          ).scale(
-            begin: const Offset(0.9, 0.9),
-            end: const Offset(1, 1),
-          );
+                product: _products[index],
+                onTap: () => _onProductTap(_products[index]),
+              )
+              .animate()
+              .fadeIn(
+                duration: 400.ms,
+                delay: Duration(milliseconds: 50 * index),
+              )
+              .scale(begin: const Offset(0.9, 0.9), end: const Offset(1, 1));
         },
       ),
     );

@@ -10,7 +10,7 @@ class SearchController extends GetxController {
   // All products cache
   final _allProducts = <Product>[].obs;
   final _isProductsLoaded = false.obs;
-  
+
   // State
   final searchResults = <Product>[].obs;
   final recentSearches = <String>[].obs;
@@ -55,7 +55,7 @@ class SearchController extends GetxController {
       );
 
       final data = response['products'] as List? ?? [];
-      
+
       final products = <Product>[];
       for (final json in data) {
         try {
@@ -85,19 +85,19 @@ class SearchController extends GetxController {
     }
 
     currentQuery.value = trimmed;
-    
+
     // Search locally
     final queryLower = trimmed.toLowerCase();
     final results = _allProducts.where((product) {
       return product.name.toLowerCase().contains(queryLower) ||
-             product.nameAr.toLowerCase().contains(queryLower) ||
-             product.nameSo.toLowerCase().contains(queryLower) ||
-             product.description.toLowerCase().contains(queryLower) ||
-             product.brand.toLowerCase().contains(queryLower);
+          product.nameAr.toLowerCase().contains(queryLower) ||
+          product.nameSo.toLowerCase().contains(queryLower) ||
+          product.description.toLowerCase().contains(queryLower) ||
+          product.brand.toLowerCase().contains(queryLower);
     }).toList();
 
     searchResults.value = results;
-    
+
     if (results.isNotEmpty) {
       _addToRecent(trimmed);
     } else {
@@ -127,7 +127,7 @@ class SearchController extends GetxController {
   /// Auto-search as user types (debounced)
   void onSearchChanged(String query) {
     _debounceTimer?.cancel();
-    
+
     if (query.trim().isEmpty) {
       clearSearch();
       return;

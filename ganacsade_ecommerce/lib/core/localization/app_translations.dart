@@ -3,10 +3,10 @@ import 'package:get/get.dart';
 class AppTranslations extends Translations {
   @override
   Map<String, Map<String, String>> get keys => {
-        'en_US': enUS,
-        'so_SO': soSO,
-        'ar_SA': arSA,
-      };
+    'en_US': enUS,
+    'so_SO': soSO,
+    'ar_SA': arSA,
+  };
 
   // English translations
   static const Map<String, String> enUS = {
@@ -36,6 +36,7 @@ class AppTranslations extends Translations {
     'nav_cart': 'Cart',
     'nav_orders': 'Orders',
     'nav_profile': 'Profile',
+    'nav_wishlist': 'Wishlist',
 
     // Home
     'home_welcome': 'Good Morning!',
@@ -43,8 +44,9 @@ class AppTranslations extends Translations {
     'home_featured': 'Featured Products',
     'home_new_arrivals': 'New Arrivals',
     'home_best_sellers': 'Best Sellers',
-    'home_categories': 'Shop by Category',
+    'home_categories': 'Our Services',
     'home_see_all': 'See All',
+    'home_flash_scale': 'Flash Scale',
 
     // Products
     'product_details': 'Product Details',
@@ -282,6 +284,7 @@ class AppTranslations extends Translations {
     'nav_cart': 'Gaadiga',
     'nav_orders': 'Dalabka',
     'nav_profile': 'Xogta',
+    'nav_wishlist': 'xiiseyn',
 
     // Home
     'home_welcome': 'Subax wanaagsan!',
@@ -291,6 +294,7 @@ class AppTranslations extends Translations {
     'home_best_sellers': 'Kuwa Ugu Iibka Badan',
     'home_categories': 'Iibso Qaybaha',
     'home_see_all': 'Arag Dhammaan',
+    'home_flash_scale': 'Qiimo Dhimis Deg-deg Ah',
 
     // Products
     'product_details': 'Faahfaahinta Alaabta',

@@ -17,10 +17,7 @@ import 'reviews_screen.dart';
 class ProductDetailScreen extends StatefulWidget {
   final Product product;
 
-  const ProductDetailScreen({
-    super.key,
-    required this.product,
-  });
+  const ProductDetailScreen({super.key, required this.product});
 
   @override
   State<ProductDetailScreen> createState() => _ProductDetailScreenState();
@@ -32,7 +29,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   final CartController _cartController = Get.find<CartController>();
   final WishlistController _wishlistController = Get.put(WishlistController());
   final ReviewsApiService _reviewsApiService = ReviewsApiService();
-  
+
   int _currentImageIndex = 0;
   int _selectedQuantity = 1;
   List<Map<String, dynamic>> _reviews = [];
@@ -54,10 +51,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
         productId: widget.product.id,
         limit: 2, // Only load 2 reviews for preview
       );
-      
+
       if (mounted) {
         setState(() {
-          _reviews = (response['reviews'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+          _reviews =
+              (response['reviews'] as List?)?.cast<Map<String, dynamic>>() ??
+              [];
           _isLoadingReviews = false;
         });
       }
@@ -72,7 +71,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   Future<void> _loadRelatedProducts() async {
     try {
       setState(() => _isLoadingRelatedProducts = true);
-      
+
       final ProductsApiService productsApiService = ProductsApiService();
       final response = await productsApiService.getProducts(
         category: widget.product.categoryId,
@@ -80,12 +79,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
         sortBy: 'created_at',
         sortOrder: 'DESC',
       );
-      
+
       if (mounted) {
         final productsData = response['products'] as List? ?? [];
         setState(() {
           _relatedProducts = productsData
-              .where((json) => json['id'] != widget.product.id) // Exclude current product
+              .where(
+                (json) => json['id'] != widget.product.id,
+              ) // Exclude current product
               .take(6)
               .map((json) => Product.fromJson(json))
               .toList();
@@ -103,9 +104,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Scaffold(
-      backgroundColor: isDark ? AppColors.darkScaffoldBackground : AppColors.scaffoldBackground,
+      backgroundColor: isDark
+          ? AppColors.darkScaffoldBackground
+          : AppColors.scaffoldBackground,
       body: CustomScrollView(
         slivers: [
           _buildSliverAppBar(isDark),
@@ -140,54 +143,71 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     return SliverAppBar(
       expandedHeight: 400,
       pinned: true,
-      backgroundColor: isDark ? AppColors.darkScaffoldBackground : AppColors.white,
+      backgroundColor: isDark
+          ? AppColors.darkScaffoldBackground
+          : AppColors.white,
       leading: IconButton(
         onPressed: () => Get.back(),
+
         icon: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: AppColors.white.withOpacity(0.9),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: const Icon(
-            Icons.arrow_back,
-            color: AppColors.primaryGreen,
-          ),
+          child: const Icon(Icons.arrow_back, color: AppColors.primaryGreen),
         ),
       ),
       actions: [
-        Obx(() => IconButton(
-          onPressed: () {
-            _wishlistController.toggleWishlist(widget.product);
-          },
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppColors.white.withOpacity(0.9),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              _wishlistController.isInWishlist(widget.product.id) 
-                  ? Icons.favorite 
-                  : Icons.favorite_border,
-              color: _wishlistController.isInWishlist(widget.product.id) 
-                  ? AppColors.error 
-                  : AppColors.grey600,
+        Obx(
+          () => IconButton(
+            onPressed: () async {
+              await _wishlistController.toggleWishlist(widget.product);
+              final isInWishlist = _wishlistController.isInWishlist(
+                widget.product.id,
+              );
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    isInWishlist
+                        ? '${widget.product.name} added to wishlist'
+                        : '${widget.product.name} removed from wishlist',
+                  ),
+                  backgroundColor: isInWishlist
+                      ? AppColors.primaryGreen
+                      : AppColors.error,
+                  behavior: SnackBarBehavior.floating,
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            },
+            icon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.white.withOpacity(0.9),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                _wishlistController.isInWishlist(widget.product.id)
+                    ? Icons.favorite
+                    : Icons.favorite_border,
+                color: _wishlistController.isInWishlist(widget.product.id)
+                    ? AppColors.error
+                    : AppColors.grey600,
+              ),
             ),
           ),
-        )),
+        ),
         const SizedBox(width: 16),
       ],
-      flexibleSpace: FlexibleSpaceBar(
-        background: _buildImageGallery(),
-      ),
+      flexibleSpace: FlexibleSpaceBar(background: _buildImageGallery()),
     );
   }
 
   Widget _buildImageGallery() {
     // Use all images from the product, or show placeholder if empty
-    final images = widget.product.images.isNotEmpty 
-        ? widget.product.images 
+    final images = widget.product.images.isNotEmpty
+        ? widget.product.images
         : ['placeholder'];
 
     return Stack(
@@ -239,7 +259,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
             children: [
               Flexible(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.primaryGreen.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
@@ -259,24 +282,24 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    Icons.star,
-                    color: AppColors.warning,
-                    size: 16,
-                  ),
+                  Icon(Icons.star, color: AppColors.warning, size: 16),
                   const SizedBox(width: 4),
                   Text(
                     '${widget.product.rating}',
                     style: AppTextStyles.labelMedium.copyWith(
                       fontWeight: FontWeight.w600,
-                      color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                      color: isDark
+                          ? AppColors.darkTextPrimary
+                          : AppColors.textPrimary,
                     ),
                   ),
                   const SizedBox(width: 4),
                   Text(
                     '(${widget.product.reviewCount} reviews)',
                     style: AppTextStyles.labelSmall.copyWith(
-                      color: isDark ? AppColors.darkTextSecondary : AppColors.grey600,
+                      color: isDark
+                          ? AppColors.darkTextSecondary
+                          : AppColors.grey600,
                     ),
                   ),
                 ],
@@ -306,13 +329,18 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                 Text(
                   '\$${widget.product.price.toStringAsFixed(2)}',
                   style: AppTextStyles.bodyMedium.copyWith(
-                    color: isDark ? AppColors.darkTextSecondary : AppColors.grey600,
+                    color: isDark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.grey600,
                     decoration: TextDecoration.lineThrough,
                   ),
                 ),
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.error,
                     borderRadius: BorderRadius.circular(4),
@@ -330,69 +358,74 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
           ),
         ],
       ),
-    )
-        .animate()
-        .fadeIn(duration: 600.ms)
-        .slideY(begin: 0.3, end: 0);
+    ).animate().fadeIn(duration: 600.ms).slideY(begin: 0.3, end: 0);
   }
 
   Widget _buildQuantitySelector(bool isDark) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Quantity',
-            style: AppTextStyles.titleMedium.copyWith(
-              fontWeight: FontWeight.w600,
-              color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildQuantityButton(
-                icon: Icons.remove,
-                onTap: () {
-                  if (_selectedQuantity > 1) {
-                    setState(() {
-                      _selectedQuantity--;
-                    });
-                  }
-                },
-              ),
-              Container(
-                width: 60,
-                height: 40,
-                margin: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  border: Border.all(color: isDark ? AppColors.darkBorderLight : AppColors.grey300),
-                  borderRadius: BorderRadius.circular(8),
+              Text(
+                'Quantity',
+                style: AppTextStyles.titleMedium.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: isDark
+                      ? AppColors.darkTextPrimary
+                      : AppColors.textPrimary,
                 ),
-                child: Center(
-                  child: Text(
-                    '$_selectedQuantity',
-                    style: AppTextStyles.titleMedium.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  _buildQuantityButton(
+                    icon: Icons.remove,
+                    onTap: () {
+                      if (_selectedQuantity > 1) {
+                        setState(() {
+                          _selectedQuantity--;
+                        });
+                      }
+                    },
+                  ),
+                  Container(
+                    width: 60,
+                    height: 40,
+                    margin: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: isDark
+                            ? AppColors.darkBorderLight
+                            : AppColors.grey300,
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '$_selectedQuantity',
+                        style: AppTextStyles.titleMedium.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: isDark
+                              ? AppColors.darkTextPrimary
+                              : AppColors.textPrimary,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
-              _buildQuantityButton(
-                icon: Icons.add,
-                onTap: () {
-                  setState(() {
-                    _selectedQuantity++;
-                  });
-                },
+                  _buildQuantityButton(
+                    icon: Icons.add,
+                    onTap: () {
+                      setState(() {
+                        _selectedQuantity++;
+                      });
+                    },
+                  ),
+                ],
               ),
             ],
           ),
-        ],
-      ),
-    )
+        )
         .animate()
         .fadeIn(delay: 200.ms, duration: 600.ms)
         .slideX(begin: -0.3, end: 0);
@@ -411,76 +444,97 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
           color: AppColors.primaryGreen,
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Icon(
-          icon,
-          color: AppColors.white,
-          size: 20,
-        ),
+        child: Icon(icon, color: AppColors.white, size: 20),
       ),
     );
   }
 
   Widget _buildActionButtons(bool isDark) {
     return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Row(
-        children: [
-          Expanded(
-            child: Obx(() => OutlinedButton.icon(
-              onPressed: () {
-                _wishlistController.toggleWishlist(widget.product);
-              },
-              icon: Icon(
-                _wishlistController.isInWishlist(widget.product.id)
-                    ? Icons.favorite
-                    : Icons.favorite_border,
-              ),
-              label: const Text('Wishlist'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: _wishlistController.isInWishlist(widget.product.id)
-                    ? AppColors.error
-                    : AppColors.primaryGreen,
-                side: BorderSide(
-                  color: _wishlistController.isInWishlist(widget.product.id)
-                      ? AppColors.error
-                      : AppColors.primaryGreen,
+          padding: const EdgeInsets.all(20),
+          child: Row(
+            children: [
+              Expanded(
+                child: Obx(
+                  () => OutlinedButton.icon(
+                    onPressed: () async {
+                      await _wishlistController.toggleWishlist(widget.product);
+                      final isInWishlist = _wishlistController.isInWishlist(
+                        widget.product.id,
+                      );
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            isInWishlist
+                                ? '${widget.product.name} added to wishlist'
+                                : '${widget.product.name} removed from wishlist',
+                          ),
+                          backgroundColor: isInWishlist
+                              ? AppColors.primaryGreen
+                              : AppColors.error,
+                          behavior: SnackBarBehavior.floating,
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    },
+                    icon: Icon(
+                      _wishlistController.isInWishlist(widget.product.id)
+                          ? Icons.favorite
+                          : Icons.favorite_border,
+                    ),
+                    label: const Text('Wishlist'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor:
+                          _wishlistController.isInWishlist(widget.product.id)
+                          ? AppColors.error
+                          : AppColors.primaryGreen,
+                      side: BorderSide(
+                        color:
+                            _wishlistController.isInWishlist(widget.product.id)
+                            ? AppColors.error
+                            : AppColors.primaryGreen,
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
                 ),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                flex: 2,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    _cartController.addToCart(
+                      widget.product,
+                      _selectedQuantity,
+                    );
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('${widget.product.name} added to cart'),
+                        backgroundColor: AppColors.primaryGreen,
+                        behavior: SnackBarBehavior.floating,
+                        duration: const Duration(seconds: 2),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.shopping_cart),
+                  label: const Text('Add to Cart'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryGreen,
+                    foregroundColor: AppColors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                 ),
               ),
-            )),
+            ],
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            flex: 2,
-            child: ElevatedButton.icon(
-              onPressed: () {
-                _cartController.addToCart(widget.product, _selectedQuantity);
-                Get.snackbar(
-                  'Added to Cart',
-                  '${widget.product.name} added to cart',
-                  backgroundColor: AppColors.primaryGreen,
-                  colorText: AppColors.white,
-                  snackPosition: SnackPosition.BOTTOM,
-                );
-              },
-              icon: const Icon(Icons.shopping_cart),
-              label: const Text('Add to Cart'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryGreen,
-                foregroundColor: AppColors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    )
+        )
         .animate()
         .fadeIn(delay: 400.ms, duration: 600.ms)
         .slideY(begin: 0.3, end: 0);
@@ -509,9 +563,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
           ),
         ],
       ),
-    )
-        .animate()
-        .fadeIn(delay: 600.ms, duration: 600.ms);
+    ).animate().fadeIn(delay: 600.ms, duration: 600.ms);
   }
 
   Widget _buildReviewsSection(bool isDark) {
@@ -527,7 +579,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                 'Reviews (${widget.product.reviewCount})',
                 style: AppTextStyles.titleLarge.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                  color: isDark
+                      ? AppColors.darkTextPrimary
+                      : AppColors.textPrimary,
                 ),
               ),
               TextButton(
@@ -545,7 +599,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
             ],
           ),
           const SizedBox(height: 16),
-          
+
           // Show loading or reviews from database
           if (_isLoadingReviews)
             const Center(
@@ -563,20 +617,26 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                     Icon(
                       Icons.rate_review_outlined,
                       size: 48,
-                      color: isDark ? AppColors.darkTextSecondary : AppColors.grey400,
+                      color: isDark
+                          ? AppColors.darkTextSecondary
+                          : AppColors.grey400,
                     ),
                     const SizedBox(height: 12),
                     Text(
                       'No reviews yet',
                       style: AppTextStyles.bodyMedium.copyWith(
-                        color: isDark ? AppColors.darkTextPrimary : AppColors.grey600,
+                        color: isDark
+                            ? AppColors.darkTextPrimary
+                            : AppColors.grey600,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       'Be the first to review this product',
                       style: AppTextStyles.bodySmall.copyWith(
-                        color: isDark ? AppColors.darkTextSecondary : AppColors.grey500,
+                        color: isDark
+                            ? AppColors.darkTextSecondary
+                            : AppColors.grey500,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -604,9 +664,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
               final index = entry.key;
               final review = entry.value;
               return Padding(
-                padding: EdgeInsets.only(bottom: index < _reviews.length - 1 ? 12 : 0),
+                padding: EdgeInsets.only(
+                  bottom: index < _reviews.length - 1 ? 12 : 0,
+                ),
                 child: _buildReviewItem(
-                  userName: '${review['first_name'] ?? ''} ${review['last_name'] ?? ''}'.trim(),
+                  userName:
+                      '${review['first_name'] ?? ''} ${review['last_name'] ?? ''}'
+                          .trim(),
                   userInitials: review['initials'] ?? 'U',
                   rating: review['rating'] ?? 0,
                   comment: review['comment'] ?? '',
@@ -619,18 +683,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
             }),
         ],
       ),
-    )
-        .animate()
-        .fadeIn(delay: 800.ms, duration: 600.ms);
+    ).animate().fadeIn(delay: 800.ms, duration: 600.ms);
   }
-  
+
   String _formatTimeAgo(dynamic createdAt) {
     if (createdAt == null) return 'Recently';
-    
+
     try {
       final DateTime reviewDate = DateTime.parse(createdAt.toString());
       final Duration difference = DateTime.now().difference(reviewDate);
-      
+
       if (difference.inDays > 365) {
         return '${(difference.inDays / 365).floor()} year${(difference.inDays / 365).floor() > 1 ? 's' : ''} ago';
       } else if (difference.inDays > 30) {
@@ -653,7 +715,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     String userName = 'John Doe',
     String userInitials = 'JD',
     int rating = 4,
-    String comment = 'Great product! Exactly as described and arrived quickly. Would definitely recommend to others.',
+    String comment =
+        'Great product! Exactly as described and arrived quickly. Would definitely recommend to others.',
     String timeAgo = '2 days ago',
     bool isVerified = true,
     int helpfulCount = 0,
@@ -704,7 +767,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                               userName,
                               style: AppTextStyles.titleSmall.copyWith(
                                 fontWeight: FontWeight.w600,
-                                color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                                color: isDark
+                                    ? AppColors.darkTextPrimary
+                                    : AppColors.textPrimary,
                               ),
                             ),
                             if (isVerified) ...[
@@ -715,7 +780,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                   vertical: 1,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AppColors.primaryGreen.withOpacity(0.1),
+                                  color: AppColors.primaryGreen.withOpacity(
+                                    0.1,
+                                  ),
                                   borderRadius: BorderRadius.circular(3),
                                 ),
                                 child: Text(
@@ -737,14 +804,18 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                               return Icon(
                                 Icons.star,
                                 size: 14,
-                                color: index < rating ? AppColors.warning : AppColors.grey300,
+                                color: index < rating
+                                    ? AppColors.warning
+                                    : AppColors.grey300,
                               );
                             }),
                             const SizedBox(width: 6),
                             Text(
                               timeAgo,
                               style: AppTextStyles.labelSmall.copyWith(
-                                color: isDark ? AppColors.darkTextSecondary : AppColors.grey600,
+                                color: isDark
+                                    ? AppColors.darkTextSecondary
+                                    : AppColors.grey600,
                                 fontSize: 11,
                               ),
                             ),
@@ -756,7 +827,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                   Icon(
                     Icons.arrow_forward_ios,
                     size: 14,
-                    color: isDark ? AppColors.darkTextSecondary : AppColors.grey400,
+                    color: isDark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.grey400,
                   ),
                 ],
               ),
@@ -764,7 +837,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
               Text(
                 comment,
                 style: AppTextStyles.bodyMedium.copyWith(
-                  color: isDark ? AppColors.darkTextSecondary : AppColors.grey700,
+                  color: isDark
+                      ? AppColors.darkTextSecondary
+                      : AppColors.grey700,
                   height: 1.4,
                 ),
                 maxLines: 3,
@@ -776,13 +851,17 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                   Icon(
                     Icons.thumb_up_outlined,
                     size: 14,
-                    color: isDark ? AppColors.darkTextSecondary : AppColors.grey500,
+                    color: isDark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.grey500,
                   ),
                   const SizedBox(width: 4),
                   Text(
                     'Helpful (12)',
                     style: AppTextStyles.labelSmall.copyWith(
-                      color: isDark ? AppColors.darkTextSecondary : AppColors.grey500,
+                      color: isDark
+                          ? AppColors.darkTextSecondary
+                          : AppColors.grey500,
                       fontSize: 11,
                     ),
                   ),
@@ -818,7 +897,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
             ),
           ),
           const SizedBox(height: 16),
-          
+
           // Show loading, empty state, or products
           if (_isLoadingRelatedProducts)
             const Center(
@@ -834,7 +913,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                 child: Text(
                   'No related products found',
                   style: AppTextStyles.bodyMedium.copyWith(
-                    color: isDark ? AppColors.darkTextSecondary : AppColors.grey600,
+                    color: isDark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.grey600,
                   ),
                 ),
               ),
@@ -853,14 +934,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
             ),
         ],
       ),
-    )
-        .animate()
-        .fadeIn(delay: 1000.ms, duration: 600.ms);
+    ).animate().fadeIn(delay: 1000.ms, duration: 600.ms);
   }
 
   Widget _buildBottomActionBar(bool isDark) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.only(top: 20, bottom: 55, left: 20, right: 20),
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkCardBackground : AppColors.white,
         boxShadow: [
@@ -878,17 +957,17 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
               onPressed: () {
                 // Add to cart and navigate to checkout
                 _cartController.addToCart(widget.product, _selectedQuantity);
-                
+
                 // Navigate to cart screen
                 Get.to(() => const CartScreen());
-                
-                Get.snackbar(
-                  'Proceeding to Checkout',
-                  '${widget.product.name} added to cart',
-                  backgroundColor: AppColors.primaryGreen,
-                  colorText: AppColors.white,
-                  snackPosition: SnackPosition.BOTTOM,
-                  duration: const Duration(seconds: 2),
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('${widget.product.name} added to cart'),
+                    backgroundColor: AppColors.primaryGreen,
+                    behavior: SnackBarBehavior.floating,
+                    duration: const Duration(seconds: 2),
+                  ),
                 );
               },
               style: OutlinedButton.styleFrom(
@@ -907,12 +986,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
             child: ElevatedButton(
               onPressed: () {
                 _cartController.addToCart(widget.product, _selectedQuantity);
-                Get.snackbar(
-                  'Added to Cart',
-                  '${widget.product.name} added to cart',
-                  backgroundColor: AppColors.primaryGreen,
-                  colorText: AppColors.white,
-                  snackPosition: SnackPosition.BOTTOM,
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('${widget.product.name} added to cart'),
+                    backgroundColor: AppColors.primaryGreen,
+                    behavior: SnackBarBehavior.floating,
+                  ),
                 );
               },
               style: ElevatedButton.styleFrom(
@@ -938,12 +1017,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     if (imagePath == 'placeholder' || imagePath.isEmpty) {
       return _buildImagePlaceholder();
     }
-    
+
     // Build full URL for backend images
-    final imageUrl = imagePath.startsWith('http') 
-        ? imagePath 
+    final imageUrl = imagePath.startsWith('http')
+        ? imagePath
         : '${ApiConfig.getServerUrl()}$imagePath';
-    
+
     return Image.network(
       imageUrl,
       width: double.infinity,
@@ -957,7 +1036,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
         return Center(
           child: CircularProgressIndicator(
             value: loadingProgress.expectedTotalBytes != null
-                ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                ? loadingProgress.cumulativeBytesLoaded /
+                      loadingProgress.expectedTotalBytes!
                 : null,
             color: AppColors.primaryGreen,
           ),
@@ -1000,223 +1080,247 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     );
   }
 
-
   Widget _buildRelatedProductCard(Product product, bool isDark) {
     final hasDiscount = product.discountPrice < product.price;
     final isInStock = product.inStock;
-    
+
     return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: isInStock ? () {
-          // Add haptic feedback
-          HapticFeedback.lightImpact();
-          
-          // Show loading feedback
-          Get.snackbar(
-            'Loading Product',
-            'Opening ${product.name}...',
-            backgroundColor: AppColors.primaryGreen.withValues(alpha: 0.8),
-            colorText: AppColors.white,
-            duration: const Duration(milliseconds: 800),
-            snackPosition: SnackPosition.BOTTOM,
-            borderRadius: 8,
-          );
-          
-          // Navigate after brief delay
-          Future.delayed(const Duration(milliseconds: 300), () {
-            Get.off(() => ProductDetailScreen(product: product));
-          });
-        } : () {
-          HapticFeedback.lightImpact();
-          Get.snackbar(
-            'Out of Stock',
-            '${product.name} is currently unavailable',
-            backgroundColor: AppColors.error.withValues(alpha: 0.8),
-            colorText: AppColors.white,
-            snackPosition: SnackPosition.BOTTOM,
-          );
-        },
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-        width: 150,
-        margin: const EdgeInsets.only(right: 12),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.darkCardBackground : (isInStock ? AppColors.white : AppColors.grey50),
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: isDark ? Colors.black26 : AppColors.shadowLight,
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-          border: !isInStock ? Border.all(
-            color: AppColors.grey300,
-            width: 1,
-          ) : null,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Product Image
-            Stack(
-              children: [
-                Container(
-                  height: 100,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: AppColors.grey100,
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(12),
-                    ),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(12),
-                    ),
-                    child: _buildProductImage(product.mainImage),
-                  ),
-                ),
-                
-                // Discount Badge
-                if (hasDiscount)
-                  Positioned(
-                    top: 6,
-                    right: 6,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: AppColors.error,
-                        borderRadius: BorderRadius.circular(6),
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: isInStock
+                ? () {
+                    // Add haptic feedback
+                    HapticFeedback.lightImpact();
+
+                    // Show loading feedback
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Opening ${product.name}...'),
+                        backgroundColor: AppColors.primaryGreen,
+                        behavior: SnackBarBehavior.floating,
+                        duration: const Duration(milliseconds: 800),
                       ),
-                      child: Text(
-                        '${(((product.price - product.discountPrice) / product.price) * 100).round()}%',
-                        style: const TextStyle(
-                          color: AppColors.white,
-                          fontSize: 8,
-                          fontWeight: FontWeight.bold,
+                    );
+
+                    // Navigate after brief delay
+                    Future.delayed(const Duration(milliseconds: 300), () {
+                      Get.off(() => ProductDetailScreen(product: product));
+                    });
+                  }
+                : () {
+                    HapticFeedback.lightImpact();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          '${product.name} is currently unavailable',
                         ),
+                        backgroundColor: AppColors.error,
+                        behavior: SnackBarBehavior.floating,
                       ),
-                    ),
+                    );
+                  },
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              width: 150,
+              margin: const EdgeInsets.only(right: 12),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? AppColors.darkCardBackground
+                    : (isInStock ? AppColors.white : AppColors.grey50),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: isDark ? Colors.black26 : AppColors.shadowLight,
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
                   ),
-                
-                // Out of Stock Badge
-                if (!isInStock)
-                  Positioned(
-                    top: 6,
-                    left: 6,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: AppColors.grey600,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        'OUT OF STOCK',
-                        style: TextStyle(
-                          color: AppColors.white,
-                          fontSize: 7,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            
-            // Product Details
-            Padding(
-              padding: const EdgeInsets.all(8),
+                ],
+                border: !isInStock
+                    ? Border.all(color: AppColors.grey300, width: 1)
+                    : null,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
                 children: [
-                    Text(
-                      product.name,
-                      style: AppTextStyles.labelMedium.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: isDark 
-                            ? (isInStock ? AppColors.darkTextPrimary : AppColors.darkTextSecondary)
-                            : (isInStock ? AppColors.grey900 : AppColors.grey500),
+                  // Product Image
+                  Stack(
+                    children: [
+                      Container(
+                        height: 100,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: AppColors.grey100,
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(12),
+                          ),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(12),
+                          ),
+                          child: _buildProductImage(product.mainImage),
+                        ),
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    
-                    // Rating
-                    Row(
+
+                      // Discount Badge
+                      if (hasDiscount)
+                        Positioned(
+                          top: 6,
+                          right: 6,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.error,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              '${(((product.price - product.discountPrice) / product.price) * 100).round()}%',
+                              style: const TextStyle(
+                                color: AppColors.white,
+                                fontSize: 8,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+
+                      // Out of Stock Badge
+                      if (!isInStock)
+                        Positioned(
+                          top: 6,
+                          left: 6,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.grey600,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              'OUT OF STOCK',
+                              style: TextStyle(
+                                color: AppColors.white,
+                                fontSize: 7,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+
+                  // Product Details
+                  Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
-                          Icons.star,
-                          size: 10,
-                          color: AppColors.warning,
-                        ),
-                        const SizedBox(width: 2),
                         Text(
-                          '${product.rating}',
-                          style: AppTextStyles.labelSmall.copyWith(
-                            fontSize: 9,
+                          product.name,
+                          style: AppTextStyles.labelMedium.copyWith(
                             fontWeight: FontWeight.w600,
-                            color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                            color: isDark
+                                ? (isInStock
+                                      ? AppColors.darkTextPrimary
+                                      : AppColors.darkTextSecondary)
+                                : (isInStock
+                                      ? AppColors.grey900
+                                      : AppColors.grey500),
                           ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(width: 2),
-                        Text(
-                          '(${product.reviewCount})',
-                          style: AppTextStyles.labelSmall.copyWith(
-                            color: isDark ? AppColors.darkTextSecondary : AppColors.grey600,
-                            fontSize: 8,
-                          ),
+                        const SizedBox(height: 4),
+
+                        // Rating
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.star,
+                              size: 10,
+                              color: AppColors.warning,
+                            ),
+                            const SizedBox(width: 2),
+                            Text(
+                              '${product.rating}',
+                              style: AppTextStyles.labelSmall.copyWith(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w600,
+                                color: isDark
+                                    ? AppColors.darkTextPrimary
+                                    : AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(width: 2),
+                            Text(
+                              '(${product.reviewCount})',
+                              style: AppTextStyles.labelSmall.copyWith(
+                                color: isDark
+                                    ? AppColors.darkTextSecondary
+                                    : AppColors.grey600,
+                                fontSize: 8,
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    
-                    const SizedBox(height: 4),
-                    
-                    // Price
-                    if (hasDiscount)
-                      Row(
-                        children: [
+
+                        const SizedBox(height: 4),
+
+                        // Price
+                        if (hasDiscount)
+                          Row(
+                            children: [
+                              Text(
+                                '\$${product.discountPrice.toStringAsFixed(2)}',
+                                style: AppTextStyles.labelMedium.copyWith(
+                                  color: isInStock
+                                      ? AppColors.primaryGreen
+                                      : AppColors.grey500,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                '\$${product.price.toStringAsFixed(2)}',
+                                style: AppTextStyles.labelSmall.copyWith(
+                                  color: AppColors.grey600,
+                                  decoration: TextDecoration.lineThrough,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ],
+                          )
+                        else
                           Text(
-                            '\$${product.discountPrice.toStringAsFixed(2)}',
+                            '\$${product.price.toStringAsFixed(2)}',
                             style: AppTextStyles.labelMedium.copyWith(
-                              color: isInStock ? AppColors.primaryGreen : AppColors.grey500,
+                              color: isInStock
+                                  ? AppColors.primaryGreen
+                                  : AppColors.grey500,
                               fontWeight: FontWeight.bold,
                               fontSize: 12,
                             ),
                           ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '\$${product.price.toStringAsFixed(2)}',
-                            style: AppTextStyles.labelSmall.copyWith(
-                              color: AppColors.grey600,
-                              decoration: TextDecoration.lineThrough,
-                              fontSize: 10,
-                            ),
-                          ),
-                        ],
-                      )
-                    else
-                      Text(
-                        '\$${product.price.toStringAsFixed(2)}',
-                        style: AppTextStyles.labelMedium.copyWith(
-                          color: isInStock ? AppColors.primaryGreen : AppColors.grey500,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
-                      ),
-                  ],
-                ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-          ],
-        ),
-        ),
-      ),
-    )
+            ),
+          ),
+        )
         .animate()
-        .fadeIn(duration: 600.ms, delay: Duration(milliseconds: 100 * (product.hashCode % 6)))
+        .fadeIn(
+          duration: 600.ms,
+          delay: Duration(milliseconds: 100 * (product.hashCode % 6)),
+        )
         .slideX(begin: 0.3, end: 0);
   }
 }

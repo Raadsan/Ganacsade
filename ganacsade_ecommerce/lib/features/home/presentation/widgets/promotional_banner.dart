@@ -8,16 +8,12 @@ class PromotionalBannerWidget extends StatelessWidget {
   final PromotionalBanner banner;
   final VoidCallback? onTap;
 
-  const PromotionalBannerWidget({
-    super.key,
-    required this.banner,
-    this.onTap,
-  });
+  const PromotionalBannerWidget({super.key, required this.banner, this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final bool hasNetworkImage = banner.imageUrl.startsWith('http');
-    
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -51,7 +47,7 @@ class PromotionalBannerWidget extends StatelessWidget {
                           child: CircularProgressIndicator(
                             value: loadingProgress.expectedTotalBytes != null
                                 ? loadingProgress.cumulativeBytesLoaded /
-                                    loadingProgress.expectedTotalBytes!
+                                      loadingProgress.expectedTotalBytes!
                                 : null,
                             color: AppColors.white,
                             strokeWidth: 2,
@@ -63,7 +59,7 @@ class PromotionalBannerWidget extends StatelessWidget {
                 )
               else
                 Positioned.fill(child: _buildGradientBackground()),
-              
+
               // Dark overlay for better text readability on images
               if (hasNetworkImage)
                 Positioned.fill(
@@ -80,7 +76,7 @@ class PromotionalBannerWidget extends StatelessWidget {
                     ),
                   ),
                 ),
-              
+
               // Decorative circles (only show on gradient background)
               if (!hasNetworkImage) ...[
                 Positioned(
@@ -108,7 +104,7 @@ class PromotionalBannerWidget extends StatelessWidget {
                   ),
                 ),
               ],
-              
+
               // Content
               Padding(
                 padding: const EdgeInsets.all(20),
@@ -117,62 +113,62 @@ class PromotionalBannerWidget extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      banner.title,
-                      style: AppTextStyles.headlineSmall.copyWith(
-                        color: AppColors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    )
+                          banner.title,
+                          style: AppTextStyles.headlineSmall.copyWith(
+                            color: AppColors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        )
                         .animate()
                         .fadeIn(delay: 200.ms, duration: 600.ms)
                         .slideX(begin: -0.3, end: 0),
-                    
+
                     const SizedBox(height: 8),
-                    
+
                     if (banner.subtitle.isNotEmpty)
                       Text(
-                        banner.subtitle,
-                        style: AppTextStyles.bodyMedium.copyWith(
-                          color: AppColors.white.withOpacity(0.9),
-                        ),
-                      )
+                            banner.subtitle,
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              color: AppColors.white.withOpacity(0.9),
+                            ),
+                          )
                           .animate()
                           .fadeIn(delay: 600.ms, duration: 600.ms)
                           .slideX(begin: -0.2, end: 0),
-                    
+
                     const SizedBox(height: 16),
-                    
+
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: AppColors.white.withOpacity(0.3),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'Shop Now',
-                            style: AppTextStyles.labelMedium.copyWith(
-                              color: AppColors.white,
-                              fontWeight: FontWeight.w600,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: AppColors.white.withOpacity(0.3),
                             ),
                           ),
-                          const SizedBox(width: 4),
-                          const Icon(
-                            Icons.arrow_forward,
-                            color: AppColors.white,
-                            size: 16,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Shop Now',
+                                style: AppTextStyles.labelMedium.copyWith(
+                                  color: AppColors.white,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              const Icon(
+                                Icons.arrow_forward,
+                                color: AppColors.white,
+                                size: 16,
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                    )
+                        )
                         .animate()
                         .fadeIn(delay: 600.ms, duration: 600.ms)
                         .scaleXY(begin: 0.8, end: 1.0),
@@ -185,7 +181,7 @@ class PromotionalBannerWidget extends StatelessWidget {
       ),
     );
   }
-  
+
   Widget _buildGradientBackground({Widget? child}) {
     return Container(
       decoration: BoxDecoration(

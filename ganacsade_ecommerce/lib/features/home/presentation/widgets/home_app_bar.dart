@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:ganacsade/features/products/presentation/pages/search_screen.dart';
 import 'package:get/get.dart';
+import 'package:iconly/iconly.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../navigation/navigation_controller.dart';
+import '../../../auth/presentation/controllers/auth_controller.dart';
 
 class HomeAppBar extends StatelessWidget {
   const HomeAppBar({super.key});
@@ -10,162 +13,168 @@ class HomeAppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final authController = Get.find<AuthController>();
+
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
       child: Column(
         children: [
-          // GANACSADE Text Header
-          Center(
-            child: Text(
-              'GANACSADE',
-              style: AppTextStyles.titleLarge.copyWith(
-                color: AppColors.primaryGreen,
-                fontWeight: FontWeight.bold,
-                fontSize: 22,
-                letterSpacing: 1.5,
-              ),
-            ),
-          ),
-          
-          const SizedBox(height: 16),
-          
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Greeting and Location
+              // Dynamic User Info
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'home_welcome'.tr,
-                      style: AppTextStyles.bodyMedium.copyWith(
-                        color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                child: Obx(() {
+                  final user = authController.user;
+                  final firstName = user?.firstName ?? 'Guest';
+
+                  // Get location from default address or fallback
+                  String location = 'Mogadishu - Somalia';
+                  if (user != null && user.addresses.isNotEmpty) {
+                    final defaultAddress = user.addresses.firstWhere(
+                      (a) => a.isDefault,
+                      orElse: () => user.addresses.first,
+                    );
+                    location =
+                        '${defaultAddress.city} - ${defaultAddress.country}';
+                  }
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        firstName.capitalizeFirst!,
+                        style: AppTextStyles.headlineSmall.copyWith(
+                          color: isDark
+                              ? AppColors.darkTextPrimary
+                              : AppColors.textPrimary,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 22,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.location_on_outlined,
-                          size: 16,
-                          color: AppColors.primaryGreen,
+                      const SizedBox(height: 2),
+                      Text(
+                        location,
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: isDark
+                              ? AppColors.darkTextSecondary
+                              : AppColors.grey600,
+                          fontWeight: FontWeight.w400,
                         ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Mogadishu, Somalia',
-                          style: AppTextStyles.titleMedium.copyWith(
-                            color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  );
+                }),
               ),
-              
-              // Notification and Profile
-              Row(
-                children: [
-                  IconButton(
-                    onPressed: () {
-                      // Navigate to notifications
-                    },
-                    icon: Stack(
-                      children: [
-                        Icon(
-                          Icons.notifications_outlined,
-                          color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                        ),
-                        Positioned(
-                          right: 0,
-                          top: 0,
-                          child: Container(
-                            width: 8,
-                            height: 8,
-                            decoration: const BoxDecoration(
-                              color: AppColors.error,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  GestureDetector(
-                    onTap: () {
-                      // Navigate to profile
-                      Get.find<NavigationController>().changeIndex(4);
-                    },
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        gradient: AppColors.primaryGradient,
-                        shape: BoxShape.circle,
+
+              // Profile Avatar
+              GestureDetector(
+                onTap: () {
+                  Get.find<NavigationController>().changeIndex(4);
+                },
+                child: Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: AppColors.grey200,
+                    shape: BoxShape.circle,
+
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
                       ),
-                      child: const Center(
-                        child: Text(
-                          'U',
-                          style: TextStyle(
-                            color: AppColors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ),
-                    ),
+                    ],
                   ),
-                ],
+                  child: ClipOval(
+                    child: Obx(() {
+                      final profileUrl = authController.user?.profileImageUrl;
+                      if (profileUrl != null && profileUrl.isNotEmpty) {
+                        return Image.network(
+                          profileUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              const Icon(
+                                Icons.person,
+                                color: Colors.white,
+                                size: 30,
+                              ),
+                        );
+                      }
+                      return const Icon(
+                        Icons.person,
+                        color: Colors.white,
+                        size: 30,
+                      );
+                    }),
+                  ),
+                ),
               ),
             ],
           ),
-          
-          const SizedBox(height: 20),
-          
-          // Search Bar
-          GestureDetector(
-            onTap: () {
-              // Navigate to search screen
-              Get.find<NavigationController>().changeIndex(2);
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.darkCardBackground : AppColors.grey100,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: isDark ? AppColors.grey700 : AppColors.borderLight),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.search,
-                    color: isDark ? AppColors.grey400 : AppColors.grey500,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    'Search products...',
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
-                    ),
-                  ),
-                  const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.all(6),
+
+          const SizedBox(height: 24),
+
+          // Search Bar Row
+          Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => Get.to(() => const SearchScreen()),
+                  child: Container(
+                    height: 50,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     decoration: BoxDecoration(
-                      color: AppColors.primaryGreen,
-                      borderRadius: BorderRadius.circular(6),
+                      color: isDark
+                          ? AppColors.darkCardBackground
+                          : const Color(0xFFF5F5F5),
+                      borderRadius: BorderRadius.circular(25),
                     ),
-                    child: const Icon(
-                      Icons.tune,
-                      color: AppColors.white,
-                      size: 16,
+                    child: Row(
+                      children: [
+                        Icon(
+                          IconlyLight.search,
+                          color: isDark ? AppColors.grey400 : AppColors.grey500,
+                          size: 22,
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Search products',
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            color: isDark
+                                ? AppColors.darkTextSecondary
+                                : AppColors.grey500,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
+                ),
               ),
-            ),
+              const SizedBox(width: 12),
+              // Filter Button
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.grey400 : AppColors.grey200,
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  onPressed: () {
+                    Get.to(() => const SearchScreen());
+                  },
+                  icon: Icon(
+                    IconlyBold.filter,
+                    color: AppColors.grey500,
+                    size: 22,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),

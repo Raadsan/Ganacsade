@@ -30,20 +30,20 @@ class AppTheme {
       scaffoldBackgroundColor: AppColors.scaffoldBackground,
       
       // App Bar Theme
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: AppColors.primaryGreen,
         foregroundColor: AppColors.textOnPrimary,
         elevation: 0,
         centerTitle: true,
         titleTextStyle: AppTextStyles.appBarTitle,
-        systemOverlayStyle: SystemUiOverlayStyle(
+        systemOverlayStyle: const SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
           statusBarIconBrightness: Brightness.light,
         ),
       ),
       
       // Bottom Navigation Bar Theme
-      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: AppColors.white,
         selectedItemColor: AppColors.primaryGreen,
         unselectedItemColor: AppColors.grey500,
@@ -168,7 +168,7 @@ class AppTheme {
       ),
       
       // Tab Bar Theme
-      tabBarTheme: const TabBarThemeData(
+      tabBarTheme: TabBarThemeData(
         labelColor: AppColors.primaryGreen,
         unselectedLabelColor: AppColors.grey500,
         indicatorColor: AppColors.primaryGreen,
@@ -237,7 +237,7 @@ class AppTheme {
       ),
       
       // Text Theme
-      textTheme: const TextTheme(
+      textTheme: TextTheme(
         displayLarge: AppTextStyles.displayLarge,
         displayMedium: AppTextStyles.displayMedium,
         displaySmall: AppTextStyles.displaySmall,
@@ -299,8 +299,8 @@ class AppTheme {
       ),
       
       // Bottom Navigation Bar Theme
-      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: Color(0xFF1E1E1E),
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        backgroundColor: const Color(0xFF1E1E1E),
         selectedItemColor: AppColors.primaryGreen,
         unselectedItemColor: AppColors.grey500,
         type: BottomNavigationBarType.fixed,

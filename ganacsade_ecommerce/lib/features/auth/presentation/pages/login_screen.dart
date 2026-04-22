@@ -105,7 +105,7 @@ class _LoginScreenState extends State<LoginScreen> {
         const SizedBox(height: 20),
         
         // Welcome Text
-        const Text(
+        Text(
           'Welcome Back!',
           style: AppTextStyles.headlineLarge,
           textAlign: TextAlign.center,
@@ -116,7 +116,7 @@ class _LoginScreenState extends State<LoginScreen> {
         
         const SizedBox(height: 8),
         
-        const Text(
+        Text(
           'Sign in to continue to G-Store',
           style: AppTextStyles.bodyLarge,
           textAlign: TextAlign.center,
@@ -197,7 +197,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 });
               },
             ),
-            const Text('Remember me', style: AppTextStyles.bodyMedium),
+            Text('Remember me', style: AppTextStyles.bodyMedium),
             const Spacer(),
             TextButton(
               onPressed: () {
@@ -228,14 +228,14 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildSocialLogin() {
     return Column(
       children: [
-        const Row(
+        Row(
           children: [
-            Expanded(child: Divider()),
+            const Expanded(child: Divider()),
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text('Or continue with', style: AppTextStyles.bodyMedium),
             ),
-            Expanded(child: Divider()),
+            const Expanded(child: Divider()),
           ],
         ),
         
@@ -281,7 +281,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Text(
+        Text(
           "Don't have an account? ",
           style: AppTextStyles.bodyMedium,
         ),

@@ -74,7 +74,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget _buildHeader() {
     return Column(
       children: [
-        const Text(
+        Text(
           'Create Account',
           style: AppTextStyles.headlineLarge,
           textAlign: TextAlign.center,
@@ -85,7 +85,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         
         const SizedBox(height: 8),
         
-        const Text(
+        Text(
           'Join G-Store community today',
           style: AppTextStyles.bodyLarge,
           textAlign: TextAlign.center,
@@ -267,7 +267,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
             Expanded(
               child: RichText(
-                text: const TextSpan(
+                text: TextSpan(
                   style: AppTextStyles.bodyMedium,
                   children: [
                     TextSpan(text: 'I agree to the '),
@@ -314,7 +314,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Text(
+        Text(
           'Already have an account? ',
           style: AppTextStyles.bodyMedium,
         ),

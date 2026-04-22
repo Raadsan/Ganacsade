@@ -413,7 +413,18 @@ class _SignInScreenState extends State<SignInScreen> {
         _passwordController.text,
       );
       
-      if (success) {
+      if (success && mounted) {
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('auth signin success'.tr, style: const TextStyle(color: Colors.white)),
+            backgroundColor: AppColors.primaryGreen,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+
         // Navigate to main app
         Get.offAllNamed('/main');
       }

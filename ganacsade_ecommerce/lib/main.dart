@@ -14,7 +14,8 @@ import 'features/cart/presentation/controllers/cart_controller.dart';
 import 'features/navigation/navigation_controller.dart';
 import 'features/profile/presentation/controllers/profile_controller.dart';
 import 'features/orders/presentation/pages/orders_screen.dart';
-import 'features/products/presentation/controllers/search_controller.dart' as search_ctrl;
+import 'features/products/presentation/controllers/search_controller.dart'
+    as search_ctrl;
 import 'features/auth/presentation/controllers/auth_controller.dart';
 import 'features/auth/presentation/pages/sign_in_screen.dart';
 import 'features/navigation/main_navigation.dart';
@@ -22,12 +23,12 @@ import 'features/wishlist/presentation/controllers/wishlist_controller.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Firebase removed - using Node.js API instead
-  
+
   // Initialize Hive
   await Hive.initFlutter();
-  
+
   // Initialize GetX controllers
   Get.put(ThemeController());
   Get.put(LanguageController());
@@ -37,15 +38,15 @@ void main() async {
   Get.put(ProfileController());
   Get.put(search_ctrl.SearchController());
   Get.put(WishlistController());
-  
+
   // Set system UI overlay style
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
-    ),
-  );
-  
+  // SystemChrome.setSystemUIOverlayStyle(
+  //   const SystemUiOverlayStyle(
+  //     statusBarColor: Colors.transparent,
+  //     statusBarIconBrightness: Brightness.light,
+  //   ),
+  // );
+
   runApp(const GStoreApp());
 }
 
@@ -63,42 +64,42 @@ class GStoreApp extends StatelessWidget {
         builder: (themeController) => GetMaterialApp(
           title: 'GANACSADE',
           debugShowCheckedModeBanner: false,
-          
+
           // Theme
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
           themeMode: themeController.themeMode,
-        
-        // Localization
-        translations: AppTranslations(),
-        localizationsDelegates: const [
-          SomaliMaterialLocalizations.delegate,
-          SomaliCupertinoLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        supportedLocales: const [
-          Locale('en', 'US'), // English
-          Locale('so', 'SO'), // Somali
-          Locale('ar', 'SA'), // Arabic
-        ],
-        locale: const Locale('en', 'US'),
-        fallbackLocale: const Locale('en', 'US'),
-        
-        // Initial route
-        home: const SplashScreen(),
-        
-        // Routes
-        getPages: [
-          GetPage(name: '/orders', page: () => const OrdersScreen()),
-          GetPage(name: '/signin', page: () => const SignInScreen()),
-          GetPage(name: '/main', page: () => const MainNavigation()),
-        ],
-        
-        // GetX configuration
-        defaultTransition: Transition.cupertino,
-        transitionDuration: const Duration(milliseconds: 300),
+
+          // Localization
+          translations: AppTranslations(),
+          localizationsDelegates: const [
+            SomaliMaterialLocalizations.delegate,
+            SomaliCupertinoLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [
+            Locale('en', 'US'), // English
+            Locale('so', 'SO'), // Somali
+            Locale('ar', 'SA'), // Arabic
+          ],
+          locale: const Locale('en', 'US'),
+          fallbackLocale: const Locale('en', 'US'),
+
+          // Initial route
+          home: const SplashScreen(),
+
+          // Routes
+          getPages: [
+            GetPage(name: '/orders', page: () => const OrdersScreen()),
+            GetPage(name: '/signin', page: () => const SignInScreen()),
+            GetPage(name: '/main', page: () => const MainNavigation()),
+          ],
+
+          // GetX configuration
+          defaultTransition: Transition.cupertino,
+          transitionDuration: const Duration(milliseconds: 300),
         ),
       ),
     );

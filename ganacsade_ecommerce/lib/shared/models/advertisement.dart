@@ -26,20 +26,36 @@ class Advertisement {
   });
 
   factory Advertisement.fromJson(Map<String, dynamic> json) {
+    // Safe int parser — PostgreSQL can return integers as strings
+    int safeInt(dynamic v, int fallback) {
+      if (v == null) return fallback;
+      if (v is int) return v;
+      if (v is double) return v.toInt();
+      return int.tryParse(v.toString()) ?? fallback;
+    }
+
+    // Safe bool parser
+    bool safeBool(dynamic v, bool fallback) {
+      if (v == null) return fallback;
+      if (v is bool) return v;
+      return v.toString().toLowerCase() == 'true';
+    }
+
     return Advertisement(
       id: json['id']?.toString() ?? '',
-      title: json['title'] as String? ?? '',
-      description: json['description'] as String?,
-      imageUrl: json['imageUrl'] as String? ?? '',
-      targetUrl: json['targetUrl'] as String?,
-      placement: json['placement'] as String? ?? 'home_slider',
-      displayOrder: json['displayOrder'] as int? ?? 1,
-      isActive: json['isActive'] as bool? ?? true,
-      startDate: json['startDate'] != null 
-          ? DateTime.tryParse(json['startDate'] as String)
+      title: json['title']?.toString() ?? '',
+      description: json['description']?.toString(),
+      // Accept both camelCase (from service layer) and snake_case (raw DB)
+      imageUrl: json['imageUrl']?.toString() ?? json['image_url']?.toString() ?? '',
+      targetUrl: json['targetUrl']?.toString() ?? json['target_url']?.toString(),
+      placement: json['placement']?.toString() ?? 'home_slider',
+      displayOrder: safeInt(json['displayOrder'] ?? json['display_order'], 1),
+      isActive: safeBool(json['isActive'] ?? json['is_active'], true),
+      startDate: (json['startDate'] ?? json['start_date']) != null
+          ? DateTime.tryParse((json['startDate'] ?? json['start_date']).toString())
           : null,
-      endDate: json['endDate'] != null
-          ? DateTime.tryParse(json['endDate'] as String)
+      endDate: (json['endDate'] ?? json['end_date']) != null
+          ? DateTime.tryParse((json['endDate'] ?? json['end_date']).toString())
           : null,
     );
   }
@@ -76,17 +92,17 @@ class Advertisement {
 
   bool get isCurrentlyActive {
     if (!isActive) return false;
-    
+
     final now = DateTime.now();
-    
+
     if (startDate != null && now.isBefore(startDate!)) {
       return false;
     }
-    
+
     if (endDate != null && now.isAfter(endDate!)) {
       return false;
     }
-    
+
     return true;
   }
 }

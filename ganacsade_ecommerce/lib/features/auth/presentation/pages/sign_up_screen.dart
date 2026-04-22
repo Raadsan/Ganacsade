@@ -576,11 +576,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
   void _signUp() async {
     if (_formKey.currentState!.validate()) {
       if (!_agreeToTerms) {
-        Get.snackbar(
-          'Terms Required',
-          'Please agree to the Terms of Service and Privacy Policy',
-          backgroundColor: AppColors.error,
-          colorText: AppColors.white,
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Please agree to the Terms of Service and Privacy Policy'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
         );
         return;
       }
@@ -594,7 +596,18 @@ class _SignUpScreenState extends State<SignUpScreen> {
         phoneNumber: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
       );
       
-      if (success) {
+      if (success && mounted) {
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('auth sign up success'.tr, style: const TextStyle(color: Colors.white)),
+            backgroundColor: AppColors.primaryGreen,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+
         // Navigate to main app
         Get.offAllNamed('/main');
       }

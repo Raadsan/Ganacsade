@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
+import 'package:iconly/iconly.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../controllers/cart_controller.dart';
@@ -34,10 +35,16 @@ class _CartScreenState extends State<CartScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.white,
       appBar: AppBar(
-        title: Text('cart_title'.tr),
-        backgroundColor: AppColors.primaryGreen,
-        foregroundColor: AppColors.white,
+        title: Text(
+          'My cart',
+          style: AppTextStyles.headlineSmall.copyWith(
+            fontWeight: FontWeight.w500,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
         actions: [
@@ -47,7 +54,10 @@ class _CartScreenState extends State<CartScreen> {
                     onPressed: () {
                       _showClearCartDialog(context, controller);
                     },
-                    icon: const Icon(Icons.delete_outline),
+                    icon: const Icon(
+                      IconlyLight.delete,
+                      color: AppColors.textPrimary,
+                    ),
                     tooltip: 'Clear Cart',
                   )
                 : const SizedBox.shrink(),
@@ -77,58 +87,67 @@ class _CartScreenState extends State<CartScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkCardBackground : AppColors.grey100,
-                  borderRadius: BorderRadius.circular(60),
-                ),
-                child: Icon(
-                  Icons.shopping_cart_outlined,
-                  size: 60,
-                  color: isDark ? AppColors.grey500 : AppColors.grey400,
-                ),
-              )
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? AppColors.darkCardBackground
+                          : AppColors.grey100,
+                      borderRadius: BorderRadius.circular(60),
+                    ),
+                    child: Icon(
+                      Icons.shopping_cart_outlined,
+                      size: 60,
+                      color: isDark ? AppColors.grey500 : AppColors.grey400,
+                    ),
+                  )
                   .animate()
                   .scale(duration: 600.ms, curve: Curves.elasticOut)
                   .then(delay: 200.ms)
                   .shake(duration: 500.ms),
               const SizedBox(height: 24),
               Text(
-                'cart_empty'.tr,
-                style: AppTextStyles.headlineMedium.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: isDark ? AppColors.darkTextPrimary : AppColors.grey700,
-                ),
-              )
+                    'cart_empty'.tr,
+                    style: AppTextStyles.headlineMedium.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: isDark
+                          ? AppColors.darkTextPrimary
+                          : AppColors.grey700,
+                    ),
+                  )
                   .animate()
                   .fadeIn(delay: 400.ms, duration: 600.ms)
                   .slideY(begin: 0.3, end: 0),
               const SizedBox(height: 8),
               Text(
-                'cart_empty_desc'.tr,
-                style: AppTextStyles.bodyLarge.copyWith(
-                  color: isDark ? AppColors.darkTextSecondary : AppColors.grey600,
-                ),
-              )
+                    'cart_empty_desc'.tr,
+                    style: AppTextStyles.bodyLarge.copyWith(
+                      color: isDark
+                          ? AppColors.darkTextSecondary
+                          : AppColors.grey600,
+                    ),
+                  )
                   .animate()
                   .fadeIn(delay: 600.ms, duration: 600.ms)
                   .slideY(begin: 0.3, end: 0),
               const SizedBox(height: 32),
               ElevatedButton(
-                onPressed: () {
-                  Get.back();
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryGreen,
-                  foregroundColor: AppColors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: Text('nav_home'.tr),
-              )
+                    onPressed: () {
+                      Get.back();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryGreen,
+                      foregroundColor: AppColors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 16,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text('nav_home'.tr),
+                  )
                   .animate()
                   .fadeIn(delay: 800.ms, duration: 600.ms)
                   .slideY(begin: 0.3, end: 0),
@@ -147,14 +166,13 @@ class _CartScreenState extends State<CartScreen> {
             onRefresh: () async {
               HapticFeedback.lightImpact();
               await controller.refreshSettings();
-              Get.snackbar(
-                'Updated',
-                'Cart totals refreshed',
-                backgroundColor: AppColors.primaryGreen.withOpacity(0.9),
-                colorText: AppColors.white,
-                duration: const Duration(seconds: 2),
-                snackPosition: SnackPosition.BOTTOM,
-                margin: const EdgeInsets.all(16),
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Cart totals refreshed'),
+                  backgroundColor: AppColors.primaryGreen,
+                  behavior: SnackBarBehavior.floating,
+                  duration: Duration(seconds: 2),
+                ),
               );
             },
             color: AppColors.primaryGreen,
@@ -173,151 +191,184 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  Widget _buildCartItemCard(dynamic cartItem, CartController controller, int index) {
+  Widget _buildCartItemCard(
+    dynamic cartItem,
+    CartController controller,
+    int index,
+  ) {
+    // List of soft colors for product backgrounds like in the image
+    final List<Color> bgColors = [
+      const Color(0xFFEFEBE0), // Light beige
+      const Color(0xFFF1DADC), // Light pink
+      const Color(0xFFD2E0E9), // Light blue
+      const Color(0xFFE8D5CC), // Light brown
+    ];
+    final cardBgColor = bgColors[index % bgColors.length];
+
     return Builder(
       builder: (context) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
         return Container(
-          margin: const EdgeInsets.only(bottom: 16),
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.darkCardBackground : AppColors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.shadowLight,
-                blurRadius: 8,
-                offset: const Offset(0, 2),
+              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? AppColors.darkCardBackground
+                    : const Color(0xFFF8F8F8),
+                borderRadius: BorderRadius.circular(10),
               ),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                // Product Image
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: isDark ? AppColors.darkElevatedSurface : AppColors.grey100,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: cartItem.product.images.isNotEmpty
-                        ? _buildProductImage(cartItem.product.images.first)
-                        : _buildImagePlaceholder(),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                
-                // Product Details
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        cartItem.product.name,
-                        style: AppTextStyles.titleMedium.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: isDark ? AppColors.darkTextPrimary : null,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Product Image with tinted background
+                  Container(
+                    width: 110,
+                    height: 110,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(5.0),
+                        child: cartItem.product.images.isNotEmpty
+                            ? _buildProductImage(cartItem.product.images.first)
+                            : _buildImagePlaceholder(),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '\$${cartItem.product.discountPrice.toStringAsFixed(2)}',
-                        style: AppTextStyles.titleSmall.copyWith(
-                          color: AppColors.primaryGreen,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      
-                      // Quantity Controls
-                      Row(
-                        children: [
-                          _buildQuantityButton(
-                            icon: Icons.remove,
-                            onPressed: () {
-                              HapticFeedback.lightImpact();
-                              if (cartItem.quantity > 1) {
-                                controller.updateQuantity(cartItem.id, cartItem.quantity - 1);
-                              } else {
-                                controller.removeFromCart(cartItem.id);
-                              }
-                            },
-                          ),
-                          Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 16),
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: isDark ? AppColors.darkElevatedSurface : AppColors.grey100,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              '${cartItem.quantity}',
-                              style: AppTextStyles.titleMedium.copyWith(
-                                fontWeight: FontWeight.w600,
-                                color: isDark ? AppColors.darkTextPrimary : null,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+
+                  // Product Details
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                cartItem.product.name,
+                                style: AppTextStyles.titleMedium.copyWith(
+                                  fontWeight: FontWeight.w500,
+                                  color: isDark
+                                      ? AppColors.darkTextPrimary
+                                      : AppColors.textPrimary,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
+                            Text(
+                              'Size: ${index == 0
+                                  ? "35"
+                                  : index == 1
+                                  ? "M"
+                                  : "L"}',
+                              style: AppTextStyles.bodySmall.copyWith(
+                                color: AppColors.grey500,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '\$ ${cartItem.product.discountPrice.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => "${m[1]},")}',
+                          style: AppTextStyles.titleLarge.copyWith(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.w500,
                           ),
-                          _buildQuantityButton(
-                            icon: Icons.add,
-                            onPressed: () {
-                              HapticFeedback.lightImpact();
-                              controller.updateQuantity(cartItem.id, cartItem.quantity + 1);
-                            },
-                          ),
-                          const Spacer(),
-                          IconButton(
-                            onPressed: () {
-                              HapticFeedback.lightImpact();
-                              controller.removeFromCart(cartItem.id);
-                              Get.snackbar(
-                                'Item Removed',
-                                '${cartItem.product.name} removed from cart',
-                                backgroundColor: AppColors.error.withOpacity(0.8),
-                                colorText: AppColors.white,
-                                snackPosition: SnackPosition.BOTTOM,
-                              );
-                            },
-                            icon: const Icon(Icons.delete_outline),
-                            color: AppColors.error,
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        )
-            .animate()
-            .fadeIn(duration: 600.ms, delay: Duration(milliseconds: 100 * index))
-            .slideX(begin: 0.3, end: 0);
-      },
-    );
-  }
+                        ),
+                        const SizedBox(height: 12),
 
-  Widget _buildQuantityButton({required IconData icon, required VoidCallback onPressed}) {
-    return Container(
-      width: 36,
-      height: 36,
-      decoration: BoxDecoration(
-        color: AppColors.primaryGreen,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: IconButton(
-        onPressed: onPressed,
-        icon: Icon(icon),
-        color: AppColors.white,
-        iconSize: 18,
-        padding: EdgeInsets.zero,
-      ),
+                        // Quantity Controls (Pill Shape bottom right)
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? AppColors.darkScaffoldBackground
+                                    : AppColors.white,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: AppColors.grey200),
+                              ),
+                              child: Row(
+                                children: [
+                                  GestureDetector(
+                                    onTap: () {
+                                      HapticFeedback.lightImpact();
+                                      if (cartItem.quantity > 1) {
+                                        controller.updateQuantity(
+                                          cartItem.id,
+                                          cartItem.quantity - 1,
+                                        );
+                                      } else {
+                                        controller.removeFromCart(cartItem.id);
+                                      }
+                                    },
+                                    child: const Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      child: Icon(
+                                        Icons.remove,
+                                        size: 14,
+                                        color: AppColors.primaryBlue,
+                                      ),
+                                    ),
+                                  ),
+                                  Text(
+                                    '${cartItem.quantity}',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  GestureDetector(
+                                    onTap: () {
+                                      HapticFeedback.lightImpact();
+                                      controller.updateQuantity(
+                                        cartItem.id,
+                                        cartItem.quantity + 1,
+                                      );
+                                    },
+                                    child: const Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      child: Icon(
+                                        Icons.add,
+                                        size: 14,
+                                        color: AppColors.primaryBlue,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            )
+            .animate()
+            .fadeIn(
+              duration: 600.ms,
+              delay: Duration(milliseconds: 100 * index),
+            )
+            .slideY(begin: 0.1, end: 0);
+      },
     );
   }
 
@@ -326,7 +377,7 @@ class _CartScreenState extends State<CartScreen> {
     if (imagePath == 'placeholder' || imagePath.isEmpty) {
       return _buildImagePlaceholder();
     }
-    
+
     // Check if it's a network URL or local asset
     if (imagePath.startsWith('http')) {
       return Image.network(
@@ -361,11 +412,8 @@ class _CartScreenState extends State<CartScreen> {
             'assets/logos/GANACSADE LOGO-06.png',
             width: 40,
             height: 40,
-            errorBuilder: (context, error, stackTrace) => Icon(
-              Icons.image_outlined,
-              size: 40,
-              color: AppColors.grey400,
-            ),
+            errorBuilder: (context, error, stackTrace) =>
+                Icon(Icons.image_outlined, size: 40, color: AppColors.grey400),
           ),
         ],
       ),
@@ -391,9 +439,23 @@ class _CartScreenState extends State<CartScreen> {
           ),
           child: Column(
             children: [
-              _buildSummaryRow('cart_subtotal'.tr, '\$${controller.subtotal.toStringAsFixed(2)}', isDark),
-              _buildSummaryRow('cart_shipping'.tr, controller.shipping == 0 ? 'Free' : '\$${controller.shipping.toStringAsFixed(2)}', isDark),
-              _buildSummaryRow('cart_tax'.tr, '\$${controller.tax.toStringAsFixed(2)}', isDark),
+              _buildSummaryRow(
+                'cart_subtotal'.tr,
+                '\$${controller.subtotal.toStringAsFixed(2)}',
+                isDark,
+              ),
+              _buildSummaryRow(
+                'cart_shipping'.tr,
+                controller.shipping == 0
+                    ? 'Free'
+                    : '\$${controller.shipping.toStringAsFixed(2)}',
+                isDark,
+              ),
+              _buildSummaryRow(
+                'cart_tax'.tr,
+                '\$${controller.tax.toStringAsFixed(2)}',
+                isDark,
+              ),
               const Divider(height: 24),
               _buildSummaryRow(
                 'cart_total'.tr,
@@ -432,7 +494,12 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  Widget _buildSummaryRow(String label, String value, bool isDark, {bool isTotal = false}) {
+  Widget _buildSummaryRow(
+    String label,
+    String value,
+    bool isDark, {
+    bool isTotal = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -470,28 +537,24 @@ class _CartScreenState extends State<CartScreen> {
     Get.dialog(
       AlertDialog(
         title: const Text('Clear Cart'),
-        content: const Text('Are you sure you want to remove all items from your cart?'),
+        content: const Text(
+          'Are you sure you want to remove all items from your cart?',
+        ),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Cancel'),
-          ),
+          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
           TextButton(
             onPressed: () {
               controller.clearCart();
               Get.back();
-              Get.snackbar(
-                'Cart Cleared',
-                'All items have been removed from your cart',
-                backgroundColor: AppColors.primaryGreen.withOpacity(0.8),
-                colorText: AppColors.white,
-                snackPosition: SnackPosition.BOTTOM,
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('All items have been removed from your cart'),
+                  backgroundColor: AppColors.primaryGreen,
+                  behavior: SnackBarBehavior.floating,
+                ),
               );
             },
-            child: Text(
-              'Clear',
-              style: TextStyle(color: AppColors.error),
-            ),
+            child: Text('Clear', style: TextStyle(color: AppColors.error)),
           ),
         ],
       ),

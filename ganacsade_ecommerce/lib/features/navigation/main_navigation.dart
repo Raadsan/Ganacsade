@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:iconly/iconly.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/responsive.dart';
 import '../../features/home/presentation/pages/home_screen.dart';
 import '../../features/orders/presentation/pages/orders_screen.dart';
-import '../../features/products/presentation/pages/search_screen.dart';
+import '../../features/wishlist/presentation/pages/wishlist_screen.dart';
 import '../../features/cart/presentation/pages/cart_screen.dart';
 import '../../features/profile/presentation/pages/profile_screen.dart';
 import 'navigation_controller.dart';
@@ -15,7 +16,7 @@ class MainNavigation extends StatelessWidget {
   static const List<Widget> _screens = [
     HomeScreen(),
     OrdersScreen(),
-    SearchScreen(),
+    WishlistScreen(),
     CartScreen(),
     ProfileScreen(),
   ];
@@ -23,7 +24,7 @@ class MainNavigation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isTablet = context.isTabletOrLarger;
-    
+
     return GetBuilder<NavigationController>(
       init: NavigationController(),
       builder: (controller) {
@@ -44,7 +45,7 @@ class MainNavigation extends StatelessWidget {
             ),
           );
         }
-        
+
         return PopScope(
           canPop: false,
           onPopInvokedWithResult: (didPop, result) {
@@ -56,83 +57,93 @@ class MainNavigation extends StatelessWidget {
             // If already on Home, do nothing (don't exit)
           },
           child: Scaffold(
-          body: IndexedStack(
-            index: controller.currentIndex,
-            children: _screens,
-          ),
-          bottomNavigationBar: Builder(
-            builder: (context) {
-              final isDark = Theme.of(context).brightness == Brightness.dark;
-              return Container(
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkCardBackground : AppColors.white,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.shadowLight,
-                      blurRadius: 10,
-                      offset: const Offset(0, -2),
-                    ),
-                  ],
-                ),
-            child: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildNavItem(
-                      icon: Icons.home_outlined,
-                      activeIcon: Icons.home,
-                      label: 'nav_home'.tr,
-                      index: 0,
-                      controller: controller,
-                    ),
-                    _buildNavItem(
-                      icon: Icons.receipt_long_outlined,
-                      activeIcon: Icons.receipt_long,
-                      label: 'nav_orders'.tr,
-                      index: 1,
-                      controller: controller,
-                    ),
-                    _buildNavItem(
-                      icon: Icons.search_outlined,
-                      activeIcon: Icons.search,
-                      label: 'search'.tr,
-                      index: 2,
-                      controller: controller,
-                    ),
-                    _buildNavItem(
-                      icon: Icons.shopping_cart_outlined,
-                      activeIcon: Icons.shopping_cart,
-                      label: 'nav_cart'.tr,
-                      index: 3,
-                      controller: controller,
-                      badge: controller.cartItemCount > 0 ? controller.cartItemCount.toString() : null,
-                    ),
-                    _buildNavItem(
-                      icon: Icons.person_outline,
-                      activeIcon: Icons.person,
-                      label: 'nav_profile'.tr,
-                      index: 4,
-                      controller: controller,
-                    ),
+            body: IndexedStack(
+              index: controller.currentIndex,
+              children: _screens,
+            ),
+            bottomNavigationBar: Builder(
+              builder: (context) {
+                final isDark = Theme.of(context).brightness == Brightness.dark;
+                return Container(
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? AppColors.darkCardBackground
+                        : AppColors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.shadowLight,
+                        blurRadius: 10,
+                        offset: const Offset(0, -2),
+                      ),
                     ],
                   ),
-                ),
-              ),
-            );
-          },
+                  child: SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _buildNavItem(
+                            icon: IconlyLight.home,
+                            activeIcon: IconlyBold.home,
+                            label: 'nav_home'.tr,
+                            index: 0,
+                            controller: controller,
+                          ),
+                          _buildNavItem(
+                            icon: IconlyLight.buy,
+                            activeIcon: IconlyBold.buy,
+                            label: 'nav_orders'.tr,
+                            index: 1,
+                            controller: controller,
+                          ),
+                          _buildNavItem(
+                            icon: IconlyLight.heart,
+                            activeIcon: IconlyBold.heart,
+                            label: 'nav_wishlist'.tr,
+                            index: 2,
+                            controller: controller,
+                          ),
+                          _buildNavItem(
+                            icon: IconlyLight.bag,
+                            activeIcon: IconlyBold.bag,
+                            label: 'nav_cart'.tr,
+                            index: 3,
+                            controller: controller,
+                            badge: controller.cartItemCount > 0
+                                ? controller.cartItemCount.toString()
+                                : null,
+                          ),
+                          _buildNavItem(
+                            icon: IconlyLight.profile,
+                            activeIcon: IconlyBold.profile,
+                            label: 'nav_profile'.tr,
+                            index: 4,
+                            controller: controller,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
           ),
-        ),
         );
       },
     );
   }
 
-  Widget _buildNavigationRail(BuildContext context, NavigationController controller) {
+  Widget _buildNavigationRail(
+    BuildContext context,
+    NavigationController controller,
+  ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isDesktop = context.isDesktop;
-    
+
     return NavigationRail(
       selectedIndex: controller.currentIndex,
       onDestinationSelected: (index) => controller.changeIndex(index),
@@ -161,36 +172,36 @@ class MainNavigation extends StatelessWidget {
       ),
       destinations: [
         NavigationRailDestination(
-          icon: const Icon(Icons.home_outlined),
-          selectedIcon: const Icon(Icons.home),
+          icon: const Icon(IconlyLight.home),
+          selectedIcon: const Icon(IconlyBold.home),
           label: Text('nav_home'.tr),
         ),
         NavigationRailDestination(
-          icon: const Icon(Icons.receipt_long_outlined),
-          selectedIcon: const Icon(Icons.receipt_long),
+          icon: const Icon(IconlyLight.buy),
+          selectedIcon: const Icon(IconlyBold.buy),
           label: Text('nav_orders'.tr),
         ),
         NavigationRailDestination(
-          icon: const Icon(Icons.search_outlined),
-          selectedIcon: const Icon(Icons.search),
-          label: Text('search'.tr),
+          icon: const Icon(IconlyLight.heart),
+          selectedIcon: const Icon(IconlyBold.heart),
+          label: Text('nav_wishlist'.tr),
         ),
         NavigationRailDestination(
           icon: Badge(
             isLabelVisible: controller.cartItemCount > 0,
             label: Text(controller.cartItemCount.toString()),
-            child: const Icon(Icons.shopping_cart_outlined),
+            child: const Icon(IconlyLight.bag),
           ),
           selectedIcon: Badge(
             isLabelVisible: controller.cartItemCount > 0,
             label: Text(controller.cartItemCount.toString()),
-            child: const Icon(Icons.shopping_cart),
+            child: const Icon(IconlyBold.bag),
           ),
           label: Text('nav_cart'.tr),
         ),
         NavigationRailDestination(
-          icon: const Icon(Icons.person_outline),
-          selectedIcon: const Icon(Icons.person),
+          icon: const Icon(IconlyLight.profile),
+          selectedIcon: const Icon(IconlyBold.profile),
           label: Text('nav_profile'.tr),
         ),
       ],
@@ -206,44 +217,51 @@ class MainNavigation extends StatelessWidget {
     String? badge,
   }) {
     final isActive = controller.currentIndex == index;
-    
+
     return GestureDetector(
       onTap: () => controller.changeIndex(index),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
         decoration: BoxDecoration(
-          color: isActive ? AppColors.primaryGreen.withOpacity(0.1) : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
+          color: isActive
+              ? AppColors.primaryGreen.withOpacity(0.12)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(25),
         ),
-        child: Column(
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Stack(
+              clipBehavior: Clip.none,
               children: [
                 Icon(
                   isActive ? activeIcon : icon,
-                  color: isActive ? AppColors.primaryGreen : AppColors.grey500,
+                  color: isActive ? AppColors.primaryGreen : AppColors.grey600,
                   size: 24,
                 ),
-                if (badge != null)
+                if (!isActive && badge != null)
                   Positioned(
-                    right: -6,
-                    top: -6,
+                    right: -4,
+                    top: -4,
                     child: Container(
-                      padding: const EdgeInsets.all(4),
+                      padding: const EdgeInsets.all(2),
                       decoration: const BoxDecoration(
                         color: AppColors.error,
                         shape: BoxShape.circle,
                       ),
                       constraints: const BoxConstraints(
-                        minWidth: 16,
-                        minHeight: 16,
+                        minWidth: 14,
+                        minHeight: 14,
                       ),
                       child: Text(
                         badge,
+                        textAlign: TextAlign.center,
                         style: const TextStyle(
                           color: AppColors.white,
-                          fontSize: 10,
+                          fontSize: 8,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -251,15 +269,17 @@ class MainNavigation extends StatelessWidget {
                   ),
               ],
             ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                color: isActive ? AppColors.primaryGreen : AppColors.grey500,
-                fontSize: 12,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+            if (isActive) ...[
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: AppColors.primaryGreen,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
+            ],
           ],
         ),
       ),

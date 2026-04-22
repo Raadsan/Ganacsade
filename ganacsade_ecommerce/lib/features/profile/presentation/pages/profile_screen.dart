@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
+import 'package:iconly/iconly.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/localization/language_controller.dart';
@@ -116,12 +117,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           )
                         : _buildDefaultAvatar(controller),
-                  )
-                      .animate()
-                      .scale(duration: 800.ms, curve: Curves.elasticOut),
-                  
+                  ).animate().scale(duration: 800.ms, curve: Curves.elasticOut),
+
                   const SizedBox(height: 16),
-                  
+
                   // User Name
                   Text(
                     controller.currentUser?.name ?? 'User Name',
@@ -130,12 +129,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                     ),
-                  )
-                      .animate()
-                      .fadeIn(delay: 300.ms, duration: 600.ms),
-                  
+                  ).animate().fadeIn(delay: 300.ms, duration: 600.ms),
+
                   const SizedBox(height: 4),
-                  
+
                   // User Email
                   Text(
                     controller.currentUser?.email ?? 'user@email.com',
@@ -143,29 +140,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       color: AppColors.white.withOpacity(0.9),
                       fontSize: 16,
                     ),
-                  )
-                      .animate()
-                      .fadeIn(delay: 500.ms, duration: 600.ms),
-                  
+                  ).animate().fadeIn(delay: 500.ms, duration: 600.ms),
+
                   const SizedBox(height: 12),
-                  
+
                   // Edit Profile Button
                   ElevatedButton.icon(
-                    onPressed: () {
-                      HapticFeedback.lightImpact();
-                      _navigateToEditProfile();
-                    },
-                    icon: const Icon(Icons.edit, size: 16),
-                    label: const Text('Edit Profile'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.white,
-                      foregroundColor: AppColors.primaryGreen,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                    ),
-                  )
+                        onPressed: () {
+                          HapticFeedback.lightImpact();
+                          _navigateToEditProfile();
+                        },
+                        icon: const Icon(Icons.edit, size: 16),
+                        label: const Text('Edit Profile'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.white,
+                          foregroundColor: AppColors.primaryGreen,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 10,
+                          ),
+                        ),
+                      )
                       .animate()
                       .fadeIn(delay: 700.ms, duration: 600.ms)
                       .slideY(begin: 0.3, end: 0),
@@ -232,7 +230,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Row(
                 children: [
                   Icon(
-                    Icons.person_outline,
+                    IconlyBold.profile,
                     color: AppColors.primaryGreen,
                     size: 20,
                   ),
@@ -241,28 +239,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     'Personal Information',
                     style: AppTextStyles.titleMedium.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                      color: isDark
+                          ? AppColors.darkTextPrimary
+                          : AppColors.textPrimary,
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 16),
               _buildInfoRow(
-                icon: Icons.email_outlined,
+                icon: IconlyBold.message,
                 label: 'Email',
                 value: controller.currentUser?.email ?? 'Not provided',
                 isDark: isDark,
               ),
               const SizedBox(height: 12),
               _buildInfoRow(
-                icon: Icons.phone_outlined,
+                icon: IconlyBold.call,
                 label: 'Phone',
                 value: controller.currentUser?.phone ?? 'Not provided',
                 isDark: isDark,
               ),
               const SizedBox(height: 12),
               _buildInfoRow(
-                icon: Icons.calendar_today_outlined,
+                icon: IconlyBold.calendar,
                 label: 'Member Since',
                 value: controller.getFormattedJoinDate(),
                 isDark: isDark,
@@ -288,11 +288,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             color: AppColors.primaryGreen.withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(
-            icon,
-            size: 18,
-            color: AppColors.primaryGreen,
-          ),
+          child: Icon(icon, size: 18, color: AppColors.primaryGreen),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -302,7 +298,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Text(
                 label,
                 style: AppTextStyles.bodySmall.copyWith(
-                  color: isDark ? AppColors.darkTextSecondary : AppColors.grey600,
+                  color: isDark
+                      ? AppColors.darkTextSecondary
+                      : AppColors.grey600,
                   fontSize: 12,
                 ),
               ),
@@ -311,7 +309,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 value,
                 style: AppTextStyles.bodyMedium.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                  color: isDark
+                      ? AppColors.darkTextPrimary
+                      : AppColors.textPrimary,
                 ),
               ),
             ],
@@ -321,7 +321,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildStatItem(String title, String value, IconData icon, Color color) {
+  Widget _buildStatItem(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Column(
       children: [
         Container(
@@ -331,11 +336,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             color: color.withOpacity(0.1),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Icon(
-            icon,
-            color: color,
-            size: 24,
-          ),
+          child: Icon(icon, color: color, size: 24),
         ),
         const SizedBox(height: 8),
         Text(
@@ -347,9 +348,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         Text(
           title,
-          style: AppTextStyles.bodySmall.copyWith(
-            color: AppColors.grey600,
-          ),
+          style: AppTextStyles.bodySmall.copyWith(color: AppColors.grey600),
         ),
       ],
     );
@@ -358,63 +357,63 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildMenuSection(ProfileController controller) {
     final menuItems = [
       {
-        'icon': Icons.shopping_bag_outlined,
+        'icon': IconlyBold.bag_2,
         'title': 'profile_my_orders'.tr,
         'subtitle': 'order_tracking'.tr,
         'color': AppColors.primaryGreen,
         'onTap': () => _navigateToOrders(),
       },
       {
-        'icon': Icons.favorite_outline,
+        'icon': IconlyBold.heart,
         'title': 'Wishlist',
         'subtitle': 'Your favorite items',
         'color': AppColors.error,
         'onTap': () => _navigateToWishlist(),
       },
       {
-        'icon': Icons.location_on_outlined,
+        'icon': IconlyBold.location,
         'title': 'profile_addresses'.tr,
         'subtitle': 'addresses_title'.tr,
         'color': AppColors.primaryBlue,
         'onTap': () => _navigateToAddresses(),
       },
       {
-        'icon': Icons.notifications_outlined,
+        'icon': IconlyBold.notification,
         'title': 'profile_notifications'.tr,
         'subtitle': 'notifications_enable'.tr,
         'color': AppColors.info,
         'onTap': () => _navigateToNotifications(),
       },
       {
-        'icon': Icons.language_outlined,
+        'icon': IconlyBold.discovery,
         'title': 'profile_language'.tr,
         'subtitle': Get.find<LanguageController>().currentLanguageName,
         'color': AppColors.success,
         'onTap': () => _navigateToLanguage(),
       },
       {
-        'icon': Icons.palette_outlined,
+        'icon': IconlyBold.category,
         'title': 'profile_theme'.tr,
         'subtitle': 'theme_subtitle'.tr,
         'color': AppColors.primaryBlue,
         'onTap': () => _navigateToTheme(),
       },
       {
-        'icon': Icons.help_outline,
+        'icon': IconlyBold.chat,
         'title': 'profile_help'.tr,
         'subtitle': 'help_contact'.tr,
         'color': AppColors.primaryGreen,
         'onTap': () => _navigateToHelpSupport(),
       },
       {
-        'icon': Icons.info_outline,
+        'icon': IconlyBold.info_square,
         'title': 'profile_about'.tr,
         'subtitle': 'about_version'.tr,
         'color': AppColors.grey600,
         'onTap': () => _navigateToAbout(),
       },
       {
-        'icon': Icons.logout,
+        'icon': IconlyBold.logout,
         'title': 'profile_logout'.tr,
         'subtitle': 'auth_logout'.tr,
         'color': AppColors.error,
@@ -453,76 +452,76 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (context) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
         return Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.darkCardBackground : AppColors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.shadowLight,
-                blurRadius: 8,
-                offset: const Offset(0, 2),
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.darkCardBackground : AppColors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.shadowLight,
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () {
-                HapticFeedback.lightImpact();
-                onTap();
-              },
-              borderRadius: BorderRadius.circular(16),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: color.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        icon,
-                        color: color,
-                        size: 24,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            title,
-                            style: AppTextStyles.titleSmall.copyWith(
-                              color: isDark ? AppColors.darkTextPrimary : AppColors.grey900,
-                              fontWeight: FontWeight.w600,
-                            ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    onTap();
+                  },
+                  borderRadius: BorderRadius.circular(16),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: color.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            subtitle,
-                            style: AppTextStyles.bodySmall.copyWith(
-                              color: isDark ? AppColors.darkTextSecondary : AppColors.grey600,
-                            ),
+                          child: Icon(icon, color: color, size: 24),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                title,
+                                style: AppTextStyles.titleSmall.copyWith(
+                                  color: isDark
+                                      ? AppColors.darkTextPrimary
+                                      : AppColors.grey900,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                subtitle,
+                                style: AppTextStyles.bodySmall.copyWith(
+                                  color: isDark
+                                      ? AppColors.darkTextSecondary
+                                      : AppColors.grey600,
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
+                        Icon(
+                          Icons.arrow_forward_ios,
+                          size: 16,
+                          color: isDark ? AppColors.grey500 : AppColors.grey400,
+                        ),
+                      ],
                     ),
-                    Icon(
-                      Icons.arrow_forward_ios,
-                      size: 16,
-                      color: isDark ? AppColors.grey500 : AppColors.grey400,
-                    ),
-                  ],
+                  ),
                 ),
               ),
-            ),
-          ),
-        )
+            )
             .animate(delay: Duration(milliseconds: index * 100))
             .fadeIn(duration: 600.ms)
             .slideX(begin: 0.3, end: 0);
@@ -546,7 +545,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _navigateToAddresses() {
     Get.to(() => const AddressesScreen());
   }
-
 
   void _navigateToNotifications() {
     Get.to(() => const NotificationsScreen());
@@ -580,16 +578,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _showSignOutDialog(ProfileController controller) {
     Get.dialog(
       AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
-            Icon(
-              Icons.logout,
-              color: AppColors.error,
-              size: 24,
-            ),
+            Icon(IconlyBold.logout, color: AppColors.error, size: 24),
             const SizedBox(width: 12),
             const Text('Sign Out'),
           ],
@@ -601,16 +593,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
         actions: [
           TextButton(
             onPressed: () => Get.back(),
-            child: Text(
-              'Cancel',
-              style: TextStyle(color: AppColors.grey600),
-            ),
+            child: Text('Cancel', style: TextStyle(color: AppColors.grey600)),
           ),
           ElevatedButton(
             onPressed: () async {
               Get.back();
               final authController = Get.find<AuthController>();
               await authController.signOut();
+
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text('Successfully signed out'),
+                    backgroundColor: AppColors.primaryGreen,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                );
+              }
+
               Get.offAllNamed('/signin');
             },
             style: ElevatedButton.styleFrom(

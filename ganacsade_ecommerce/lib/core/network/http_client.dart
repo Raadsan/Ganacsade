@@ -56,7 +56,9 @@ class HttpClient {
           print('❌ ERROR MESSAGE: ${error.message}');
           
           // Handle 401 Unauthorized - Token expired
-          if (error.response?.statusCode == 401) {
+          // IMPORTANT: Never attempt refresh if the failing request IS the refresh endpoint
+          final isRefreshRequest = error.requestOptions.path.contains('refresh-token');
+          if (error.response?.statusCode == 401 && !isRefreshRequest) {
             // Try to refresh token
             final refreshed = await _refreshToken();
             if (refreshed) {
@@ -89,7 +91,21 @@ class HttpClient {
       final refreshToken = _storageBox!.get(ApiConfig.refreshTokenKey);
       if (refreshToken == null) return false;
 
-      final response = await _dio.post(
+      // Use a SEPARATE Dio instance (no interceptors) to avoid re-entering
+      // the onError handler if the refresh endpoint itself returns 401
+      final plainDio = Dio(
+        BaseOptions(
+          baseUrl: ApiConfig.getBaseUrl(),
+          connectTimeout: ApiConfig.connectTimeout,
+          receiveTimeout: ApiConfig.receiveTimeout,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+        ),
+      );
+
+      final response = await plainDio.post(
         ApiConfig.refreshTokenEndpoint,
         data: {'refreshToken': refreshToken},
       );
@@ -104,9 +120,15 @@ class HttpClient {
         return true;
       }
       
+      // Refresh failed — clear stale tokens so we stop retrying
+      await _storageBox!.delete(ApiConfig.accessTokenKey);
+      await _storageBox!.delete(ApiConfig.refreshTokenKey);
       return false;
     } catch (e) {
       print('Error refreshing token: $e');
+      // Clear stale tokens on error too
+      await _storageBox?.delete(ApiConfig.accessTokenKey);
+      await _storageBox?.delete(ApiConfig.refreshTokenKey);
       return false;
     }
   }
