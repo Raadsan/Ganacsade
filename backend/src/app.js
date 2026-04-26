@@ -37,7 +37,10 @@ app.use(helmet({
 }));
 
 // CORS configuration
-app.use(cors(config.cors));
+app.use(cors({
+  origin: true, // Allow all origins for debugging
+  credentials: true,
+}));
 
 // Rate limiting
 const limiter = rateLimit({
