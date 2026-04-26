@@ -4,6 +4,7 @@ import { ApiResponse, DashboardStats, SalesData, TopProduct, RecentOrder } from 
 export interface OrdersByStatus {
   status: string;
   count: number;
+  [key: string]: any;
 }
 
 export const dashboardApi = {
