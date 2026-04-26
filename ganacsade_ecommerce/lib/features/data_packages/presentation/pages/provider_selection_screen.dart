@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
+import 'package:iconly/iconly.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/utils/responsive.dart';
@@ -385,6 +386,7 @@ class _ProviderSelectionScreenState extends State<ProviderSelectionScreen> {
                 children: [
                   Expanded(
                     child: _buildContactButton(
+                      imagePath: 'assets/images/whatsup.png',
                       label: 'WHATS APP',
                       onPressed: () => _launchWhatsApp(),
                       isDark: isDark,
@@ -393,6 +395,7 @@ class _ProviderSelectionScreenState extends State<ProviderSelectionScreen> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: _buildContactButton(
+                      icon: Icons.call_rounded,
                       label: 'CALL',
                       onPressed: () => _launchPhone(),
                       isDark: isDark,
@@ -444,6 +447,8 @@ class _ProviderSelectionScreenState extends State<ProviderSelectionScreen> {
     required String label,
     required VoidCallback onPressed,
     required bool isDark,
+    IconData? icon,
+    String? imagePath,
   }) {
     return Container(
       height: 48,
@@ -461,14 +466,24 @@ class _ProviderSelectionScreenState extends State<ProviderSelectionScreen> {
             borderRadius: BorderRadius.circular(12),
           ),
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: AppColors.primaryGreen,
-            fontWeight: FontWeight.bold,
-            fontSize: 12,
-            letterSpacing: 1.2,
-          ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (imagePath != null)
+              Image.asset(imagePath, width: 20, height: 20)
+            else if (icon != null)
+              Icon(icon, color: AppColors.primaryGreen, size: 20),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: AppColors.primaryGreen,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+                letterSpacing: 1.2,
+              ),
+            ),
+          ],
         ),
       ),
     );

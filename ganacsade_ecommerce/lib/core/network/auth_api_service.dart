@@ -69,14 +69,16 @@ class AuthApiService {
   /// 
   /// Returns: Map containing user data, access token, and refresh token
   Future<Map<String, dynamic>> login({
-    required String email,
+    String? email,
+    String? phoneNumber,
     required String password,
   }) async {
     try {
       final response = await _httpClient.post(
         ApiConfig.loginEndpoint,
         data: {
-          'email': email,
+          if (email != null) 'email': email,
+          if (phoneNumber != null) 'phoneNumber': phoneNumber,
           'password': password,
         },
       );

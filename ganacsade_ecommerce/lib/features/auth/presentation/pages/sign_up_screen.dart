@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:ganacsade/features/navigation/navigation_controller.dart';
 import 'package:get/get.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_text_styles.dart';
@@ -18,16 +19,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
   final AuthController _authController = Get.find<AuthController>();
   
   bool _obscurePassword = true;
-  bool _obscureConfirmPassword = true;
   bool _isNameFocused = false;
   bool _isEmailFocused = false;
   bool _isPhoneFocused = false;
   bool _isPasswordFocused = false;
-  bool _isConfirmPasswordFocused = false;
   bool _agreeToTerms = false;
 
   @override
@@ -36,7 +34,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
     _emailController.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
-    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -303,7 +300,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   child: TextFormField(
                     controller: _passwordController,
                     obscureText: _obscurePassword,
-                    textInputAction: TextInputAction.next,
+                    textInputAction: TextInputAction.done,
                     decoration: InputDecoration(
                       hintText: 'auth_create_password'.tr,
                       prefixIcon: Icon(
@@ -348,78 +345,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     onChanged: (value) {
                       _authController.clearError();
                     },
-                  ),
-                ),
-                
-                const SizedBox(height: 20),
-                
-                // Confirm Password Field
-                Text(
-                  'auth_confirm_password'.tr,
-                  style: AppTextStyles.titleSmall.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Focus(
-                  onFocusChange: (hasFocus) {
-                    setState(() {
-                      _isConfirmPasswordFocused = hasFocus;
-                    });
-                  },
-                  child: TextFormField(
-                    controller: _confirmPasswordController,
-                    obscureText: _obscureConfirmPassword,
-                    textInputAction: TextInputAction.done,
-                    decoration: InputDecoration(
-                      hintText: 'auth_confirm_password_hint'.tr,
-                      prefixIcon: Icon(
-                        Icons.lock_outline,
-                        color: _isConfirmPasswordFocused ? AppColors.primaryGreen : AppColors.grey500,
-                      ),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
-                          color: AppColors.grey500,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _obscureConfirmPassword = !_obscureConfirmPassword;
-                          });
-                        },
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: AppColors.borderLight),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: AppColors.primaryGreen, width: 2),
-                      ),
-                      errorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: AppColors.error, width: 2),
-                      ),
-                      filled: true,
-                      fillColor: _isConfirmPasswordFocused ? AppColors.primaryGreen.withOpacity(0.05) : (isDark ? AppColors.darkElevatedSurface : AppColors.grey50),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please confirm your password';
-                      }
-                      if (value != _passwordController.text) {
-                        return 'Passwords do not match';
-                      }
-                      return null;
-                    },
                     onFieldSubmitted: (value) {
                       _signUp();
                     },
                   ),
                 ),
                 
-                const SizedBox(height: 20),
+                const SizedBox(height: 12),
                 
                 // Terms and Conditions
                 Row(
@@ -589,10 +521,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
       
       HapticFeedback.lightImpact();
       
+      final fullName = _nameController.text.trim();
+      final nameParts = fullName.split(' ');
+      final firstName = nameParts.first;
+      final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
+
       final success = await _authController.signUpWithEmail(
         email: _emailController.text.trim(),
         password: _passwordController.text,
-        name: _nameController.text.trim(),
+        firstName: firstName,
+        lastName: lastName.isEmpty ? '.' : lastName, // Backend requires lastName
         phoneNumber: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
       );
       
@@ -608,6 +546,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
           ),
         );
 
+        // Reset navigation to home tab
+        Get.find<NavigationController>().resetToHome();
         // Navigate to main app
         Get.offAllNamed('/main');
       }

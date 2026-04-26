@@ -341,7 +341,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       final success = await _authController.signUpWithEmail(
         email: _emailController.text.trim(),
         password: _passwordController.text,
-        name: '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}',
+        firstName: _firstNameController.text.trim(),
+        lastName: _lastNameController.text.trim(),
         phoneNumber: _phoneController.text.trim(),
       );
       

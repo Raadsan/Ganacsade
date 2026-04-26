@@ -55,7 +55,9 @@ abstract class ApiService {
   Future<ApiResponse<Cart>> addToCart(@Body() Map<String, dynamic> cartItem);
 
   @PUT('/cart/update')
-  Future<ApiResponse<Cart>> updateCartItem(@Body() Map<String, dynamic> cartItem);
+  Future<ApiResponse<Cart>> updateCartItem(
+    @Body() Map<String, dynamic> cartItem,
+  );
 
   @DELETE('/cart/remove/{productId}')
   Future<ApiResponse<Cart>> removeFromCart(@Path('productId') String productId);
@@ -65,7 +67,9 @@ abstract class ApiService {
 
   // Order endpoints (simplified for now)
   @POST('/orders')
-  Future<ApiResponse<String>> createOrder(@Body() Map<String, dynamic> orderData);
+  Future<ApiResponse<String>> createOrder(
+    @Body() Map<String, dynamic> orderData,
+  );
 
   @GET('/orders')
   Future<ApiResponse<String>> getOrders();

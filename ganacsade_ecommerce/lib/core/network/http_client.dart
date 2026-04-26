@@ -54,6 +54,9 @@ class HttpClient {
         onError: (error, handler) async {
           print('❌ ERROR[${error.response?.statusCode}] => PATH: ${error.requestOptions.path}');
           print('❌ ERROR MESSAGE: ${error.message}');
+          if (error.response?.data != null) {
+            print('❌ ERROR DATA: ${error.response?.data}');
+          }
           
           // Handle 401 Unauthorized - Token expired
           // IMPORTANT: Never attempt refresh if the failing request IS the refresh endpoint

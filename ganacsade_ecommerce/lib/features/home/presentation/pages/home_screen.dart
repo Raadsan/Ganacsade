@@ -199,10 +199,10 @@ class HomeScreen extends StatelessWidget {
                     horizontal: sizing.horizontalPadding,
                   ),
                   child: Text(
-                    'home_categories'.tr,
+                    'Our Services',
                     style: AppTextStyles.headlineSmall.copyWith(
                       fontWeight: FontWeight.bold,
-                      fontSize: 18,
+                      fontSize: 22,
                       color: isDark
                           ? AppColors.darkTextPrimary
                           : AppColors.textPrimary,
@@ -215,33 +215,32 @@ class HomeScreen extends StatelessWidget {
 
             SizedBox(height: sizing.verticalPadding),
 
-            // Center the 2 main categories in a row
             Padding(
               padding: EdgeInsets.symmetric(
                 horizontal: sizing.horizontalPadding,
               ),
-              child: SingleChildScrollView(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _buildCategoryPill(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildCategoryPill(
                       label: 'Internet Services',
-                      color: const Color(0xFFD4E6B5), // Light green from image
-                      textColor: Colors.black87,
-                      onTap: () {
-                        Get.to(() => const DataPackagesScreen());
-                      },
+                      icon: Icons.wifi,
+                      color: Colors.green.withOpacity(0.1),
+                      textColor: Colors.green.shade700,
+                      onTap: () => Get.to(() => const DataPackagesScreen()),
                     ),
-                    _buildCategoryPill(
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildCategoryPill(
                       label: 'Online Market',
-                      color: const Color(0xFF1A3B8E), // Navy blue from image
-                      textColor: Colors.white,
-                      onTap: () {
-                        Get.to(() => const CategoriesScreen());
-                      },
+                      icon: IconlyBold.bag,
+                      color: Colors.blue.withOpacity(0.1),
+                      textColor: Colors.blue.shade700,
+                      onTap: () => Get.to(() => const CategoriesScreen()),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ).animate().fadeIn(delay: 600.ms, duration: 600.ms),
           ],
@@ -442,22 +441,33 @@ class HomeScreen extends StatelessWidget {
     required Color color,
     required Color textColor,
     required VoidCallback onTap,
+    required IconData icon,
   }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        height: 100, // Fixed height for balance
+        padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
           color: color,
-          borderRadius: BorderRadius.circular(30),
+          border: Border.all(color: textColor.withOpacity(0.3), width: 1.5),
+          borderRadius: BorderRadius.circular(12),
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: textColor,
-            fontWeight: FontWeight.w500,
-            fontSize: 14,
-          ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: textColor, size: 32),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: textColor,
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       ),
     );
