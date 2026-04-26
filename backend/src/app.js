@@ -31,7 +31,7 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-      "img-src": ["'self'", "data:", "http://localhost:3003", "http://localhost:5000", "https://ganacsade-production.up.railway.app"],
+      "img-src": ["'self'", "data:", "http://178.18.241.5:5002", "http://localhost:3003", "http://localhost:5000", "https://ganacsade-production.up.railway.app"],
     },
   },
 }));
