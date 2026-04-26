@@ -31,7 +31,7 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-      "img-src": ["'self'", "data:", "http://localhost:3003", "http://localhost:5000"],
+      "img-src": ["'self'", "data:", "http://localhost:3003", "http://localhost:5000", "https://ganacsade-production.up.railway.app"],
     },
   },
 }));
@@ -109,14 +109,17 @@ app.get('/api', (req, res) => {
 // Authentication routes (public)
 app.use('/api/auth', authRoutes);
 app.use('/api/v1/auth', authRoutes);
+app.use('/auth', authRoutes); // Fallback for resolution issues
 
 // Admin routes (protected)
 app.use('/api/admin', adminRoutes);
 app.use('/api/v1/admin', adminRoutes);
+app.use('/admin', adminRoutes); // Fallback for resolution issues
 
 // Customer routes (protected/public)
 app.use('/api/customer', customerRoutes);
 app.use('/api/v1/customer', customerRoutes);
+app.use('/customer', customerRoutes); // Fallback for resolution issues
 
 // =====================================================
 // Error Handling Middleware

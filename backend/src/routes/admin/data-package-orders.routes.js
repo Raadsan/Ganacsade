@@ -58,11 +58,10 @@ router.get('/', async (req, res, next) => {
         o.user_id,
         CONCAT(u.first_name, ' ', u.last_name) as customer_name,
         u.email as customer_email,
-        u.phone as customer_phone,
+        u.phone_number as customer_phone,
         o.total as amount,
         o.status,
         o.payment_status,
-        o.payment_transaction_id,
         o.shipping_address,
         o.payment_method,
         o.created_at,
@@ -117,7 +116,7 @@ router.get('/:id', async (req, res, next) => {
         o.*,
         CONCAT(u.first_name, ' ', u.last_name) as customer_name,
         u.email as customer_email,
-        u.phone as customer_phone
+        u.phone_number as customer_phone
       FROM orders o
       JOIN users u ON o.user_id = u.id
       WHERE o.id = $1 AND o.order_type = 'data_package'`,
@@ -170,7 +169,7 @@ router.get('/stats/summary', async (req, res, next) => {
 
     // Get total revenue
     const revenueResult = await query(
-      `SELECT SUM(total) as revenue FROM orders WHERE order_type = 'data_package' AND payment_status = 'paid'`
+      `SELECT SUM(total) as revenue FROM orders WHERE order_type = 'data_package' AND payment_status = 'completed'`
     );
 
     // Get orders by status

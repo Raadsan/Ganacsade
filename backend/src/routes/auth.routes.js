@@ -36,8 +36,15 @@ router.post(
 router.post(
   '/login',
   [
-    body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
+    body('email').optional().isEmail().normalizeEmail().withMessage('Valid email is required'),
+    body('phoneNumber').optional().notEmpty().withMessage('Phone number is required'),
     body('password').notEmpty().withMessage('Password is required'),
+    body().custom((value, { req }) => {
+      if (!req.body.email && !req.body.phoneNumber) {
+        throw new Error('Either email or phone number must be provided');
+      }
+      return true;
+    }),
     validate,
   ],
   authController.login
@@ -51,8 +58,15 @@ router.post(
 router.post(
   '/admin/login',
   [
-    body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
+    body('email').optional().isEmail().normalizeEmail().withMessage('Valid email is required'),
+    body('phoneNumber').optional().notEmpty().withMessage('Phone number is required'),
     body('password').notEmpty().withMessage('Password is required'),
+    body().custom((value, { req }) => {
+      if (!req.body.email && !req.body.phoneNumber) {
+        throw new Error('Either email or phone number must be provided');
+      }
+      return true;
+    }),
     validate,
   ],
   authController.adminLogin

@@ -20,11 +20,17 @@ module.exports = {
     url: process.env.DATABASE_URL,
   },
 
-  // JWT
+  // JWT — secrets must be set in .env; no insecure fallbacks
   jwt: {
-    secret: process.env.JWT_SECRET || 'your-secret-key',
+    secret: (() => {
+      if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET env variable is required');
+      return process.env.JWT_SECRET;
+    })(),
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
-    refreshSecret: process.env.JWT_REFRESH_SECRET || 'your-refresh-secret',
+    refreshSecret: (() => {
+      if (!process.env.JWT_REFRESH_SECRET) throw new Error('JWT_REFRESH_SECRET env variable is required');
+      return process.env.JWT_REFRESH_SECRET;
+    })(),
     refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '30d',
   },
 

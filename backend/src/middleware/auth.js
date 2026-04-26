@@ -24,7 +24,7 @@ const authenticate = async (req, res, next) => {
 
     // Get user from database
     const result = await query(
-      `SELECT id, email, phone_number, role, first_name, last_name, status
+      `SELECT id, email, phone_number, role, first_name, last_name, status, token_invalidated_at
        FROM users
        WHERE id = $1 AND deleted_at IS NULL`,
       [decoded.userId]
@@ -38,6 +38,17 @@ const authenticate = async (req, res, next) => {
     }
 
     const user = result.rows[0];
+
+    // Check if token was issued before the user logged out
+    if (user.token_invalidated_at) {
+      const invalidatedAt = new Date(user.token_invalidated_at).getTime() / 1000;
+      if (decoded.iat <= invalidatedAt) {
+        return res.status(401).json({
+          success: false,
+          message: 'Unauthorized - Token has been invalidated',
+        });
+      }
+    }
 
     // Check if user is active
     if (user.status !== 'active') {

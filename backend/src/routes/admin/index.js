@@ -3,9 +3,10 @@ const { authenticate, authorize } = require('../../middleware/auth');
 
 const router = express.Router();
 
-// Apply authentication and admin authorization to all admin routes
+// Apply authentication and authorization to all admin routes
+// Both 'admin' and 'staff' roles can access the dashboard
 router.use(authenticate);
-router.use(authorize('admin'));
+router.use(authorize('admin', 'staff'));
 
 // Import admin route modules
 const productsRoutes = require('./products.routes');
@@ -19,6 +20,7 @@ const flashSalesRoutes = require('./flash-sales.routes');
 const advertisementsRoutes = require('./advertisements.routes');
 const transactionsRoutes = require('./transactions.routes');
 const settingsRoutes = require('./settings.routes');
+const staffRoutes = require('./staff.routes');
 
 // Mount routes
 router.use('/products', productsRoutes);
@@ -32,6 +34,7 @@ router.use('/flash-sales', flashSalesRoutes);
 router.use('/advertisements', advertisementsRoutes);
 router.use('/transactions', transactionsRoutes);
 router.use('/settings', settingsRoutes);
+router.use('/staff', staffRoutes);
 
 // Admin dashboard stats
 router.get('/analytics/dashboard', async (req, res, next) => {
@@ -129,6 +132,100 @@ router.get('/dashboard/quick-stats', async (req, res, next) => {
     res.json({
       success: true,
       data: stats.rows[0],
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Monthly revenue + orders for last 12 months
+router.get('/analytics/sales', async (req, res, next) => {
+  try {
+    const { query } = require('../../config/database');
+
+    const result = await query(`
+      SELECT
+        TO_CHAR(DATE_TRUNC('month', created_at), 'Mon YYYY') AS month,
+        DATE_TRUNC('month', created_at) AS month_date,
+        COUNT(*) AS orders,
+        COALESCE(SUM(total), 0) AS revenue
+      FROM orders
+      WHERE
+        created_at >= DATE_TRUNC('month', NOW()) - INTERVAL '11 months'
+        AND (order_type IS NULL OR order_type != 'data_package')
+      GROUP BY DATE_TRUNC('month', created_at)
+      ORDER BY month_date ASC
+    `);
+
+    res.json({
+      success: true,
+      data: result.rows.map(r => ({
+        month: r.month,
+        orders: parseInt(r.orders),
+        revenue: parseFloat(r.revenue),
+      })),
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Top 5 products by units sold
+router.get('/analytics/top-products', async (req, res, next) => {
+  try {
+    const { query } = require('../../config/database');
+    const limit = parseInt(req.query.limit) || 5;
+
+    const result = await query(`
+      SELECT
+        p.id,
+        p.name_en AS name,
+        COALESCE(SUM(oi.quantity), 0) AS total_sold,
+        COALESCE(SUM(oi.total), 0) AS revenue,
+        (SELECT image_url FROM product_images
+         WHERE product_id = p.id AND is_primary = true LIMIT 1) AS image
+      FROM products p
+      LEFT JOIN order_items oi ON oi.product_id = p.id
+      WHERE p.deleted_at IS NULL
+      GROUP BY p.id, p.name_en
+      ORDER BY total_sold DESC, revenue DESC
+      LIMIT $1
+    `, [limit]);
+
+    res.json({
+      success: true,
+      data: result.rows.map(r => ({
+        id: r.id,
+        name: r.name,
+        totalSold: parseInt(r.total_sold),
+        revenue: parseFloat(r.revenue),
+        image: r.image || null,
+      })),
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Order status distribution
+router.get('/analytics/orders-by-status', async (req, res, next) => {
+  try {
+    const { query } = require('../../config/database');
+
+    const result = await query(`
+      SELECT status, COUNT(*) AS count
+      FROM orders
+      WHERE order_type IS NULL OR order_type != 'data_package'
+      GROUP BY status
+      ORDER BY count DESC
+    `);
+
+    res.json({
+      success: true,
+      data: result.rows.map(r => ({
+        status: r.status,
+        count: parseInt(r.count),
+      })),
     });
   } catch (error) {
     next(error);

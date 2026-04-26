@@ -7,11 +7,12 @@ const { generateAccessToken, generateRefreshToken } = require('../utils/jwt');
  */
 const register = async (req, res, next) => {
   try {
-    const { email, phoneNumber, password, firstName, lastName, role = 'customer' } = req.body;
+    const { email, phoneNumber, password, firstName, lastName } = req.body;
+    const role = 'customer'; // Role is never taken from client input
 
     // Check if user already exists
     const existingUser = await query(
-      'SELECT id, email, phone_number FROM users WHERE email = $1 OR phone_number = $2 AND deleted_at IS NULL',
+      'SELECT id, email, phone_number FROM users WHERE (email = $1 OR phone_number = $2) AND deleted_at IS NULL',
       [email, phoneNumber]
     );
 
@@ -76,20 +77,20 @@ const register = async (req, res, next) => {
  */
 const login = async (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    const { email, phoneNumber, password } = req.body;
 
-    // Find user
+    // Find user by email OR phone number
     const result = await query(
       `SELECT id, email, phone_number, password_hash, role, first_name, last_name, status
        FROM users
-       WHERE email = $1 AND deleted_at IS NULL`,
-      [email]
+       WHERE (email = $1 OR phone_number = $2) AND deleted_at IS NULL`,
+      [email || null, phoneNumber || null]
     );
 
     if (result.rows.length === 0) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid email or password',
+        message: 'Invalid credentials',
       });
     }
 
@@ -109,7 +110,7 @@ const login = async (req, res, next) => {
     if (!isPasswordValid) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid email or password',
+        message: 'Invalid credentials',
       });
     }
 
@@ -146,14 +147,14 @@ const login = async (req, res, next) => {
  */
 const adminLogin = async (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    const { email, phoneNumber, password } = req.body;
 
-    // Find admin user
+    // Find admin or staff user by email OR phone number
     const result = await query(
       `SELECT id, email, phone_number, password_hash, role, first_name, last_name, status
        FROM users
-       WHERE email = $1 AND role = 'admin' AND deleted_at IS NULL`,
-      [email]
+       WHERE (email = $1 OR phone_number = $2) AND role IN ('admin', 'staff') AND deleted_at IS NULL`,
+      [email || null, phoneNumber || null]
     );
 
     if (result.rows.length === 0) {
@@ -179,7 +180,7 @@ const adminLogin = async (req, res, next) => {
     if (!isPasswordValid) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid credentials',
+        message: 'Invalid credentials or not authorized',
       });
     }
 
@@ -328,12 +329,14 @@ const changePassword = async (req, res, next) => {
 };
 
 /**
- * Logout user
+ * Logout user — invalidates all tokens issued before this moment
  */
 const logout = async (req, res, next) => {
   try {
-    // In a real application, you might want to blacklist the token
-    // For now, we'll just return success
+    await query(
+      'UPDATE users SET token_invalidated_at = CURRENT_TIMESTAMP WHERE id = $1',
+      [req.user.id]
+    );
     res.json({
       success: true,
       message: 'Logged out successfully',
