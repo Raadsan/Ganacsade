@@ -220,7 +220,7 @@ router.post('/upload-image', uploadSubcategory.single('image'), async (req, res,
       });
     }
 
-    const imageUrl = `/uploads/subcategories/${req.file.filename}`;
+    const imageUrl = req.file.path;
 
     res.json({
       success: true,

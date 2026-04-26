@@ -1,6 +1,14 @@
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const cloudinary = require('cloudinary').v2;
+const config = require('../config');
+
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: config.cloudinary.cloudName,
+  api_key: config.cloudinary.apiKey,
+  api_secret: config.cloudinary.apiSecret,
+});
 
 // File filter - only allow images
 const fileFilter = (req, file, cb) => {
@@ -15,24 +23,18 @@ const fileFilter = (req, file, cb) => {
 
 // Create upload middleware for different folders
 const createUploadMiddleware = (folder) => {
-  // Ensure upload directory exists
-  const uploadDir = path.join(__dirname, `../../uploads/${folder}`);
-  if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-  }
-
-  // Configure storage
-  const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-      cb(null, uploadDir);
+  // Configure Cloudinary Storage
+  const storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+      folder: `ganacsade/${folder}`,
+      allowed_formats: ['jpg', 'png', 'jpeg', 'webp'],
+      public_id: (req, file) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const nameWithoutExt = file.originalname.split('.')[0];
+        return `${nameWithoutExt}-${uniqueSuffix}`;
+      },
     },
-    filename: function (req, file, cb) {
-      // Generate unique filename: timestamp-randomstring-originalname
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-      const ext = path.extname(file.originalname);
-      const nameWithoutExt = path.basename(file.originalname, ext);
-      cb(null, `${nameWithoutExt}-${uniqueSuffix}${ext}`);
-    }
   });
 
   // Configure multer
@@ -50,3 +52,5 @@ module.exports = createUploadMiddleware('products'); // Default for backward com
 module.exports.uploadProduct = createUploadMiddleware('products');
 module.exports.uploadCategory = createUploadMiddleware('categories');
 module.exports.uploadSubcategory = createUploadMiddleware('subcategories');
+module.exports.uploadBrand = createUploadMiddleware('brands');
+module.exports.uploadAdvertisement = createUploadMiddleware('advertisements');

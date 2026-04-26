@@ -236,7 +236,7 @@ router.post('/upload-logo', uploadCategory.single('logo'), async (req, res, next
       });
     }
 
-    const logoUrl = `/uploads/categories/${req.file.filename}`;
+    const logoUrl = req.file.path;
 
     res.json({
       success: true,

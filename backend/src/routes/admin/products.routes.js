@@ -331,7 +331,7 @@ router.post('/upload-images', upload.array('images', 5), async (req, res, next) 
 
     // Generate URLs for uploaded images
     const imageUrls = req.files.map(file => {
-      return `/uploads/products/${file.filename}`;
+      return file.path;
     });
 
     res.status(200).json({
@@ -407,7 +407,7 @@ router.post('/:id/images', upload.array('images', 5), async (req, res, next) => 
     // Insert images into database
     const insertPromises = req.files.map(async (file, index) => {
       displayOrder++;
-      const imageUrl = `/uploads/products/${file.filename}`;
+      const imageUrl = file.path;
       const isPrimary = index === 0 && displayOrder === 1; // First image is primary if it's the first ever
 
       return query(

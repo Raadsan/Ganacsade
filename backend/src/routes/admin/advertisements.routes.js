@@ -1,42 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const { query } = require('../../config/database');
-const multer = require('multer');
+const upload = require('../../middleware/upload');
 const path = require('path');
 const fs = require('fs').promises;
-
-// Configure multer for image uploads
-const storage = multer.diskStorage({
-  destination: async (req, file, cb) => {
-    const uploadDir = path.join(__dirname, '../../../uploads/advertisements');
-    try {
-      await fs.mkdir(uploadDir, { recursive: true });
-      cb(null, uploadDir);
-    } catch (error) {
-      cb(error);
-    }
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'ad-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
-const upload = multer({
-  storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-  fileFilter: (req, file, cb) => {
-    const allowedTypes = /jpeg|jpg|png|gif|webp/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedTypes.test(file.mimetype);
-    
-    if (mimetype && extname) {
-      return cb(null, true);
-    } else {
-      cb(new Error('Only image files are allowed!'));
-    }
-  }
-});
 
 /**
  * @route   GET /api/admin/advertisements
@@ -106,7 +73,7 @@ router.get('/:id', async (req, res, next) => {
  * @desc    Create new advertisement
  * @access  Private/Admin
  */
-router.post('/', upload.single('image'), async (req, res, next) => {
+router.post('/', upload.uploadAdvertisement.single('image'), async (req, res, next) => {
   try {
     const {
       title,
@@ -130,7 +97,7 @@ router.post('/', upload.single('image'), async (req, res, next) => {
     // Get image URL from uploaded file or request body
     let imageUrl = req.body.imageUrl;
     if (req.file) {
-      imageUrl = `/uploads/advertisements/${req.file.filename}`;
+      imageUrl = req.file.path;
     }
 
     if (!imageUrl) {
@@ -163,7 +130,7 @@ router.post('/', upload.single('image'), async (req, res, next) => {
  * @desc    Update advertisement
  * @access  Private/Admin
  */
-router.put('/:id', upload.single('image'), async (req, res, next) => {
+router.put('/:id', upload.uploadAdvertisement.single('image'), async (req, res, next) => {
   try {
     const { id } = req.params;
     const {
@@ -189,7 +156,7 @@ router.put('/:id', upload.single('image'), async (req, res, next) => {
     // Handle image update
     let imageUrl = req.body.imageUrl || current.rows[0].image_url;
     if (req.file) {
-      imageUrl = `/uploads/advertisements/${req.file.filename}`;
+      imageUrl = req.file.path;
       
       // Delete old image if it exists and is different
       if (current.rows[0].image_url && current.rows[0].image_url !== imageUrl) {
