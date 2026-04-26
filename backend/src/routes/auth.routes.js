@@ -72,6 +72,51 @@ router.post(
   authController.adminLogin
 );
 
+/**
+ * @route   POST /api/auth/forgot-password
+ * @desc    Request password reset OTP
+ * @access  Public
+ */
+router.post(
+  '/forgot-password',
+  [
+    body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
+    validate,
+  ],
+  authController.forgotPassword
+);
+
+/**
+ * @route   POST /api/auth/verify-otp
+ * @desc    Verify OTP code
+ * @access  Public
+ */
+router.post(
+  '/verify-otp',
+  [
+    body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
+    body('otp').isLength({ min: 6, max: 6 }).withMessage('OTP must be 6 digits'),
+    validate,
+  ],
+  authController.verifyOTP
+);
+
+/**
+ * @route   POST /api/auth/reset-password
+ * @desc    Reset password using OTP
+ * @access  Public
+ */
+router.post(
+  '/reset-password',
+  [
+    body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
+    body('otp').isLength({ min: 6, max: 6 }).withMessage('OTP must be 6 digits'),
+    body('newPassword').isLength({ min: 6 }).withMessage('New password must be at least 6 characters'),
+    validate,
+  ],
+  authController.resetPassword
+);
+
 // =====================================================
 // PROTECTED ROUTES
 // =====================================================

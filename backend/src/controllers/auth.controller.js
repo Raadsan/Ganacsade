@@ -1,6 +1,7 @@
 const { query } = require('../config/database');
 const { hashPassword, comparePassword } = require('../utils/password');
 const { generateAccessToken, generateRefreshToken } = require('../utils/jwt');
+const { sendResetOTP } = require('../services/email.service');
 
 /**
  * Register new user
@@ -394,6 +395,133 @@ const refreshToken = async (req, res, next) => {
   }
 };
 
+/**
+ * Request password reset OTP
+ */
+const forgotPassword = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+
+    // Check if user exists
+    const userResult = await query(
+      'SELECT id, email FROM users WHERE email = $1 AND deleted_at IS NULL',
+      [email]
+    );
+
+    if (userResult.rows.length === 0) {
+      // For security, don't reveal if user exists
+      return res.json({
+        success: true,
+        message: 'If an account exists with this email, you will receive an OTP code shortly.',
+      });
+    }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date();
+    expiresAt.setMinutes(expiresAt.getMinutes() + 10); // Expire in 10 minutes
+
+    // Store OTP in database
+    await query(
+      'INSERT INTO PasswordResets (email, otp, expiresAt) VALUES ($1, $2, $3)',
+      [email, otp, expiresAt]
+    );
+
+    // Send email
+    const emailSent = await sendResetOTP(email, otp);
+
+    if (!emailSent) {
+      return res.status(500).json({
+        success: false,
+        message: 'Error sending email. Please try again later.',
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'OTP code sent to your email.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Verify OTP code
+ */
+const verifyOTP = async (req, res, next) => {
+  try {
+    const { email, otp } = req.body;
+
+    const result = await query(
+      `SELECT id FROM PasswordResets 
+       WHERE email = $1 AND otp = $2 AND expiresAt > CURRENT_TIMESTAMP AND isUsed = FALSE
+       ORDER BY createdAt DESC LIMIT 1`,
+      [email, otp]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired OTP code.',
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'OTP verified successfully.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Reset password using OTP
+ */
+const resetPassword = async (req, res, next) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+
+    // Verify OTP one last time
+    const otpResult = await query(
+      `SELECT id FROM PasswordResets 
+       WHERE email = $1 AND otp = $2 AND expiresAt > CURRENT_TIMESTAMP AND isUsed = FALSE
+       ORDER BY createdAt DESC LIMIT 1`,
+      [email, otp]
+    );
+
+    if (otpResult.rows.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired OTP code.',
+      });
+    }
+
+    // Hash new password
+    const passwordHash = await hashPassword(newPassword);
+
+    // Update user password
+    await query(
+      'UPDATE users SET password_hash = $1 WHERE email = $2 AND deleted_at IS NULL',
+      [passwordHash, email]
+    );
+
+    // Mark OTP as used
+    await query(
+      'UPDATE PasswordResets SET isUsed = TRUE WHERE id = $1',
+      [otpResult.rows[0].id]
+    );
+
+    res.json({
+      success: true,
+      message: 'Password reset successfully. You can now login with your new password.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -403,4 +531,7 @@ module.exports = {
   changePassword,
   logout,
   refreshToken,
+  forgotPassword,
+  verifyOTP,
+  resetPassword,
 };
