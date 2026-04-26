@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { productsApi } from "@/lib/api/products"
+import { BACKEND_URL, axiosInstance } from "@/lib/api/client"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -163,8 +164,7 @@ export default function ProductsPage() {
         if (response.success && response.data) {
           setProducts(response.data)
         }
-      } catch (error) {
-        console.error('Error fetching products:', error)
+      } catch {
         toast.error('Failed to load products')
       } finally {
         setLoading(false)
@@ -201,8 +201,6 @@ export default function ProductsPage() {
   }
 
   const handleEditProduct = async (product: any) => {
-    console.log('Editing product:', product)
-    
     // Fetch full product details from API to get all fields including images
     try {
       const response = await productsApi.getProduct(product.id)
@@ -223,7 +221,7 @@ export default function ProductsPage() {
           categoryId: fullProduct.category_id || '',
           subcategoryId: fullProduct.subcategory_id || '',
           images: fullProduct.images?.map((img: any) => 
-            img.image_url?.startsWith('/') ? `http://localhost:5000${img.image_url}` : img.image_url
+            img.image_url?.startsWith('/uploads') ? `${BACKEND_URL}${img.image_url}` : img.image_url
           ) || [],
           rating: parseFloat(fullProduct.rating?.toString() || '0'),
           reviewCount: fullProduct.review_count || 0,
@@ -239,12 +237,10 @@ export default function ProductsPage() {
           createdAt: fullProduct.created_at ? new Date(fullProduct.created_at) : undefined,
         }
         
-        console.log('Transformed product for editing:', transformedProduct)
         setSelectedProduct(transformedProduct)
         setIsFormOpen(true)
       }
-    } catch (error) {
-      console.error('Error fetching product details:', error)
+    } catch {
       toast.error('Failed to load product details')
     }
   }
@@ -271,18 +267,9 @@ export default function ProductsPage() {
     }
     
     // Upload to server
-    const token = localStorage.getItem('token')
-    const uploadResponse = await fetch(`http://localhost:5000/api/admin/products/${productId}/images`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      },
-      body: formData
+    await axiosInstance.post(`/admin/products/${productId}/images`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
     })
-    
-    if (!uploadResponse.ok) {
-      throw new Error('Failed to upload images')
-    }
   }
 
   const handleDeleteProduct = async (id: string) => {
@@ -301,8 +288,7 @@ export default function ProductsPage() {
             setProducts(productsResponse.data)
           }
         }
-      } catch (error) {
-        console.error('Error deleting product:', error)
+      } catch {
         toast.error('Failed to delete product')
       }
     }
@@ -331,7 +317,6 @@ export default function ProductsPage() {
           isFeatured: productData.isFeatured || false,
         }
         
-        console.log('Updating product with data:', updateData)
         const response = await productsApi.updateProduct(selectedProduct.id, updateData as any)
         
         if (response.success) {
@@ -340,8 +325,7 @@ export default function ProductsPage() {
             try {
               await uploadProductImages(selectedProduct.id, productData.images)
               toast.success("Product and images updated successfully")
-            } catch (error) {
-              console.error('Error uploading images:', error)
+            } catch {
               toast.warning("Product updated but some images failed to upload")
             }
           } else {
@@ -386,7 +370,6 @@ export default function ProductsPage() {
           isFeatured: productData.isFeatured || false,
         }
         
-        console.log('Creating product with data:', createData)
         const response = await productsApi.createProduct(createData as any)
         
         if (response.success && response.data) {
@@ -397,8 +380,7 @@ export default function ProductsPage() {
             try {
               await uploadProductImages(productId, productData.images)
               toast.success("Product and images created successfully")
-            } catch (error) {
-              console.error('Error uploading images:', error)
+            } catch {
               toast.warning("Product created but some images failed to upload")
             }
           } else {
@@ -418,9 +400,7 @@ export default function ProductsPage() {
         }
       }
     } catch (error: any) {
-      console.error('Error saving product:', error)
       const errorMessage = error?.response?.data?.message || error?.message || 'Unknown error'
-      console.error('Error details:', error?.response?.data)
       toast.error(`Failed to ${selectedProduct ? 'update' : 'create'} product: ${errorMessage}`)
     }
   }
@@ -642,7 +622,7 @@ export default function ProductsPage() {
                     <div className="h-10 w-10 rounded-md border bg-muted overflow-hidden flex-shrink-0">
                       {product.primary_image ? (
                         <img
-                          src={`http://localhost:5000${product.primary_image}`}
+                          src={`${BACKEND_URL}${product.primary_image}`}
                           alt={product.name_en}
                           className="h-full w-full object-cover"
                           onError={(e: React.SyntheticEvent<HTMLImageElement>) => {

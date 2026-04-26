@@ -1,4 +1,5 @@
 import { axiosInstance } from './client';
+import { ApiResponse } from '@/types';
 
 export interface FlashSale {
   id: string;
@@ -57,37 +58,37 @@ export interface AddProductToSaleDto {
 export const flashSalesApi = {
   // Get all flash sales
   getFlashSales: async () => {
-    const response = await axiosInstance.get<FlashSale[]>('/admin/flash-sales');
+    const response = await axiosInstance.get<ApiResponse<FlashSale[]>>('/admin/flash-sales');
     return response.data;
   },
 
   // Get single flash sale with products
   getFlashSale: async (id: string) => {
-    const response = await axiosInstance.get<FlashSaleWithProducts>(`/admin/flash-sales/${id}`);
+    const response = await axiosInstance.get<ApiResponse<FlashSaleWithProducts>>(`/admin/flash-sales/${id}`);
     return response.data;
   },
 
   // Create flash sale
   createFlashSale: async (data: CreateFlashSaleDto) => {
-    const response = await axiosInstance.post<FlashSale>('/admin/flash-sales', data);
+    const response = await axiosInstance.post<ApiResponse<FlashSale>>('/admin/flash-sales', data);
     return response.data;
   },
 
   // Update flash sale
   updateFlashSale: async (id: string, data: UpdateFlashSaleDto) => {
-    const response = await axiosInstance.put<FlashSale>(`/admin/flash-sales/${id}`, data);
+    const response = await axiosInstance.put<ApiResponse<FlashSale>>(`/admin/flash-sales/${id}`, data);
     return response.data;
   },
 
   // Delete flash sale
   deleteFlashSale: async (id: string) => {
-    const response = await axiosInstance.delete(`/admin/flash-sales/${id}`);
+    const response = await axiosInstance.delete<ApiResponse<void>>(`/admin/flash-sales/${id}`);
     return response.data;
   },
 
   // Add product to flash sale
   addProductToSale: async (saleId: string, data: AddProductToSaleDto) => {
-    const response = await axiosInstance.post<FlashSaleProduct>(
+    const response = await axiosInstance.post<ApiResponse<FlashSaleProduct>>(
       `/admin/flash-sales/${saleId}/products`,
       data
     );
@@ -96,7 +97,7 @@ export const flashSalesApi = {
 
   // Update product in flash sale
   updateProductInSale: async (saleId: string, productId: string, data: { salePrice: number; stockLimit: number; soldCount?: number }) => {
-    const response = await axiosInstance.put(
+    const response = await axiosInstance.put<ApiResponse<FlashSaleProduct>>(
       `/admin/flash-sales/${saleId}/products/${productId}`,
       data
     );
@@ -105,7 +106,7 @@ export const flashSalesApi = {
 
   // Remove product from flash sale
   removeProductFromSale: async (saleId: string, productId: string) => {
-    const response = await axiosInstance.delete(
+    const response = await axiosInstance.delete<ApiResponse<void>>(
       `/admin/flash-sales/${saleId}/products/${productId}`
     );
     return response.data;

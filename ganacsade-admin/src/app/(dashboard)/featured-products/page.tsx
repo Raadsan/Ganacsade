@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { BACKEND_URL } from "@/lib/api/client"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -74,14 +75,14 @@ export default function FeaturedProductsPage() {
     if (apiProduct.primary_image) {
       // If image starts with /uploads, prepend backend URL
       const imageUrl = apiProduct.primary_image.startsWith('/uploads') 
-        ? `http://localhost:5000${apiProduct.primary_image}`
+        ? `${BACKEND_URL}${apiProduct.primary_image}`
         : apiProduct.primary_image
       images = [imageUrl]
     } else if (apiProduct.images && Array.isArray(apiProduct.images)) {
       // Fallback for images array if it exists
       images = apiProduct.images.map((img: string) => {
         if (img.startsWith('/uploads')) {
-          return `http://localhost:5000${img}`
+          return `${BACKEND_URL}${img}`
         }
         return img
       })

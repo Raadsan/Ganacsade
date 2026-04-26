@@ -1,7 +1,10 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 import { toast } from 'sonner';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+
+// Base URL without /api path - used for image URLs
+export const BACKEND_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api').replace(/\/api$/, '');
 
 class ApiClient {
   private client: AxiosInstance;
@@ -19,12 +22,44 @@ class ApiClient {
     this.setupInterceptors();
   }
 
+  private refreshing: Promise<string | null> | null = null;
+
+  private async getValidToken(): Promise<string | null> {
+    const token = this.getToken();
+    if (!token) return null;
+
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      // Refresh if token expires within the next 60 seconds
+      if (payload?.exp && Date.now() >= (payload.exp - 60) * 1000) {
+        if (!this.refreshing) {
+          this.refreshing = this.refreshAccessToken().finally(() => {
+            this.refreshing = null;
+          });
+        }
+        return await this.refreshing;
+      }
+    } catch {
+      // Non-decodable token — let the server reject it
+    }
+    return token;
+  }
+
+  private async refreshAccessToken(): Promise<string | null> {
+    try {
+      // Refresh tokens aren't stored yet — return null so user is redirected to login
+      // TODO: persist refreshToken in localStorage at login and use it here
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
   private setupInterceptors() {
-    // Request interceptor
+    // Request interceptor — attach a valid (non-expired) token
     this.client.interceptors.request.use(
-      (config: InternalAxiosRequestConfig) => {
-        // Add auth token if available
-        const token = this.getToken();
+      async (config: InternalAxiosRequestConfig) => {
+        const token = await this.getValidToken();
         if (token && config.headers) {
           config.headers.Authorization = `Bearer ${token}`;
         }
@@ -53,33 +88,45 @@ class ApiClient {
   public setToken(token: string) {
     if (typeof window !== 'undefined') {
       localStorage.setItem('token', token);
+      // Mirror into a cookie so Next.js middleware can read it server-side
+      document.cookie = `token=${token}; path=/; SameSite=Strict`;
     }
   }
 
   public removeToken() {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('token');
+      // Expire the cookie immediately
+      document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Strict';
     }
   }
 
   private handleError(error: AxiosError) {
+    const isBrowser = typeof window !== 'undefined';
+    const onLoginPage = isBrowser && window.location.pathname === '/login';
+    const url = error.config?.url || '';
+    const isAuthEndpoint = url.includes('/auth/admin/login') || url.includes('/auth/login');
+
     if (error.response) {
       const status = error.response.status;
-      const data: any = error.response.data;
-      
+      const data: any = error.response.data || {};
+
       switch (status) {
         case 400:
-          toast.error(data.message || 'Bad request');
+          if (!isAuthEndpoint) toast.error(data.message || 'Bad request');
           break;
         case 401:
-          toast.error('Unauthorized. Please login again.');
+          // Let the login page handle 401s itself
+          if (isAuthEndpoint || onLoginPage) break;
+          toast.error('Session expired. Please login again.');
           this.removeToken();
-          if (typeof window !== 'undefined') {
+          if (isBrowser) {
+            localStorage.removeItem('user');
             window.location.href = '/login';
           }
           break;
         case 403:
-          toast.error('Access forbidden');
+          toast.error(data.message || 'Access forbidden');
           break;
         case 404:
           toast.error(data.message || 'Resource not found');
@@ -88,7 +135,7 @@ class ApiClient {
           toast.error('Server error. Please try again later.');
           break;
         default:
-          toast.error(data.message || 'An error occurred');
+          if (!isAuthEndpoint) toast.error(data.message || 'An error occurred');
       }
     } else if (error.request) {
       toast.error('No response from server. Please check your connection.');

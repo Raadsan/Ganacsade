@@ -1,11 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import {
   Select,
@@ -15,18 +14,19 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
-import {
-  Settings as SettingsIcon,
-  Save,
-  Upload,
-  X,
-} from "lucide-react"
+import { Save, Upload, X, Loader2 } from "lucide-react"
 import { toast } from "sonner"
+import { authApi } from "@/lib/api/auth"
 
 export default function SettingsPage() {
-  const [fullName, setFullName] = useState("Admin User")
-  const [email, setEmail] = useState("admin@ganacsade.com")
-  const [phone, setPhone] = useState("+252 61 234 5678")
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [changingPassword, setChangingPassword] = useState(false)
+
+  const [firstName, setFirstName] = useState("")
+  const [lastName, setLastName] = useState("")
+  const [email, setEmail] = useState("")
+  const [phone, setPhone] = useState("")
   const [currentPassword, setCurrentPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
@@ -35,6 +35,27 @@ export default function SettingsPage() {
   const [orderNotifications, setOrderNotifications] = useState(true)
   const [productNotifications, setProductNotifications] = useState(false)
   const [twoFactorAuth, setTwoFactorAuth] = useState(false)
+
+  useEffect(() => {
+    async function loadProfile() {
+      try {
+        setLoading(true)
+        const response = await authApi.getProfile()
+        if (response.success && response.data) {
+          const u: any = response.data
+          setFirstName(u.first_name || u.firstName || "")
+          setLastName(u.last_name || u.lastName || "")
+          setEmail(u.email || "")
+          setPhone(u.phone_number || u.phoneNumber || "")
+        }
+      } catch {
+        toast.error("Failed to load profile")
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadProfile()
+  }, [])
 
   const handleProfilePictureUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -45,23 +66,55 @@ export default function SettingsPage() {
     }
   }
 
-  const handlePasswordChange = () => {
+  const handlePasswordChange = async () => {
+    if (!currentPassword) {
+      toast.error("Enter your current password")
+      return
+    }
     if (newPassword !== confirmPassword) {
       toast.error("Passwords do not match")
       return
     }
-    if (newPassword.length < 8) {
-      toast.error("Password must be at least 8 characters")
+    if (newPassword.length < 6) {
+      toast.error("Password must be at least 6 characters")
       return
     }
-    toast.success("Password updated successfully")
-    setCurrentPassword("")
-    setNewPassword("")
-    setConfirmPassword("")
+    try {
+      setChangingPassword(true)
+      const response = await authApi.changePassword({ currentPassword, newPassword })
+      if (response.success) {
+        toast.success("Password updated successfully")
+        setCurrentPassword("")
+        setNewPassword("")
+        setConfirmPassword("")
+      } else {
+        toast.error(response.message || "Failed to update password")
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to update password")
+    } finally {
+      setChangingPassword(false)
+    }
   }
 
-  const handleSave = () => {
-    toast.success("Settings saved successfully")
+  const handleSave = async () => {
+    try {
+      setSaving(true)
+      const response = await authApi.updateProfile({
+        firstName,
+        lastName,
+        phoneNumber: phone,
+      })
+      if (response.success) {
+        toast.success("Profile updated successfully")
+      } else {
+        toast.error(response.message || "Failed to update profile")
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to update profile")
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -71,8 +124,8 @@ export default function SettingsPage() {
           <h1 className="text-3xl font-bold">Account Settings</h1>
           <p className="text-muted-foreground">Manage your account and preferences</p>
         </div>
-        <Button onClick={handleSave}>
-          <Save className="mr-2 h-4 w-4" />
+        <Button onClick={handleSave} disabled={saving || loading}>
+          {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
           Save Changes
         </Button>
       </div>
@@ -102,18 +155,24 @@ export default function SettingsPage() {
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label>Full Name</Label>
-                <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Enter your full name" />
+                <Label>First Name</Label>
+                <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="First name" disabled={loading} />
               </div>
               <div className="space-y-2">
-                <Label>Email Address</Label>
-                <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="your@email.com" />
+                <Label>Last Name</Label>
+                <Input value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Last name" disabled={loading} />
               </div>
             </div>
 
             <div className="space-y-2">
+              <Label>Email Address</Label>
+              <Input type="email" value={email} disabled placeholder="your@email.com" />
+              <p className="text-xs text-muted-foreground">Email cannot be changed</p>
+            </div>
+
+            <div className="space-y-2">
               <Label>Phone Number</Label>
-              <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+252 61 234 5678" />
+              <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+252 61 234 5678" disabled={loading} />
             </div>
           </div>
         </Card>
@@ -138,7 +197,8 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            <Button onClick={handlePasswordChange} variant="outline">
+            <Button onClick={handlePasswordChange} variant="outline" disabled={changingPassword}>
+              {changingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Update Password
             </Button>
 

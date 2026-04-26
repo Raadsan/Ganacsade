@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { BACKEND_URL, axiosInstance } from "@/lib/api/client"
 import { Product } from "@/types"
 import {
   Dialog,
@@ -35,18 +36,12 @@ export function ProductViewDialog({
       
       try {
         setLoadingImages(true)
-        const token = localStorage.getItem('token')
-        const response = await fetch(`http://localhost:5000/api/admin/products/${product.id}/images`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        })
-        const data = await response.json()
-        if (data.success) {
-          setProductImages(data.data || [])
+        const response = await axiosInstance.get(`/admin/products/${product.id}/images`)
+        if (response.data?.success) {
+          setProductImages(response.data.data || [])
         }
-      } catch (error) {
-        console.error('Error fetching product images:', error)
+      } catch {
+        // Interceptor handles error toast
       } finally {
         setLoadingImages(false)
       }
@@ -109,7 +104,7 @@ export function ProductViewDialog({
                       className="relative aspect-square rounded-lg border overflow-hidden bg-muted group"
                     >
                       <img
-                        src={`http://localhost:5000${image.image_url}`}
+                        src={`${BACKEND_URL}${image.image_url}`}
                         alt={image.alt_text || `${product.name} - ${index + 1}`}
                         className="w-full h-full object-cover"
                         onError={(e: React.SyntheticEvent<HTMLImageElement>) => {

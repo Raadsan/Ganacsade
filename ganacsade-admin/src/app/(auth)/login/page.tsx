@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
+import { authApi } from "@/lib/api/auth"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -20,29 +21,12 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/admin/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      })
-
-      const data = await response.json()
-
-      if (data.success) {
-        // Store token in localStorage
-        localStorage.setItem('token', data.data.token)
-        localStorage.setItem('user', JSON.stringify(data.data.user))
-        
-        toast.success("Login successful!")
-        router.push("/")
-      } else {
-        toast.error(data.message || "Login failed")
-      }
-    } catch (error) {
-      console.error('Login error:', error)
-      toast.error("Failed to connect to server")
+      await authApi.login({ email, password })
+      toast.success("Login successful!")
+      router.push("/")
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || "Login failed"
+      toast.error(msg)
     } finally {
       setIsLoading(false)
     }

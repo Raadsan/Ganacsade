@@ -19,6 +19,12 @@ export interface PaginationParams {
   search?: string;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
+  // Optional filters (pages pass these through to backend)
+  category?: string;
+  subcategory?: string;
+  brand?: string;
+  status?: string;
+  [key: string]: any;
 }
 
 export interface DashboardStats {
@@ -41,8 +47,8 @@ export interface SalesData {
 export interface TopProduct {
   id: string;
   name: string;
-  image: string;
-  sales: number;
+  image: string | null;
+  totalSold: number;
   revenue: number;
 }
 

@@ -1,30 +1,23 @@
 import { axiosInstance } from './client';
 import { ApiResponse, DashboardStats, SalesData, TopProduct, RecentOrder } from '@/types';
 
+export interface OrdersByStatus {
+  status: string;
+  count: number;
+}
+
 export const dashboardApi = {
-  /**
-   * Get dashboard statistics
-   */
   async getStats() {
     const response = await axiosInstance.get<ApiResponse<DashboardStats>>('/admin/analytics/dashboard');
     return response.data;
   },
 
-  /**
-   * Get sales data for charts
-   */
-  async getSalesData(period: 'week' | 'month' | 'year' = 'month') {
-    const response = await axiosInstance.get<ApiResponse<SalesData[]>>(
-      '/admin/analytics/sales',
-      { params: { period } }
-    );
+  async getSalesData() {
+    const response = await axiosInstance.get<ApiResponse<SalesData[]>>('/admin/analytics/sales');
     return response.data;
   },
 
-  /**
-   * Get top selling products
-   */
-  async getTopProducts(limit: number = 5) {
+  async getTopProducts(limit = 5) {
     const response = await axiosInstance.get<ApiResponse<TopProduct[]>>(
       '/admin/analytics/top-products',
       { params: { limit } }
@@ -32,14 +25,23 @@ export const dashboardApi = {
     return response.data;
   },
 
-  /**
-   * Get recent orders
-   */
-  async getRecentOrders(limit: number = 10) {
+  async getOrdersByStatus() {
+    const response = await axiosInstance.get<ApiResponse<OrdersByStatus[]>>(
+      '/admin/analytics/orders-by-status'
+    );
+    return response.data;
+  },
+
+  async getRecentOrders(limit = 10) {
     const response = await axiosInstance.get<ApiResponse<RecentOrder[]>>(
       '/admin/analytics/recent-orders',
       { params: { limit } }
     );
+    return response.data;
+  },
+
+  async getQuickStats() {
+    const response = await axiosInstance.get('/admin/dashboard/quick-stats');
     return response.data;
   },
 };

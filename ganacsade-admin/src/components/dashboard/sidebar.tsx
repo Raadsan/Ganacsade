@@ -2,8 +2,9 @@
 
 import Link from "next/link"
 import NextImage from "next/image"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
+import { authApi } from "@/lib/api/auth"
 import {
   LayoutDashboard,
   ShoppingCart,
@@ -18,6 +19,8 @@ import {
   Settings,
   LogOut,
   Store,
+  Wifi,
+  UserCog,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
@@ -32,6 +35,11 @@ const navigation = [
     title: "Orders",
     href: "/orders",
     icon: ShoppingCart,
+  },
+  {
+    title: "Data Package Orders",
+    href: "/data-package-orders",
+    icon: Wifi,
   },
   {
     title: "Categories",
@@ -52,6 +60,11 @@ const navigation = [
     title: "Users",
     href: "/users",
     icon: Users,
+  },
+  {
+    title: "Staff",
+    href: "/staff",
+    icon: UserCog,
   },
   {
     title: "Featured Products",
@@ -77,6 +90,12 @@ const navigation = [
 
 export function Sidebar() {
   const pathname = usePathname()
+  const router = useRouter()
+
+  const handleLogout = async () => {
+    await authApi.logout()
+    router.push("/login")
+  }
 
   return (
     <div className="flex h-full w-64 flex-col border-r bg-card">
@@ -151,11 +170,7 @@ export function Sidebar() {
         <Button
           variant="ghost"
           className="w-full justify-start gap-3 text-muted-foreground hover:text-accent-foreground"
-          onClick={() => {
-            localStorage.removeItem('token')
-            localStorage.removeItem('user')
-            window.location.href = '/login'
-          }}
+          onClick={handleLogout}
         >
           <LogOut className="h-5 w-5" />
           Logout

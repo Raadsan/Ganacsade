@@ -1,29 +1,40 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
+import { authApi } from "@/lib/api/auth"
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
+  const [checked, setChecked] = useState(false)
 
   useEffect(() => {
-    // Check if we're on a public route (login page)
     const isPublicRoute = pathname === "/login"
+    const authenticated = authApi.isAuthenticated()
 
-    // Get token from localStorage
-    const token = localStorage.getItem("token")
-
-    // If no token and not on login page, redirect to login
-    if (!token && !isPublicRoute) {
-      router.push("/login")
+    if (!authenticated && !isPublicRoute) {
+      // Clear any stale data
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("token")
+        localStorage.removeItem("user")
+      }
+      router.replace("/login")
+      return
     }
 
-    // If has token and on login page, redirect to dashboard
-    if (token && isPublicRoute) {
-      router.push("/")
+    if (authenticated && isPublicRoute) {
+      router.replace("/")
+      return
     }
+
+    setChecked(true)
   }, [pathname, router])
+
+  // Prevent content flash before auth check completes (protected pages only)
+  if (!checked && pathname !== "/login") {
+    return null
+  }
 
   return <>{children}</>
 }

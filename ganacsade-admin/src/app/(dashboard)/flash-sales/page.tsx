@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { BACKEND_URL } from "@/lib/api/client"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -70,7 +71,7 @@ export default function FlashSalesPage() {
                     id: p.id,
                     productId: p.product_id,
                     productName: p.product_name,
-                    productImage: p.product_image_url ? `http://localhost:5000${p.product_image_url}` : undefined,
+                    productImage: p.product_image_url ? `${BACKEND_URL}${p.product_image_url}` : undefined,
                     originalPrice: parseFloat(p.original_price),
                     salePrice: parseFloat(p.sale_price),
                     discountPercentage: p.discount_percentage,
@@ -131,7 +132,7 @@ export default function FlashSalesPage() {
           descriptionSo: p.description_so || "",
           price: parseFloat(p.price) || 0,
           categoryId: p.category_id || "",
-          images: p.primary_image ? [`http://localhost:5000${p.primary_image}`] : [],
+          images: p.primary_image ? [`${BACKEND_URL}${p.primary_image}`] : [],
           rating: p.rating || 0,
           reviewCount: p.review_count || 0,
           inStock: p.stock_quantity > 0,

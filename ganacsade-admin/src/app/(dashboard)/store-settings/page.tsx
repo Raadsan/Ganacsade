@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { axiosInstance } from "@/lib/api/client"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -38,19 +39,11 @@ export default function StoreSettingsPage() {
   const fetchSettings = async () => {
     try {
       setLoading(true)
-      const token = localStorage.getItem('token')
-      
-      const response = await fetch('http://localhost:5000/api/admin/settings', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
 
-      if (!response.ok) throw new Error('Failed to fetch settings')
+      const response = await axiosInstance.get('/admin/settings')
+      const data = response.data
 
-      const data = await response.json()
-      
-      if (data.success && data.data.settings) {
+      if (data.success && data.data?.settings) {
         data.data.settings.forEach((setting: Setting) => {
           // Extract value from JSONB object if needed
           let value = setting.value
@@ -75,29 +68,16 @@ export default function StoreSettingsPage() {
           }
         })
       }
-    } catch (error) {
-      console.error('Error fetching settings:', error)
-      toast.error('Failed to load settings')
+    } catch {
+      // Interceptor handles error toast
     } finally {
       setLoading(false)
     }
   }
 
   const updateSetting = async (key: string, value: string) => {
-    const token = localStorage.getItem('token')
-    
-    const response = await fetch(`http://localhost:5000/api/admin/settings/${key}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({ value })
-    })
-
-    if (!response.ok) throw new Error(`Failed to update ${key}`)
-    
-    return response.json()
+    const response = await axiosInstance.put(`/admin/settings/${key}`, { value })
+    return response.data
   }
 
   const handleSave = async () => {
