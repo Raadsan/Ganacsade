@@ -58,18 +58,23 @@ class AuthController extends GetxController {
     }
   }
   
-  Future<bool> signInWithEmail(String email, String password) async {
+  Future<bool> signIn({String? email, String? phoneNumber, required String password}) async {
     try {
       isLoading.value = true;
       errorMessage.value = '';
       
       // Validate inputs
-      if (email.isEmpty || password.isEmpty) {
-        errorMessage.value = 'Please fill in all fields';
+      if ((email == null || email.isEmpty) && (phoneNumber == null || phoneNumber.isEmpty)) {
+        errorMessage.value = 'Please enter your email or phone number';
+        return false;
+      }
+
+      if (password.isEmpty) {
+        errorMessage.value = 'Please enter your password';
         return false;
       }
       
-      if (!GetUtils.isEmail(email)) {
+      if (email != null && email.isNotEmpty && !GetUtils.isEmail(email)) {
         errorMessage.value = 'Please enter a valid email address';
         return false;
       }
@@ -77,6 +82,7 @@ class AuthController extends GetxController {
       // Call API to login
       final response = await _authApiService.login(
         email: email,
+        phoneNumber: phoneNumber,
         password: password,
       );
       
@@ -121,7 +127,8 @@ class AuthController extends GetxController {
   Future<bool> signUpWithEmail({
     required String email,
     required String password,
-    required String name,
+    required String firstName,
+    required String lastName,
     String? phoneNumber,
   }) async {
     try {
@@ -129,7 +136,7 @@ class AuthController extends GetxController {
       errorMessage.value = '';
       
       // Validate inputs
-      if (email.isEmpty || password.isEmpty || name.isEmpty) {
+      if (email.isEmpty || password.isEmpty || firstName.isEmpty || lastName.isEmpty) {
         errorMessage.value = 'Please fill in all required fields';
         return false;
       }
@@ -149,10 +156,7 @@ class AuthController extends GetxController {
         return false;
       }
       
-      // Split name into first and last name
-      final nameParts = name.trim().split(' ');
-      final firstName = nameParts.first;
-      final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
+      // No need to split name anymore as we receive them separately
       
       // Call API to register
       final response = await _authApiService.register(

@@ -405,11 +405,9 @@ class _SignInScreenEnhancedState extends State<SignInScreenEnhanced> {
     if (_formKey.currentState!.validate()) {
       HapticFeedback.lightImpact();
       
-      final success = await _authController.signInWithEmail(
-        _emailController.text.trim(),
-        _passwordController.text,
-        // TODO: Pass role to backend
-        // role: _selectedRole,
+      final success = await _authController.signIn(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
       );
       
       if (success) {
