@@ -31,7 +31,7 @@ class _SplashScreenState extends State<SplashScreen> {
     if (_authController.isLoggedIn) {
       Get.offAllNamed('/main');
     } else {
-      Get.offAllNamed('/signin');
+      Get.offAllNamed('/register');
     }
   }
 

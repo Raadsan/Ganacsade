@@ -24,7 +24,7 @@ class AddressesScreen extends StatelessWidget {
           onPressed: () {
             // Dismiss keyboard before going back
             FocusManager.instance.primaryFocus?.unfocus();
-            Get.back();
+            Navigator.pop(context);
           },
           icon: const Icon(Icons.arrow_back),
         ),

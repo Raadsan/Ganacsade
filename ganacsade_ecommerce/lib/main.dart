@@ -18,6 +18,7 @@ import 'features/products/presentation/controllers/search_controller.dart'
     as search_ctrl;
 import 'features/auth/presentation/controllers/auth_controller.dart';
 import 'features/auth/presentation/pages/sign_in_screen.dart';
+import 'features/auth/presentation/pages/sign_up_screen.dart';
 import 'features/navigation/main_navigation.dart';
 import 'features/wishlist/presentation/controllers/wishlist_controller.dart';
 
@@ -93,7 +94,8 @@ class GStoreApp extends StatelessWidget {
           // Routes
           getPages: [
             GetPage(name: '/orders', page: () => const OrdersScreen()),
-            GetPage(name: '/signin', page: () => const SignInScreen()),
+            GetPage(name: '/login', page: () => const SignInScreen()),
+            GetPage(name: '/register', page: () => const SignUpScreen()),
             GetPage(name: '/main', page: () => const MainNavigation()),
           ],
 

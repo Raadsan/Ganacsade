@@ -8,6 +8,7 @@ import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/utils/responsive.dart';
 import '../controllers/auth_controller.dart';
 import 'sign_up_screen.dart';
+import 'forgot_password_screen.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -325,15 +326,7 @@ class _SignInScreenState extends State<SignInScreen> {
                           const Spacer(),
                           TextButton(
                             onPressed: () {
-                              // TODO: Implement forgot password
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: const Text('Forgot password feature will be available soon'),
-                                  backgroundColor: AppColors.primaryGreen,
-                                  behavior: SnackBarBehavior.floating,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                ),
-                              );
+                              Get.to(() => const ForgotPasswordScreen());
                             },
                             child: Text(
                               'auth_forgot_password'.tr,
@@ -444,7 +437,7 @@ class _SignInScreenState extends State<SignInScreen> {
                             ),
                             TextButton(
                               onPressed: () {
-                                Get.to(() => const SignUpScreen());
+                                Get.toNamed('/register');
                               },
                               child: Text(
                                 'auth_signup'.tr,

@@ -238,4 +238,66 @@ class AuthApiService {
       throw Exception('Failed to change password: ${e.toString()}');
     }
   }
+
+  /// Request password reset OTP
+  Future<Map<String, dynamic>> forgotPassword(String email) async {
+    try {
+      final response = await _httpClient.post(
+        ApiConfig.forgotPasswordEndpoint,
+        data: {'email': email},
+      );
+
+      if (response.data['success'] == true) {
+        return response.data;
+      } else {
+        throw Exception(response.data['message'] ?? 'Failed to request OTP');
+      }
+    } catch (e) {
+      throw Exception(e.toString());
+    }
+  }
+
+  /// Verify OTP code
+  Future<Map<String, dynamic>> verifyOTP(String email, String otp) async {
+    try {
+      final response = await _httpClient.post(
+        ApiConfig.verifyOTPEndpoint,
+        data: {'email': email, 'otp': otp},
+      );
+
+      if (response.data['success'] == true) {
+        return response.data;
+      } else {
+        throw Exception(response.data['message'] ?? 'Invalid OTP code');
+      }
+    } catch (e) {
+      throw Exception(e.toString());
+    }
+  }
+
+  /// Reset password
+  Future<Map<String, dynamic>> resetPassword({
+    required String email,
+    required String otp,
+    required String newPassword,
+  }) async {
+    try {
+      final response = await _httpClient.post(
+        ApiConfig.resetPasswordEndpoint,
+        data: {
+          'email': email,
+          'otp': otp,
+          'newPassword': newPassword,
+        },
+      );
+
+      if (response.data['success'] == true) {
+        return response.data;
+      } else {
+        throw Exception(response.data['message'] ?? 'Failed to reset password');
+      }
+    } catch (e) {
+      throw Exception(e.toString());
+    }
+  }
 }

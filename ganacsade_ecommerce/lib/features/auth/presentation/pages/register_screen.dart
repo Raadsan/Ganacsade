@@ -75,7 +75,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return Column(
       children: [
         Text(
-          'Create Account',
+          'Register',
           style: AppTextStyles.headlineLarge,
           textAlign: TextAlign.center,
         )
@@ -299,7 +299,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         
         // Register Button
         Obx(() => CustomButton(
-          text: 'Create Account',
+          text: 'Register',
           onPressed: (_authController.isLoading.value || !_agreeToTerms) ? null : _handleRegister,
           isLoading: _authController.isLoading.value,
         ))
@@ -320,10 +320,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
         TextButton(
           onPressed: () {
-            Get.back();
+            Get.toNamed('/login');
           },
           child: const Text(
-            'Sign In',
+            'Login',
             style: TextStyle(
               fontWeight: FontWeight.w600,
               color: AppColors.primaryGreen,
@@ -347,7 +347,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
       
       if (success) {
-        Get.offAllNamed('/home');
+        Get.offAllNamed('/main');
       }
     }
   }

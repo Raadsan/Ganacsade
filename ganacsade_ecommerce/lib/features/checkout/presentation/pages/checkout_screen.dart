@@ -36,11 +36,24 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   void initState() {
     super.initState();
     // Auto-select default address if available
+    _initializeSelectedAddress();
+    
+    // Listen for address changes if they load late
+    ever(_profileController.addresses, (_) {
+      if (_selectedAddress == null) {
+        _initializeSelectedAddress();
+      }
+    });
+  }
+
+  void _initializeSelectedAddress() {
     if (_profileController.addresses.isNotEmpty) {
-      _selectedAddress = _profileController.addresses.firstWhere(
-        (addr) => addr.isDefault,
-        orElse: () => _profileController.addresses.first,
-      );
+      setState(() {
+        _selectedAddress = _profileController.addresses.firstWhere(
+          (addr) => addr.isDefault,
+          orElse: () => _profileController.addresses.first,
+        );
+      });
     }
   }
 
@@ -100,7 +113,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           onPressed: () {
             // Dismiss keyboard before going back
             FocusManager.instance.primaryFocus?.unfocus();
-            Get.back();
+            Navigator.pop(context);
           },
           icon: const Icon(Icons.arrow_back),
         ),
@@ -305,8 +318,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 ),
               ),
               TextButton.icon(
-                onPressed: () {
-                  Get.to(() => const AddressesScreen());
+                onPressed: () async {
+                  await Get.to(() => const AddressesScreen());
+                  _initializeSelectedAddress(); // Re-check if a default was added
                 },
                 icon: const Icon(Icons.add, size: 18),
                 label: const Text('Add New'),
@@ -319,57 +333,68 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           const SizedBox(height: 16),
           
           // Address Selection
-          if (_profileController.addresses.isEmpty)
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.grey50,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.grey200),
-              ),
-              child: Column(
-                children: [
-                  Icon(
-                    Icons.location_off_outlined,
-                    size: 48,
-                    color: AppColors.grey400,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'No saved addresses',
-                    style: AppTextStyles.titleMedium.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.grey700,
+          Obx(() {
+            if (_profileController.isLoadingAddresses.value) {
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(20.0),
+                  child: CircularProgressIndicator(),
+                ),
+              );
+            }
+
+            if (_profileController.addresses.isEmpty) {
+              return Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.grey50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.grey200),
+                ),
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.location_off_outlined,
+                      size: 48,
+                      color: AppColors.grey400,
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Add a delivery address to continue',
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.grey600,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      Get.to(() => const AddressesScreen());
-                    },
-                    icon: const Icon(Icons.add, size: 18),
-                    label: const Text('Add Address'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryGreen,
-                      foregroundColor: AppColors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
+                    const SizedBox(height: 12),
+                    Text(
+                      'No saved addresses',
+                      style: AppTextStyles.titleMedium.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.grey700,
                       ),
                     ),
-                  ),
-                ],
-              ),
-            )
-          else
-            Column(
+                    const SizedBox(height: 4),
+                    Text(
+                      'Add a delivery address to continue',
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.grey600,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        Get.to(() => const AddressesScreen());
+                      },
+                      icon: const Icon(Icons.add, size: 18),
+                      label: const Text('Add Address'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryGreen,
+                        foregroundColor: AppColors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            return Column(
               children: _profileController.addresses.map((address) {
                 final isSelected = _selectedAddress?.id == address.id;
                 return GestureDetector(
@@ -398,13 +423,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       children: [
                         Icon(
                           isSelected
-                              ? Icons.radio_button_checked
-                              : Icons.radio_button_unchecked,
+                              ? Icons.check_circle
+                              : Icons.circle_outlined,
                           color: isSelected
                               ? AppColors.primaryGreen
                               : AppColors.grey400,
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 16),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -413,28 +438,25 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 children: [
                                   Text(
                                     address.title,
-                                    style: AppTextStyles.titleMedium.copyWith(
+                                    style: AppTextStyles.bodyLarge.copyWith(
                                       fontWeight: FontWeight.bold,
-                                      color: isSelected
-                                          ? AppColors.primaryGreen
-                                          : AppColors.grey900,
                                     ),
                                   ),
                                   if (address.isDefault) ...[
                                     const SizedBox(width: 8),
                                     Container(
                                       padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
+                                        horizontal: 6,
                                         vertical: 2,
                                       ),
                                       decoration: BoxDecoration(
                                         color: AppColors.primaryGreen,
                                         borderRadius: BorderRadius.circular(4),
                                       ),
-                                      child: Text(
+                                      child: const Text(
                                         'Default',
-                                        style: AppTextStyles.bodySmall.copyWith(
-                                          color: AppColors.white,
+                                        style: TextStyle(
+                                          color: Colors.white,
                                           fontSize: 10,
                                         ),
                                       ),
@@ -444,26 +466,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                address.fullName,
+                                '${address.street}, ${address.city}',
                                 style: AppTextStyles.bodyMedium.copyWith(
-                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.grey700,
                                 ),
                               ),
-                              const SizedBox(height: 2),
                               Text(
-                                address.phoneNumber,
+                                '${address.fullName} • ${address.phoneNumber}',
                                 style: AppTextStyles.bodySmall.copyWith(
-                                  color: AppColors.grey600,
+                                  color: AppColors.grey500,
                                 ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                '${address.street}, ${address.city}, ${address.state}',
-                                style: AppTextStyles.bodySmall.copyWith(
-                                  color: AppColors.grey600,
-                                ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
                               ),
                             ],
                           ),
@@ -473,7 +485,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   ),
                 );
               }).toList(),
-            ),
+            );
+          }),
         ],
       ),
     )

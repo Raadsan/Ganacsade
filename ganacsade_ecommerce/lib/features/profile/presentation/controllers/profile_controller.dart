@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../shared/models/user_simple.dart';
 import '../../../../shared/models/address.dart';
@@ -17,11 +18,12 @@ class ProfileController extends GetxController {
 
   // Getters
   User? get currentUser => _currentUser.value;
-  List<Address> get addresses => _addresses;
+  RxList<Address> get addresses => _addresses;
   bool get notificationsEnabled => _notificationsEnabled.value;
   bool get emailNotifications => _emailNotifications.value;
   bool get pushNotifications => _pushNotifications.value;
   bool get smsNotifications => _smsNotifications.value;
+  RxBool get isLoadingAddresses => _isLoadingAddresses;
 
   @override
   void onInit() {
@@ -29,7 +31,7 @@ class ProfileController extends GetxController {
     _loadUserData();
     _loadAddresses();
   }
-  
+
   @override
   void onReady() {
     super.onReady();
@@ -40,7 +42,7 @@ class ProfileController extends GetxController {
       _loadUserData();
     });
   }
-  
+
   /// Manually refresh user data
   void refreshUserData() {
     print('🔄 Manual refresh triggered');
@@ -51,31 +53,33 @@ class ProfileController extends GetxController {
     // Get user from AuthController
     final authController = Get.find<AuthController>();
     final authUser = authController.user;
-    
+
     print('🔍 ProfileController loading user data...');
     print('🔍 AuthUser: ${authUser?.email}');
-    
+
     if (authUser != null) {
-      final name = authUser.displayName.isNotEmpty 
-          ? authUser.displayName 
+      final name = authUser.displayName.isNotEmpty
+          ? authUser.displayName
           : '${authUser.firstName} ${authUser.lastName}'.trim();
-      
+
       print('🔍 Creating User with:');
       print('   - Name: $name');
       print('   - Email: ${authUser.email}');
       print('   - Phone: ${authUser.phoneNumber}');
-      
+
       _currentUser.value = User(
         id: authUser.id,
         name: name.isNotEmpty ? name : 'User',
         email: authUser.email,
         phone: authUser.phoneNumber,
-        profileImage: authUser.profileImageUrl.isNotEmpty ? authUser.profileImageUrl : null,
+        profileImage: authUser.profileImageUrl.isNotEmpty
+            ? authUser.profileImageUrl
+            : null,
         dateOfBirth: authUser.dateOfBirth,
         gender: authUser.gender.name,
         joinedDate: authUser.createdAt ?? DateTime.now(),
       );
-      
+
       print('✅ User loaded: ${_currentUser.value?.name}');
     } else {
       print('❌ No auth user found');
@@ -88,9 +92,9 @@ class ProfileController extends GetxController {
     _isLoadingAddresses.value = true;
     try {
       final response = await _addressApiService.getAddresses();
-      
+
       print('📍 Address API Response: $response');
-      
+
       if (response['success'] == true) {
         final addressesData = response['data']?['addresses'] as List? ?? [];
         print('📍 Found ${addressesData.length} addresses');
@@ -128,7 +132,7 @@ class ProfileController extends GetxController {
       print('   - Name: $name');
       print('   - Email: $email');
       print('   - Phone: $phone');
-      
+
       _currentUser.value = _currentUser.value!.copyWith(
         name: name,
         email: email,
@@ -136,15 +140,17 @@ class ProfileController extends GetxController {
         dateOfBirth: dateOfBirth,
         gender: gender,
       );
-      
+
       // Also update AuthController
       final authController = Get.find<AuthController>();
       final authUser = authController.user;
       if (authUser != null) {
         final nameParts = name.trim().split(' ');
         final firstName = nameParts.first;
-        final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
-        
+        final lastName = nameParts.length > 1
+            ? nameParts.sublist(1).join(' ')
+            : '';
+
         // Update auth user data
         authController.updateUserData(
           firstName: firstName,
@@ -152,17 +158,17 @@ class ProfileController extends GetxController {
           email: email,
           phoneNumber: phone,
         );
-        
+
         print('✅ Profile updated in both controllers');
       }
-      
+
       update(); // Notify GetBuilder widgets
-      
-      Get.snackbar(
-        'Success',
-        'Profile updated successfully',
-        backgroundColor: AppColors.primaryGreen.withOpacity(0.9),
-        colorText: AppColors.white,
+
+      ScaffoldMessenger.of(Get.context!).showSnackBar(
+        SnackBar(
+          content: const Text('Profile updated successfully'),
+          backgroundColor: AppColors.primaryGreen,
+        ),
       );
     }
   }
@@ -192,26 +198,26 @@ class ProfileController extends GetxController {
 
       if (response['success'] == true) {
         await _loadAddresses();
-        Get.snackbar(
-          'Success',
-          'Address added successfully',
-          backgroundColor: AppColors.primaryGreen.withOpacity(0.9),
-          colorText: AppColors.white,
+        ScaffoldMessenger.of(Get.context!).showSnackBar(
+          SnackBar(
+            content: const Text('Address added successfully'),
+            backgroundColor: AppColors.primaryGreen,
+          ),
         );
       } else {
-        Get.snackbar(
-          'Error',
-          response['message'] ?? 'Failed to add address',
-          backgroundColor: AppColors.error.withOpacity(0.9),
-          colorText: AppColors.white,
+        ScaffoldMessenger.of(Get.context!).showSnackBar(
+          SnackBar(
+            content: Text(response['message'] ?? 'Failed to add address'),
+            backgroundColor: AppColors.error,
+          ),
         );
       }
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to add address. Please try again.',
-        backgroundColor: AppColors.error.withOpacity(0.9),
-        colorText: AppColors.white,
+      ScaffoldMessenger.of(Get.context!).showSnackBar(
+        SnackBar(
+          content: const Text('Failed to add address. Please try again.'),
+          backgroundColor: AppColors.error,
+        ),
       );
     }
   }
@@ -233,80 +239,84 @@ class ProfileController extends GetxController {
 
       if (response['success'] == true) {
         await _loadAddresses();
-        Get.snackbar(
-          'Success',
-          'Address updated successfully',
-          backgroundColor: AppColors.primaryGreen.withOpacity(0.9),
-          colorText: AppColors.white,
+        ScaffoldMessenger.of(Get.context!).showSnackBar(
+          SnackBar(
+            content: const Text('Address updated successfully'),
+            backgroundColor: AppColors.primaryGreen,
+          ),
         );
       } else {
-        Get.snackbar(
-          'Error',
-          response['message'] ?? 'Failed to update address',
-          backgroundColor: AppColors.error.withOpacity(0.9),
-          colorText: AppColors.white,
+        ScaffoldMessenger.of(Get.context!).showSnackBar(
+          SnackBar(
+            content: Text(response['message'] ?? 'Failed to update address'),
+            backgroundColor: AppColors.error,
+          ),
         );
       }
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to update address. Please try again.',
-        backgroundColor: AppColors.error.withOpacity(0.9),
-        colorText: AppColors.white,
+      ScaffoldMessenger.of(Get.context!).showSnackBar(
+        SnackBar(
+          content: const Text('Failed to update address. Please try again.'),
+          backgroundColor: AppColors.error,
+        ),
       );
     }
   }
 
   Future<void> deleteAddress(String addressId) async {
     try {
-      final response = await _addressApiService.deleteAddress(int.parse(addressId));
+      final response = await _addressApiService.deleteAddress(
+        int.parse(addressId),
+      );
 
       if (response['success'] == true) {
         await _loadAddresses();
-        Get.snackbar(
-          'Success',
-          'Address deleted successfully',
-          backgroundColor: AppColors.primaryGreen.withOpacity(0.9),
-          colorText: AppColors.white,
+        ScaffoldMessenger.of(Get.context!).showSnackBar(
+          SnackBar(
+            content: const Text('Address deleted successfully'),
+            backgroundColor: AppColors.primaryGreen,
+          ),
         );
       } else {
-        Get.snackbar(
-          'Error',
-          response['message'] ?? 'Failed to delete address',
-          backgroundColor: AppColors.error.withOpacity(0.9),
-          colorText: AppColors.white,
+        ScaffoldMessenger.of(Get.context!).showSnackBar(
+          SnackBar(
+            content: Text(response['message'] ?? 'Failed to delete address'),
+            backgroundColor: AppColors.error,
+          ),
         );
       }
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to delete address. Please try again.',
-        backgroundColor: AppColors.error.withOpacity(0.9),
-        colorText: AppColors.white,
+      ScaffoldMessenger.of(Get.context!).showSnackBar(
+        SnackBar(
+          content: const Text('Failed to delete address. Please try again.'),
+          backgroundColor: AppColors.error,
+        ),
       );
     }
   }
 
   Future<void> setDefaultAddress(String addressId) async {
     try {
-      final response = await _addressApiService.setDefaultAddress(int.parse(addressId));
+      final response = await _addressApiService.setDefaultAddress(
+        int.parse(addressId),
+      );
 
       if (response['success'] == true) {
         await _loadAddresses();
       } else {
-        Get.snackbar(
-          'Error',
-          response['message'] ?? 'Failed to set default address',
-          backgroundColor: AppColors.error.withOpacity(0.9),
-          colorText: AppColors.white,
+        ScaffoldMessenger.of(Get.context!).showSnackBar(
+          SnackBar(
+            content: Text(response['message'] ?? 'Failed to set default address'),
+            backgroundColor: AppColors.error,
+          ),
         );
       }
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to set default address. Please try again.',
-        backgroundColor: AppColors.error.withOpacity(0.9),
-        colorText: AppColors.white,
+      ScaffoldMessenger.of(Get.context!).showSnackBar(
+        SnackBar(
+          content: const Text('Failed to set default address. Please try again.'),
+          backgroundColor: AppColors.error,
+        ),
       );
     }
   }
@@ -334,8 +344,18 @@ class ProfileController extends GetxController {
     if (_currentUser.value?.joinedDate != null) {
       final joinDate = _currentUser.value!.joinedDate;
       final months = [
-        'January', 'February', 'March', 'April', 'May', 'June',
-        'July', 'August', 'September', 'October', 'November', 'December'
+        'January',
+        'February',
+        'March',
+        'April',
+        'May',
+        'June',
+        'July',
+        'August',
+        'September',
+        'October',
+        'November',
+        'December',
       ];
       return '${months[joinDate.month - 1]} ${joinDate.year}';
     }
@@ -355,7 +375,7 @@ class ProfileController extends GetxController {
       final birthDate = _currentUser.value!.dateOfBirth!;
       final now = DateTime.now();
       int age = now.year - birthDate.year;
-      if (now.month < birthDate.month || 
+      if (now.month < birthDate.month ||
           (now.month == birthDate.month && now.day < birthDate.day)) {
         age--;
       }
@@ -368,21 +388,21 @@ class ProfileController extends GetxController {
     // Clear user data
     _currentUser.value = null;
     _addresses.clear();
-    
+
     // Reset settings to defaults
     _notificationsEnabled.value = true;
     _emailNotifications.value = true;
     _pushNotifications.value = true;
     _smsNotifications.value = false;
-    
-    // Navigate to login/onboarding
-    Get.offAllNamed('/onboarding');
-    
-    Get.snackbar(
-      'Signed Out',
-      'You have been successfully signed out',
-      backgroundColor: AppColors.primaryGreen.withOpacity(0.9),
-      colorText: AppColors.white,
+
+    // Navigate to register page
+    Get.offAllNamed('/register');
+
+    ScaffoldMessenger.of(Get.context!).showSnackBar(
+      SnackBar(
+        content: const Text('You have been successfully logged out'),
+        backgroundColor: AppColors.primaryGreen,
+      ),
     );
   }
 }

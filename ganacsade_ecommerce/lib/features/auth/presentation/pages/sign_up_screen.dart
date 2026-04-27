@@ -481,10 +481,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ),
                       TextButton(
                         onPressed: () {
-                          Get.back();
+                          Get.toNamed('/login');
                         },
                         child: Text(
-                          'Sign In',
+                          'auth_signin'.tr,
                           style: AppTextStyles.bodyMedium.copyWith(
                             color: AppColors.primaryGreen,
                             fontWeight: FontWeight.w600,

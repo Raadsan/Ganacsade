@@ -28,6 +28,9 @@ class ApiConfig {
   static const String logoutEndpoint = '$authEndpoint/logout';
   static const String profileEndpoint = '$authEndpoint/profile';
   static const String refreshTokenEndpoint = '$authEndpoint/refresh-token';
+  static const String forgotPasswordEndpoint = '$authEndpoint/forgot-password';
+  static const String verifyOTPEndpoint = '$authEndpoint/verify-otp';
+  static const String resetPasswordEndpoint = '$authEndpoint/reset-password';
 
   // Timeout durations
   static const Duration connectTimeout = Duration(seconds: 30);

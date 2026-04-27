@@ -117,7 +117,7 @@ class _LoginScreenState extends State<LoginScreen> {
         const SizedBox(height: 8),
         
         Text(
-          'Sign in to continue to G-Store',
+          'Login to continue to G-Store',
           style: AppTextStyles.bodyLarge,
           textAlign: TextAlign.center,
         )
@@ -214,7 +214,7 @@ class _LoginScreenState extends State<LoginScreen> {
         
         // Login Button
         Obx(() => CustomButton(
-          text: 'Sign In',
+          text: 'Login',
           onPressed: _authController.isLoading.value ? null : _handleLogin,
           isLoading: _authController.isLoading.value,
         ))
@@ -287,10 +287,10 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         TextButton(
           onPressed: () {
-            Get.to(() => const RegisterScreen());
+            Get.toNamed('/register');
           },
           child: const Text(
-            'Sign Up',
+            'Register',
             style: TextStyle(
               fontWeight: FontWeight.w600,
               color: AppColors.primaryGreen,
@@ -308,7 +308,11 @@ class _LoginScreenState extends State<LoginScreen> {
       _authController.signIn(
         email: _emailController.text.trim(),
         password: _passwordController.text,
-      );
+      ).then((success) {
+        if (success) {
+          Get.offAllNamed('/main');
+        }
+      });
     }
   }
 }

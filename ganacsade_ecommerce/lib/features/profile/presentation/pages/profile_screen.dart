@@ -414,8 +414,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       },
       {
         'icon': IconlyBold.logout,
-        'title': 'profile_logout'.tr,
-        'subtitle': 'auth_logout'.tr,
+        'title': 'Logout',
+        'subtitle': 'Exit account',
         'color': AppColors.error,
         'onTap': () => _showSignOutDialog(controller),
       },
@@ -583,11 +583,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             Icon(IconlyBold.logout, color: AppColors.error, size: 24),
             const SizedBox(width: 12),
-            const Text('Sign Out'),
+            const Text('Logout'),
           ],
         ),
         content: const Text(
-          'Are you sure you want to sign out of your account?',
+          'Are you sure you want to logout of your account?',
           style: TextStyle(fontSize: 16),
         ),
         actions: [
@@ -604,7 +604,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: const Text('Successfully signed out'),
+                    content: const Text('Successfully logged out'),
                     backgroundColor: AppColors.primaryGreen,
                     behavior: SnackBarBehavior.floating,
                     shape: RoundedRectangleBorder(
@@ -614,7 +614,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 );
               }
 
-              Get.offAllNamed('/signin');
+              Get.offAllNamed('/register');
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.error,
@@ -623,7 +623,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            child: const Text('Sign Out'),
+            child: const Text('Logout'),
           ),
         ],
       ),

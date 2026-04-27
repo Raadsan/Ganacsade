@@ -269,4 +269,57 @@ class AuthController extends GetxController {
       print('✅ AuthController user data updated and saved');
     }
   }
+
+  // Forgot Password logic
+  Future<bool> forgotPassword(String email) async {
+    try {
+      isLoading.value = true;
+      errorMessage.value = '';
+      await _authApiService.forgotPassword(email);
+      return true;
+    } catch (e) {
+      errorMessage.value = e.toString().replaceAll('Exception: ', '');
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  // Verify OTP logic
+  Future<bool> verifyOTP(String email, String otp) async {
+    try {
+      isLoading.value = true;
+      errorMessage.value = '';
+      await _authApiService.verifyOTP(email, otp);
+      return true;
+    } catch (e) {
+      errorMessage.value = e.toString().replaceAll('Exception: ', '');
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  // Reset Password logic
+  Future<bool> resetPassword({
+    required String email,
+    required String otp,
+    required String newPassword,
+  }) async {
+    try {
+      isLoading.value = true;
+      errorMessage.value = '';
+      await _authApiService.resetPassword(
+        email: email,
+        otp: otp,
+        newPassword: newPassword,
+      );
+      return true;
+    } catch (e) {
+      errorMessage.value = e.toString().replaceAll('Exception: ', '');
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
 }
