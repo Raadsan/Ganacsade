@@ -11,7 +11,7 @@ class AppConstants {
   static const String apiVersion = 'v1';
 
   // App Configuration
-  static const String appName = 'G-Store';
+  static const String appName = 'Ganacsade';
   static const String appVersion = '1.0.0';
 
   // Storage Keys
