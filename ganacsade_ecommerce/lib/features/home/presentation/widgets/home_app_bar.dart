@@ -26,11 +26,11 @@ class HomeAppBar extends StatelessWidget {
               Expanded(
                 child: Obx(() {
                   final user = authController.user;
-                  final displayName =
-                      (user?.phoneNumber != null &&
-                          user!.phoneNumber.isNotEmpty)
+                  final displayName = (user?.phoneNumber != null && user!.phoneNumber.isNotEmpty)
                       ? user.phoneNumber
-                      : 'Guest';
+                      : (user?.email != null && user!.email.isNotEmpty)
+                          ? user.email
+                          : 'Guest';
 
                   // Get location from default address or fallback
                   String location = 'Mogadishu - Somalia';

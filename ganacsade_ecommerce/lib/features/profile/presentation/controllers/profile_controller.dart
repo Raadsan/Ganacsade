@@ -63,7 +63,11 @@ class ProfileController extends GetxController {
           ? authUser.displayName
           : '${authUser.firstName} ${authUser.lastName}'.trim();
 
-      final displayValue = name.isNotEmpty ? name : authUser.phoneNumber;
+      final displayValue = name.isNotEmpty 
+          ? name 
+          : (authUser.phoneNumber.isNotEmpty 
+              ? authUser.phoneNumber 
+              : authUser.email);
 
       print('🔍 Creating User with:');
       print('   - Name: $displayValue');

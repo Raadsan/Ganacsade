@@ -58,13 +58,15 @@ class AuthController extends GetxController {
     }
   }
   
-  Future<bool> signIn({String? email, String? phoneNumber, required String password}) async {
+  Future<bool> signIn({String? email, String? phoneNumber, String? identifier, required String password}) async {
     try {
       isLoading.value = true;
       errorMessage.value = '';
       
       // Validate inputs
-      if ((email == null || email.isEmpty) && (phoneNumber == null || phoneNumber.isEmpty)) {
+      if ((email == null || email.isEmpty) && 
+          (phoneNumber == null || phoneNumber.isEmpty) && 
+          (identifier == null || identifier.isEmpty)) {
         errorMessage.value = 'Please enter your phone number or email';
         return false;
       }
@@ -78,6 +80,7 @@ class AuthController extends GetxController {
       final response = await _authApiService.login(
         email: email,
         phoneNumber: phoneNumber,
+        identifier: identifier,
         password: password,
       );
       
@@ -121,7 +124,7 @@ class AuthController extends GetxController {
   
   Future<bool> signUp({
     String? email,
-    required String phoneNumber,
+    String? phoneNumber,
     required String password,
     String? firstName,
     String? lastName,
@@ -131,8 +134,13 @@ class AuthController extends GetxController {
       errorMessage.value = '';
       
       // Validate inputs
-      if (phoneNumber.isEmpty || password.isEmpty) {
-        errorMessage.value = 'Please enter phone number and password';
+      if ((phoneNumber == null || phoneNumber.isEmpty) && (email == null || email.isEmpty)) {
+        errorMessage.value = 'Please enter phone number or email';
+        return false;
+      }
+
+      if (password.isEmpty) {
+        errorMessage.value = 'Please enter a password';
         return false;
       }
       

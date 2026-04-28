@@ -19,7 +19,7 @@ class SignInScreen extends StatefulWidget {
 
 class _SignInScreenState extends State<SignInScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _phoneController = TextEditingController();
+  final _identifierController = TextEditingController();
   final _passwordController = TextEditingController();
   final AuthController _authController = Get.find<AuthController>();
 
@@ -29,7 +29,7 @@ class _SignInScreenState extends State<SignInScreen> {
 
   @override
   void dispose() {
-    _phoneController.dispose();
+    _identifierController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -136,7 +136,7 @@ class _SignInScreenState extends State<SignInScreen> {
                       const SizedBox(height: 48),
 
                       Text(
-                            'Phone Number',
+                            'Phone Number or Email',
                             style: AppTextStyles.titleSmall.copyWith(
                               fontWeight: FontWeight.w600,
                               color: isDark
@@ -155,14 +155,14 @@ class _SignInScreenState extends State<SignInScreen> {
                           });
                         },
                         child: TextFormField(
-                          controller: _phoneController,
+                          controller: _identifierController,
                           keyboardType: TextInputType.emailAddress,
                           textInputAction: TextInputAction.next,
                           autofocus: false,
                           decoration: InputDecoration(
-                            hintText: 'Enter your phone number',
+                            hintText: 'Enter your phone number or email',
                             prefixIcon: Icon(
-                              Icons.phone_outlined,
+                              Icons.person_outline,
                               color: _isPhoneFocused
                                   ? AppColors.primaryGreen
                                   : AppColors.grey500,
@@ -196,11 +196,14 @@ class _SignInScreenState extends State<SignInScreen> {
                           ),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Please enter your phone number';
+                              return 'Please enter your phone number or email';
                             }
 
-                            if (!GetUtils.isPhoneNumber(value)) {
-                              return 'Please enter a valid phone number';
+                            bool isEmail = GetUtils.isEmail(value);
+                            bool isPhone = GetUtils.isPhoneNumber(value);
+
+                            if (!isEmail && !isPhone) {
+                              return 'Please enter a valid phone number or email';
                             }
                             return null;
                           },
@@ -462,10 +465,12 @@ class _SignInScreenState extends State<SignInScreen> {
     if (_formKey.currentState!.validate()) {
       HapticFeedback.lightImpact();
 
-      final phoneNumber = _phoneController.text.trim();
+      final identifier = _identifierController.text.trim();
+      final isEmail = GetUtils.isEmail(identifier);
 
       final success = await _authController.signIn(
-        phoneNumber: phoneNumber,
+        email: isEmail ? identifier : null,
+        phoneNumber: !isEmail ? identifier : null,
         password: _passwordController.text,
       );
 

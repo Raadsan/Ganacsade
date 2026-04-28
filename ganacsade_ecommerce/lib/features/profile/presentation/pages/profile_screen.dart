@@ -134,17 +134,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(height: 4),
 
                   // User Email / Phone fallback
-                  if (controller.currentUser?.email != null &&
-                      controller.currentUser!.email.isNotEmpty)
-                    Text(
-                      controller.currentUser!.email,
-                      style: TextStyle(
-                        color: AppColors.white.withOpacity(0.9),
-                        fontSize: 16,
-                      ),
-                    ).animate().fadeIn(delay: 500.ms, duration: 600.ms)
-                  else
-                    const SizedBox(height: 10),
+                  Text(
+                    (controller.currentUser?.email != null && controller.currentUser!.email.isNotEmpty)
+                        ? controller.currentUser!.email
+                        : (controller.currentUser?.phone != null && controller.currentUser!.phone.isNotEmpty)
+                            ? controller.currentUser!.phone
+                            : '',
+                    style: TextStyle(
+                      color: AppColors.white.withOpacity(0.9),
+                      fontSize: 16,
+                    ),
+                  ).animate().fadeIn(delay: 500.ms, duration: 600.ms),
 
                   const SizedBox(height: 12),
 
@@ -261,12 +261,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const SizedBox(height: 12),
               ],
-              _buildInfoRow(
-                icon: IconlyBold.call,
-                label: 'Phone',
-                value: controller.currentUser?.phone ?? 'Not provided',
-                isDark: isDark,
-              ),
+              if (controller.currentUser?.phone != null &&
+                  controller.currentUser!.phone.isNotEmpty) ...[
+                _buildInfoRow(
+                  icon: IconlyBold.call,
+                  label: 'Phone',
+                  value: controller.currentUser!.phone,
+                  isDark: isDark,
+                ),
+                const SizedBox(height: 12),
+              ],
               const SizedBox(height: 12),
               _buildInfoRow(
                 icon: IconlyBold.calendar,

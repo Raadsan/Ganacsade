@@ -15,7 +15,7 @@ class SignUpScreen extends StatefulWidget {
 
 class _SignUpScreenState extends State<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _phoneController = TextEditingController();
+  final _identifierController = TextEditingController();
   final _passwordController = TextEditingController();
   final AuthController _authController = Get.find<AuthController>();
   
@@ -26,7 +26,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   @override
   void dispose() {
-    _phoneController.dispose();
+    _identifierController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -117,9 +117,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 
 
                 
-                // Phone Number Field
+                // Identifier Field (Email or Phone)
                 Text(
-                  'auth_phone'.tr,
+                  'Phone Number or Email',
                   style: AppTextStyles.titleSmall.copyWith(
                     fontWeight: FontWeight.w600,
                     color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
@@ -133,13 +133,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     });
                   },
                   child: TextFormField(
-                    controller: _phoneController,
-                    keyboardType: TextInputType.phone,
+                    controller: _identifierController,
+                    keyboardType: TextInputType.emailAddress,
                     textInputAction: TextInputAction.next,
                     decoration: InputDecoration(
-                      hintText: 'auth_phone_hint'.tr,
+                      hintText: 'Enter your phone number or email',
                       prefixIcon: Icon(
-                        Icons.phone_outlined,
+                        Icons.person_outline,
                         color: _isPhoneFocused ? AppColors.primaryGreen : AppColors.grey500,
                       ),
                       border: OutlineInputBorder(
@@ -155,10 +155,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter your phone number';
+                        return 'Please enter your phone number or email';
                       }
-                      if (!GetUtils.isPhoneNumber(value)) {
-                        return 'Please enter a valid phone number';
+                      
+                      bool isEmail = GetUtils.isEmail(value);
+                      bool isPhone = GetUtils.isPhoneNumber(value);
+
+                      if (!isEmail && !isPhone) {
+                        return 'Please enter a valid phone number or email';
                       }
                       return null;
                     },
@@ -404,10 +408,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
         return;
       }
       
-      HapticFeedback.lightImpact();
+      final identifier = _identifierController.text.trim();
+      final isEmail = GetUtils.isEmail(identifier);
       
       final success = await _authController.signUp(
-        phoneNumber: _phoneController.text.trim(),
+        email: isEmail ? identifier : null,
+        phoneNumber: !isEmail ? identifier : null,
         password: _passwordController.text,
       );
       

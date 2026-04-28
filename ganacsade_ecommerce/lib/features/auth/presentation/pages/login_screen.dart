@@ -17,7 +17,7 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _phoneController = TextEditingController();
+  final _identifierController = TextEditingController();
   final _passwordController = TextEditingController();
   final _authController = Get.put(AuthController());
   
@@ -26,7 +26,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   void dispose() {
-    _phoneController.dispose();
+    _identifierController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -130,19 +130,23 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildLoginForm() {
     return Column(
       children: [
-        // Phone Number Field
+        // Identifier Field (Email or Phone)
         CustomTextField(
-          controller: _phoneController,
-          labelText: 'Phone Number',
-          hintText: 'Enter your phone number',
-          keyboardType: TextInputType.phone,
-          prefixIcon: Icons.phone_outlined,
+          controller: _identifierController,
+          labelText: 'Email or Phone Number',
+          hintText: 'Enter your email or phone number',
+          keyboardType: TextInputType.emailAddress,
+          prefixIcon: Icons.person_outline,
           validator: (value) {
             if (value == null || value.isEmpty) {
-              return 'Please enter your phone number';
+              return 'Please enter your email or phone number';
             }
-            if (!GetUtils.isPhoneNumber(value)) {
-              return 'Please enter a valid phone number';
+            // Check if it's either a valid email or a valid phone number
+            bool isEmail = GetUtils.isEmail(value);
+            bool isPhone = GetUtils.isPhoneNumber(value);
+            
+            if (!isEmail && !isPhone) {
+              return 'Please enter a valid email or phone number';
             }
             return null;
           },
@@ -305,8 +309,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _handleLogin() {
     if (_formKey.currentState!.validate()) {
+      final identifier = _identifierController.text.trim();
+      final isEmail = GetUtils.isEmail(identifier);
+      
       _authController.signIn(
-        phoneNumber: _phoneController.text.trim(),
+        email: isEmail ? identifier : null,
+        phoneNumber: !isEmail ? identifier : null,
         password: _passwordController.text,
       ).then((success) {
         if (success) {

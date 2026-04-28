@@ -16,7 +16,7 @@ class SignInScreenEnhanced extends StatefulWidget {
 
 class _SignInScreenEnhancedState extends State<SignInScreenEnhanced> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
+  final _identifierController = TextEditingController();
   final _passwordController = TextEditingController();
   final AuthController _authController = Get.find<AuthController>();
   
@@ -26,7 +26,7 @@ class _SignInScreenEnhancedState extends State<SignInScreenEnhanced> {
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _identifierController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -83,7 +83,7 @@ class _SignInScreenEnhancedState extends State<SignInScreenEnhanced> {
                           .shimmer(duration: 1000.ms),
                       const SizedBox(height: 24),
                       Text(
-                        'Welcome Back!',
+                        'auth_welcome_back'.tr,
                         style: AppTextStyles.headlineLarge.copyWith(
                           fontWeight: FontWeight.bold,
                           color: AppColors.textPrimary,
@@ -94,7 +94,7 @@ class _SignInScreenEnhancedState extends State<SignInScreenEnhanced> {
                           .slideY(begin: 0.3, end: 0),
                       const SizedBox(height: 8),
                       Text(
-                        'Sign in to continue to GANACSADE',
+                        'auth_signin_subtitle'.tr,
                         style: AppTextStyles.bodyLarge.copyWith(
                           color: AppColors.textSecondary,
                         ),
@@ -109,7 +109,7 @@ class _SignInScreenEnhancedState extends State<SignInScreenEnhanced> {
                 
                 // Email/Phone Field
                 Text(
-                  'Email or Phone',
+                  'auth_phone_or_email'.tr,
                   style: AppTextStyles.bodyLarge.copyWith(
                     fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
@@ -125,16 +125,16 @@ class _SignInScreenEnhancedState extends State<SignInScreenEnhanced> {
                     });
                   },
                   child: TextFormField(
-                    controller: _emailController,
+                    controller: _identifierController,
                     keyboardType: TextInputType.emailAddress,
                     style: AppTextStyles.bodyLarge,
                     decoration: InputDecoration(
-                      hintText: 'your.email@example.com',
+                      hintText: 'auth_phone_or_email_hint'.tr,
                       hintStyle: AppTextStyles.bodyLarge.copyWith(
                         color: AppColors.textSecondary,
                       ),
                       prefixIcon: Icon(
-                        Icons.email_outlined,
+                        Icons.person_outline,
                         color: _isEmailFocused ? AppColors.primaryGreen : AppColors.textSecondary,
                       ),
                       border: OutlineInputBorder(
@@ -154,7 +154,14 @@ class _SignInScreenEnhancedState extends State<SignInScreenEnhanced> {
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter your email or phone';
+                        return 'auth_phone_or_email_hint'.tr;
+                      }
+                      
+                      bool isEmail = GetUtils.isEmail(value);
+                      bool isPhone = GetUtils.isPhoneNumber(value);
+
+                      if (!isEmail && !isPhone && value.length < 3) {
+                        return 'auth_phone_or_email_error'.tr;
                       }
                       return null;
                     },
@@ -171,7 +178,7 @@ class _SignInScreenEnhancedState extends State<SignInScreenEnhanced> {
                 
                 // Password Field
                 Text(
-                  'Password',
+                  'auth_password'.tr,
                   style: AppTextStyles.bodyLarge.copyWith(
                     fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
@@ -191,7 +198,7 @@ class _SignInScreenEnhancedState extends State<SignInScreenEnhanced> {
                     obscureText: _obscurePassword,
                     style: AppTextStyles.bodyLarge,
                     decoration: InputDecoration(
-                      hintText: 'Enter your password',
+                      hintText: 'auth_password_hint'.tr,
                       hintStyle: AppTextStyles.bodyLarge.copyWith(
                         color: AppColors.textSecondary,
                       ),
@@ -227,7 +234,7 @@ class _SignInScreenEnhancedState extends State<SignInScreenEnhanced> {
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter your password';
+                        return 'auth_password_hint'.tr;
                       }
                       return null;
                     },
@@ -256,7 +263,7 @@ class _SignInScreenEnhancedState extends State<SignInScreenEnhanced> {
                         activeColor: AppColors.primaryGreen,
                       )),
                       Text(
-                        'Remember me',
+                        'auth_remember_me'.tr,
                         style: AppTextStyles.bodyMedium.copyWith(
                           color: AppColors.textSecondary,
                         ),
@@ -272,7 +279,7 @@ class _SignInScreenEnhancedState extends State<SignInScreenEnhanced> {
                           );
                         },
                         child: Text(
-                          'Forgot Password?',
+                          'auth_forgot_password'.tr,
                           style: AppTextStyles.bodyMedium.copyWith(
                             color: AppColors.primaryGreen,
                             fontWeight: FontWeight.w600,
@@ -347,7 +354,7 @@ class _SignInScreenEnhancedState extends State<SignInScreenEnhanced> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                'Sign In',
+                                'auth_signin'.tr,
                                 style: AppTextStyles.bodyLarge.copyWith(
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.white,
@@ -371,7 +378,7 @@ class _SignInScreenEnhancedState extends State<SignInScreenEnhanced> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          "Don't have an account? ",
+                          "auth_no_account".tr,
                           style: AppTextStyles.bodyMedium.copyWith(
                             color: AppColors.textSecondary,
                           ),
@@ -381,7 +388,7 @@ class _SignInScreenEnhancedState extends State<SignInScreenEnhanced> {
                             Get.to(() => const SignUpScreen());
                           },
                           child: Text(
-                            'Sign Up',
+                            'auth_signup'.tr,
                             style: AppTextStyles.bodyMedium.copyWith(
                               color: AppColors.primaryGreen,
                               fontWeight: FontWeight.bold,
@@ -405,8 +412,9 @@ class _SignInScreenEnhancedState extends State<SignInScreenEnhanced> {
     if (_formKey.currentState!.validate()) {
       HapticFeedback.lightImpact();
       
+      final identifier = _identifierController.text.trim();
       final success = await _authController.signIn(
-        email: _emailController.text.trim(),
+        identifier: identifier,
         password: _passwordController.text,
       );
       

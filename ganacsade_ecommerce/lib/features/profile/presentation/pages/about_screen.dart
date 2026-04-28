@@ -236,65 +236,88 @@ class AboutScreen extends StatelessWidget {
             
             const SizedBox(height: 24),
             
-            // Credits Section
+            // Developed By Section
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: AppColors.grey50,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.grey200),
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.primaryGreen.withOpacity(0.05),
+                    AppColors.primaryGreen.withOpacity(0.1),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: AppColors.primaryGreen.withOpacity(0.2)),
               ),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        Icons.favorite,
-                        color: AppColors.error,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Made with ❤️ by Mohamed Hussein',
-                        style: AppTextStyles.titleSmall.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.grey900,
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryGreen.withOpacity(0.1),
+                          shape: BoxShape.circle,
                         ),
+                        child: Icon(
+                          Icons.code_rounded,
+                          color: AppColors.primaryGreen,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'about_developed_by'.tr,
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: AppColors.grey600,
+                              letterSpacing: 1.2,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Text(
+                            'Raadsan Tech',
+                            style: AppTextStyles.headlineSmall.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primaryGreen,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 20),
                   Text(
-                    'Built using Flutter framework by Mohamed Hussein with love for the Somali community. Special thanks to all our beta testers and early adopters who helped make GANACSADE better.',
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.grey600,
-                      height: 1.5,
+                    'Innovation • Quality • Excellence',
+                    style: AppTextStyles.labelMedium.copyWith(
+                      color: AppColors.primaryGreen.withOpacity(0.7),
+                      letterSpacing: 2,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.code,
-                        color: AppColors.primaryGreen,
-                        size: 16,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Powered by Flutter & Dart',
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.grey600,
-                        ),
-                      ),
-                    ],
+                  const Divider(height: 1, thickness: 0.5),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Built with passion for the Somali community, providing state-of-the-art digital solutions for modern businesses.',
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: AppColors.grey700,
+                      height: 1.6,
+                    ),
                   ),
                 ],
               ),
             )
                 .animate(delay: 800.ms)
-                .fadeIn(duration: 600.ms)
-                .slideY(begin: 0.3, end: 0),
+                .fadeIn(duration: 800.ms)
+                .slideY(begin: 0.2, end: 0),
             
             const SizedBox(height: 24),
             

@@ -20,7 +20,7 @@ class AuthApiService {
     required String password,
     String? firstName,
     String? lastName,
-    required String phoneNumber,
+    String? phoneNumber,
   }) async {
     try {
       final response = await _httpClient.post(
@@ -30,7 +30,7 @@ class AuthApiService {
           'password': password,
           if (firstName != null) 'firstName': firstName,
           if (lastName != null) 'lastName': lastName,
-          'phoneNumber': phoneNumber,
+          if (phoneNumber != null) 'phoneNumber': phoneNumber,
           'role': 'customer', // Default role for mobile app users
         },
       );
@@ -71,12 +71,14 @@ class AuthApiService {
   Future<Map<String, dynamic>> login({
     String? email,
     String? phoneNumber,
+    String? identifier,
     required String password,
   }) async {
     try {
       final response = await _httpClient.post(
         ApiConfig.loginEndpoint,
         data: {
+          if (identifier != null) 'identifier': identifier,
           if (email != null) 'email': email,
           if (phoneNumber != null) 'phoneNumber': phoneNumber,
           'password': password,

@@ -205,6 +205,7 @@ class AppTranslations extends Translations {
     'about_terms': 'Terms of Service',
     'about_privacy': 'Privacy Policy',
     'about_licenses': 'Licenses',
+    'about_developed_by': 'Developed by',
 
     // Auth
     'auth_signin': 'Login',
@@ -230,6 +231,9 @@ class AppTranslations extends Translations {
     'auth_create_password': 'Create a password',
     'auth_confirm_password': 'Confirm Password',
     'auth_confirm_password_hint': 'Confirm your password',
+    'auth_phone_or_email': 'Email or Phone Number',
+    'auth_phone_or_email_hint': 'Enter your email or phone number',
+    'auth_phone_or_email_error': 'Please enter a valid email or phone number',
 
     // Data Packages
     'data_packages': 'Data Packages',
@@ -453,6 +457,7 @@ class AppTranslations extends Translations {
     'about_terms': 'Shuruudaha Adeegga',
     'about_privacy': 'Siyaasadda Asturnaanta',
     'about_licenses': 'Shatiyada',
+    'about_developed_by': 'Waxaa horumariyay',
 
     // Auth
     'auth_signin': 'Login',
@@ -478,6 +483,9 @@ class AppTranslations extends Translations {
     'auth_create_password': 'Samee furaha sirta',
     'auth_confirm_password': 'Xaqiiji Furaha Sirta',
     'auth_confirm_password_hint': 'Xaqiiji furaha sirtaada',
+    'auth_phone_or_email': 'Email ama Telefoon',
+    'auth_phone_or_email_hint': 'Geli email-kaaga ama telefoonkaaga',
+    'auth_phone_or_email_error': 'Fadlan geli email ama telefoon sax ah',
 
     // Data Packages
     'data_packages': 'Xirmooyinka Xogta',
