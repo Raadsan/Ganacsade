@@ -54,3 +54,4 @@ module.exports.uploadCategory = createUploadMiddleware('categories');
 module.exports.uploadSubcategory = createUploadMiddleware('subcategories');
 module.exports.uploadBrand = createUploadMiddleware('brands');
 module.exports.uploadAdvertisement = createUploadMiddleware('advertisements');
+module.exports.uploadProfile = createUploadMiddleware('profiles');

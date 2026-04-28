@@ -2,7 +2,7 @@ const express = require('express');
 const { body } = require('express-validator');
 const validate = require('../../middleware/validate');
 const { query } = require('../../config/database');
-const { uploadCategory } = require('../../middleware/upload'); // Reuse category upload for brands
+const { uploadBrand } = require('../../middleware/upload');
 
 const router = express.Router();
 
@@ -227,7 +227,7 @@ router.delete('/:id', async (req, res, next) => {
  * @desc    Upload brand logo
  * @access  Private/Admin
  */
-router.post('/upload-logo', uploadCategory.single('logo'), async (req, res, next) => {
+router.post('/upload-logo', uploadBrand.single('logo'), async (req, res, next) => {
   try {
     if (!req.file) {
       return res.status(400).json({

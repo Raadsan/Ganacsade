@@ -11,22 +11,33 @@ const register = async (req, res, next) => {
     const { email, phoneNumber, password, firstName, lastName } = req.body;
     const role = 'customer'; // Role is never taken from client input
 
-    // Check if user already exists
-    const existingUser = await query(
-      'SELECT id, email, phone_number FROM users WHERE (email = $1 OR phone_number = $2) AND deleted_at IS NULL',
-      [email, phoneNumber]
-    );
+    if (!phoneNumber || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Phone number and password are required',
+      });
+    }
+
+    // Check if user already exists by phone number
+    // We only check email if it's provided
+    let checkQuery = 'SELECT id, email, phone_number FROM users WHERE phone_number = $1 AND deleted_at IS NULL';
+    let checkParams = [phoneNumber];
+
+    if (email) {
+      checkQuery = 'SELECT id, email, phone_number FROM users WHERE (phone_number = $1 OR email = $2) AND deleted_at IS NULL';
+      checkParams.push(email);
+    }
+
+    const existingUser = await query(checkQuery, checkParams);
 
     if (existingUser.rows.length > 0) {
       const user = existingUser.rows[0];
       let message = '';
       
-      if (user.email === email && user.phone_number === phoneNumber) {
-        message = 'An account with this email and phone number already exists';
-      } else if (user.email === email) {
-        message = 'An account with this email already exists';
-      } else {
+      if (user.phone_number === phoneNumber) {
         message = 'An account with this phone number already exists';
+      } else if (email && user.email === email) {
+        message = 'An account with this email already exists';
       }
       
       return res.status(409).json({
@@ -43,8 +54,9 @@ const register = async (req, res, next) => {
       `INSERT INTO users (email, phone_number, password_hash, first_name, last_name, role, status)
        VALUES ($1, $2, $3, $4, $5, $6, 'active')
        RETURNING id, email, phone_number, role, first_name, last_name, created_at`,
-      [email, phoneNumber, passwordHash, firstName, lastName, role]
+      [email || null, phoneNumber, passwordHash, firstName || 'User', lastName || '', role]
     );
+
 
     const user = result.rows[0];
 
@@ -248,7 +260,7 @@ const getProfile = async (req, res, next) => {
  */
 const updateProfile = async (req, res, next) => {
   try {
-    const { firstName, lastName, displayName, phoneNumber, gender, dateOfBirth, preferredLanguage } = req.body;
+    const { firstName, lastName, displayName, phoneNumber, gender, dateOfBirth, preferredLanguage, email, profileImageUrl } = req.body;
 
     const result = await query(
       `UPDATE users
@@ -258,10 +270,12 @@ const updateProfile = async (req, res, next) => {
            phone_number = COALESCE($4, phone_number),
            gender = COALESCE($5, gender),
            date_of_birth = COALESCE($6, date_of_birth),
-           preferred_language = COALESCE($7, preferred_language)
-       WHERE id = $8 AND deleted_at IS NULL
-       RETURNING id, email, phone_number, role, first_name, last_name, display_name`,
-      [firstName, lastName, displayName, phoneNumber, gender, dateOfBirth, preferredLanguage, req.user.id]
+           preferred_language = COALESCE($7, preferred_language),
+           email = COALESCE($8, email),
+           profile_image_url = COALESCE($9, profile_image_url)
+       WHERE id = $10 AND deleted_at IS NULL
+       RETURNING id, email, phone_number, role, first_name, last_name, display_name, profile_image_url`,
+      [firstName, lastName, displayName, phoneNumber, gender, dateOfBirth, preferredLanguage, email, profileImageUrl, req.user.id]
     );
 
     if (result.rows.length === 0) {
@@ -275,6 +289,38 @@ const updateProfile = async (req, res, next) => {
       success: true,
       message: 'Profile updated successfully',
       data: result.rows[0],
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Upload profile image
+ */
+const uploadProfileImage = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please upload an image',
+      });
+    }
+
+    const imageUrl = req.file.path; // Cloudinary URL
+
+    // Update user's profile image URL in database
+    const result = await query(
+      'UPDATE users SET profile_image_url = $1 WHERE id = $2 RETURNING id, profile_image_url',
+      [imageUrl, req.user.id]
+    );
+
+    res.json({
+      success: true,
+      message: 'Profile image uploaded successfully',
+      data: {
+        profileImageUrl: imageUrl,
+      },
     });
   } catch (error) {
     next(error);
@@ -528,6 +574,7 @@ module.exports = {
   adminLogin,
   getProfile,
   updateProfile,
+  uploadProfileImage,
   changePassword,
   logout,
   refreshToken,

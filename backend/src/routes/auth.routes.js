@@ -3,6 +3,7 @@ const { body } = require('express-validator');
 const authController = require('../controllers/auth.controller');
 const { authenticate } = require('../middleware/auth');
 const validate = require('../middleware/validate');
+const { uploadProfile } = require('../middleware/upload');
 
 const router = express.Router();
 
@@ -18,15 +19,20 @@ const router = express.Router();
 router.post(
   '/register',
   [
-    body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
+    body('email')
+      .optional({ nullable: true, checkFalsy: true })
+      .isEmail()
+      .normalizeEmail()
+      .withMessage('Valid email must be a valid email format'),
     body('phoneNumber').notEmpty().withMessage('Phone number is required'),
     body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
-    body('firstName').notEmpty().trim().withMessage('First name is required'),
-    body('lastName').notEmpty().trim().withMessage('Last name is required'),
+    body('firstName').optional({ nullable: true, checkFalsy: true }).trim(),
+    body('lastName').optional({ nullable: true, checkFalsy: true }).trim(),
     validate,
   ],
   authController.register
 );
+
 
 /**
  * @route   POST /api/auth/login
@@ -36,12 +42,12 @@ router.post(
 router.post(
   '/login',
   [
-    body('email').optional().isEmail().normalizeEmail().withMessage('Valid email is required'),
+    body('email').optional().isEmail().normalizeEmail().withMessage('Valid email format is required'),
     body('phoneNumber').optional().notEmpty().withMessage('Phone number is required'),
     body('password').notEmpty().withMessage('Password is required'),
     body().custom((value, { req }) => {
       if (!req.body.email && !req.body.phoneNumber) {
-        throw new Error('Either email or phone number must be provided');
+        throw new Error('Phone number must be provided');
       }
       return true;
     }),
@@ -143,6 +149,18 @@ router.put(
     validate,
   ],
   authController.updateProfile
+);
+
+/**
+ * @route   POST /api/auth/profile-image
+ * @desc    Upload profile image
+ * @access  Private
+ */
+router.post(
+  '/profile-image',
+  authenticate,
+  uploadProfile.single('image'),
+  authController.uploadProfileImage
 );
 
 /**
