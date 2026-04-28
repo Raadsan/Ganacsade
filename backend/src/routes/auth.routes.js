@@ -24,10 +24,16 @@ router.post(
       .isEmail()
       .normalizeEmail()
       .withMessage('Valid email must be a valid email format'),
-    body('phoneNumber').notEmpty().withMessage('Phone number is required'),
+    body('phoneNumber').optional({ nullable: true, checkFalsy: true }).trim(),
     body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
     body('firstName').optional({ nullable: true, checkFalsy: true }).trim(),
     body('lastName').optional({ nullable: true, checkFalsy: true }).trim(),
+    body().custom((value, { req }) => {
+      if (!req.body.email && !req.body.phoneNumber) {
+        throw new Error('Either email or phone number must be provided');
+      }
+      return true;
+    }),
     validate,
   ],
   authController.register
@@ -42,12 +48,12 @@ router.post(
 router.post(
   '/login',
   [
-    body('email').optional().isEmail().normalizeEmail().withMessage('Valid email format is required'),
-    body('phoneNumber').optional().notEmpty().withMessage('Phone number is required'),
+    body('email').optional({ nullable: true, checkFalsy: true }).isEmail().normalizeEmail().withMessage('Valid email format is required'),
+    body('phoneNumber').optional({ nullable: true, checkFalsy: true }).trim(),
     body('password').notEmpty().withMessage('Password is required'),
     body().custom((value, { req }) => {
-      if (!req.body.email && !req.body.phoneNumber) {
-        throw new Error('Phone number must be provided');
+      if (!req.body.email && !req.body.phoneNumber && !req.body.identifier) {
+        throw new Error('Email or phone number must be provided');
       }
       return true;
     }),
@@ -64,11 +70,11 @@ router.post(
 router.post(
   '/admin/login',
   [
-    body('email').optional().isEmail().normalizeEmail().withMessage('Valid email is required'),
-    body('phoneNumber').optional().notEmpty().withMessage('Phone number is required'),
+    body('email').optional({ nullable: true, checkFalsy: true }).isEmail().normalizeEmail().withMessage('Valid email is required'),
+    body('phoneNumber').optional({ nullable: true, checkFalsy: true }).trim(),
     body('password').notEmpty().withMessage('Password is required'),
     body().custom((value, { req }) => {
-      if (!req.body.email && !req.body.phoneNumber) {
+      if (!req.body.email && !req.body.phoneNumber && !req.body.identifier) {
         throw new Error('Either email or phone number must be provided');
       }
       return true;

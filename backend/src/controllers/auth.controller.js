@@ -11,33 +11,40 @@ const register = async (req, res, next) => {
     const { email, phoneNumber, password, firstName, lastName } = req.body;
     const role = 'customer'; // Role is never taken from client input
 
-    if (!phoneNumber || !password) {
+    if ((!email && !phoneNumber) || !password) {
       return res.status(400).json({
         success: false,
-        message: 'Phone number and password are required',
+        message: 'Email or Phone number and password are required',
       });
     }
 
-    // Check if user already exists by phone number
-    // We only check email if it's provided
-    let checkQuery = 'SELECT id, email, phone_number FROM users WHERE phone_number = $1 AND deleted_at IS NULL';
-    let checkParams = [phoneNumber];
+    // Check if user already exists
+    let checkQuery = 'SELECT id, email, phone_number FROM users WHERE (deleted_at IS NULL) AND (';
+    let checkParams = [];
+    let conditions = [];
 
     if (email) {
-      checkQuery = 'SELECT id, email, phone_number FROM users WHERE (phone_number = $1 OR email = $2) AND deleted_at IS NULL';
       checkParams.push(email);
+      conditions.push(`email = $${checkParams.length}`);
     }
+
+    if (phoneNumber) {
+      checkParams.push(phoneNumber);
+      conditions.push(`phone_number = $${checkParams.length}`);
+    }
+
+    checkQuery += conditions.join(' OR ') + ')';
 
     const existingUser = await query(checkQuery, checkParams);
 
     if (existingUser.rows.length > 0) {
       const user = existingUser.rows[0];
-      let message = '';
+      let message = 'An account with this email or phone number already exists';
       
-      if (user.phone_number === phoneNumber) {
-        message = 'An account with this phone number already exists';
-      } else if (email && user.email === email) {
+      if (email && user.email === email) {
         message = 'An account with this email already exists';
+      } else if (phoneNumber && user.phone_number === phoneNumber) {
+        message = 'An account with this phone number already exists';
       }
       
       return res.status(409).json({
@@ -54,7 +61,7 @@ const register = async (req, res, next) => {
       `INSERT INTO users (email, phone_number, password_hash, first_name, last_name, role, status)
        VALUES ($1, $2, $3, $4, $5, $6, 'active')
        RETURNING id, email, phone_number, role, first_name, last_name, created_at`,
-      [email || null, phoneNumber, passwordHash, firstName || 'User', lastName || '', role]
+      [email || null, phoneNumber || null, passwordHash, firstName || 'User', lastName || '', role]
     );
 
 
@@ -90,14 +97,22 @@ const register = async (req, res, next) => {
  */
 const login = async (req, res, next) => {
   try {
-    const { email, phoneNumber, password } = req.body;
+    const { email, phoneNumber, identifier, password } = req.body;
+    const loginIdentifier = identifier || email || phoneNumber;
+
+    if (!loginIdentifier || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email/Phone number and password are required',
+      });
+    }
 
     // Find user by email OR phone number
     const result = await query(
       `SELECT id, email, phone_number, password_hash, role, first_name, last_name, status
        FROM users
-       WHERE (email = $1 OR phone_number = $2) AND deleted_at IS NULL`,
-      [email || null, phoneNumber || null]
+       WHERE (email = $1 OR phone_number = $1) AND deleted_at IS NULL`,
+      [loginIdentifier]
     );
 
     if (result.rows.length === 0) {
@@ -160,14 +175,15 @@ const login = async (req, res, next) => {
  */
 const adminLogin = async (req, res, next) => {
   try {
-    const { email, phoneNumber, password } = req.body;
+    const { email, phoneNumber, identifier, password } = req.body;
+    const loginIdentifier = identifier || email || phoneNumber;
 
     // Find admin or staff user by email OR phone number
     const result = await query(
       `SELECT id, email, phone_number, password_hash, role, first_name, last_name, status
        FROM users
-       WHERE (email = $1 OR phone_number = $2) AND role IN ('admin', 'staff') AND deleted_at IS NULL`,
-      [email || null, phoneNumber || null]
+       WHERE (email = $1 OR phone_number = $1) AND role IN ('admin', 'staff') AND deleted_at IS NULL`,
+      [loginIdentifier]
     );
 
     if (result.rows.length === 0) {
