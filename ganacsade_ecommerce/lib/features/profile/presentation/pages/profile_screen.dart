@@ -133,14 +133,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   const SizedBox(height: 4),
 
-                  // User Email
-                  Text(
-                    controller.currentUser?.email ?? 'user@email.com',
-                    style: TextStyle(
-                      color: AppColors.white.withOpacity(0.9),
-                      fontSize: 16,
-                    ),
-                  ).animate().fadeIn(delay: 500.ms, duration: 600.ms),
+                  // User Email / Phone fallback
+                  if (controller.currentUser?.email != null &&
+                      controller.currentUser!.email.isNotEmpty)
+                    Text(
+                      controller.currentUser!.email,
+                      style: TextStyle(
+                        color: AppColors.white.withOpacity(0.9),
+                        fontSize: 16,
+                      ),
+                    ).animate().fadeIn(delay: 500.ms, duration: 600.ms)
+                  else
+                    const SizedBox(height: 10),
 
                   const SizedBox(height: 12),
 
@@ -247,13 +251,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              _buildInfoRow(
-                icon: IconlyBold.message,
-                label: 'Email',
-                value: controller.currentUser?.email ?? 'Not provided',
-                isDark: isDark,
-              ),
-              const SizedBox(height: 12),
+              if (controller.currentUser?.email != null &&
+                  controller.currentUser!.email.isNotEmpty) ...[
+                _buildInfoRow(
+                  icon: IconlyBold.message,
+                  label: 'Email',
+                  value: controller.currentUser!.email,
+                  isDark: isDark,
+                ),
+                const SizedBox(height: 12),
+              ],
               _buildInfoRow(
                 icon: IconlyBold.call,
                 label: 'Phone',

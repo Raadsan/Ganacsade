@@ -19,17 +19,17 @@ class SignInScreen extends StatefulWidget {
 
 class _SignInScreenState extends State<SignInScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final AuthController _authController = Get.find<AuthController>();
 
   bool _obscurePassword = true;
-  bool _isEmailFocused = false;
+  bool _isPhoneFocused = false;
   bool _isPasswordFocused = false;
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _phoneController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -136,7 +136,7 @@ class _SignInScreenState extends State<SignInScreen> {
                       const SizedBox(height: 48),
 
                       Text(
-                            'Email or Phone Number',
+                            'Phone Number',
                             style: AppTextStyles.titleSmall.copyWith(
                               fontWeight: FontWeight.w600,
                               color: isDark
@@ -151,19 +151,19 @@ class _SignInScreenState extends State<SignInScreen> {
                       Focus(
                         onFocusChange: (hasFocus) {
                           setState(() {
-                            _isEmailFocused = hasFocus;
+                            _isPhoneFocused = hasFocus;
                           });
                         },
                         child: TextFormField(
-                          controller: _emailController,
+                          controller: _phoneController,
                           keyboardType: TextInputType.emailAddress,
                           textInputAction: TextInputAction.next,
                           autofocus: false,
                           decoration: InputDecoration(
-                            hintText: 'Enter email or phone number',
+                            hintText: 'Enter your phone number',
                             prefixIcon: Icon(
-                              Icons.person_outline,
-                              color: _isEmailFocused
+                              Icons.phone_outlined,
+                              color: _isPhoneFocused
                                   ? AppColors.primaryGreen
                                   : AppColors.grey500,
                             ),
@@ -188,7 +188,7 @@ class _SignInScreenState extends State<SignInScreen> {
                               ),
                             ),
                             filled: true,
-                            fillColor: _isEmailFocused
+                            fillColor: _isPhoneFocused
                                 ? AppColors.primaryGreen.withOpacity(0.05)
                                 : (isDark
                                       ? AppColors.darkElevatedSurface
@@ -196,16 +196,11 @@ class _SignInScreenState extends State<SignInScreen> {
                           ),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Please enter your email or phone number';
+                              return 'Please enter your phone number';
                             }
 
-                            final isEmail = GetUtils.isEmail(value);
-                            final isPhone = RegExp(r'^[0-9]+$').hasMatch(
-                              value.replaceAll(RegExp(r'[\s\-\+\(\)]'), ''),
-                            );
-
-                            if (!isEmail && !isPhone) {
-                              return 'Please enter a valid email or phone number';
+                            if (!GetUtils.isPhoneNumber(value)) {
+                              return 'Please enter a valid phone number';
                             }
                             return null;
                           },
@@ -467,12 +462,10 @@ class _SignInScreenState extends State<SignInScreen> {
     if (_formKey.currentState!.validate()) {
       HapticFeedback.lightImpact();
 
-      final identifier = _emailController.text.trim();
-      final isEmail = GetUtils.isEmail(identifier);
+      final phoneNumber = _phoneController.text.trim();
 
       final success = await _authController.signIn(
-        email: isEmail ? identifier : null,
-        phoneNumber: !isEmail ? identifier : null,
+        phoneNumber: phoneNumber,
         password: _passwordController.text,
       );
 

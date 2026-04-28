@@ -17,7 +17,7 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _authController = Get.put(AuthController());
   
@@ -26,7 +26,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _phoneController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -130,19 +130,19 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildLoginForm() {
     return Column(
       children: [
-        // Email Field
+        // Phone Number Field
         CustomTextField(
-          controller: _emailController,
-          labelText: 'Email',
-          hintText: 'Enter your email',
-          keyboardType: TextInputType.emailAddress,
-          prefixIcon: Icons.email_outlined,
+          controller: _phoneController,
+          labelText: 'Phone Number',
+          hintText: 'Enter your phone number',
+          keyboardType: TextInputType.phone,
+          prefixIcon: Icons.phone_outlined,
           validator: (value) {
             if (value == null || value.isEmpty) {
-              return 'Please enter your email';
+              return 'Please enter your phone number';
             }
-            if (!GetUtils.isEmail(value)) {
-              return 'Please enter a valid email';
+            if (!GetUtils.isPhoneNumber(value)) {
+              return 'Please enter a valid phone number';
             }
             return null;
           },
@@ -306,7 +306,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void _handleLogin() {
     if (_formKey.currentState!.validate()) {
       _authController.signIn(
-        email: _emailController.text.trim(),
+        phoneNumber: _phoneController.text.trim(),
         password: _passwordController.text,
       ).then((success) {
         if (success) {

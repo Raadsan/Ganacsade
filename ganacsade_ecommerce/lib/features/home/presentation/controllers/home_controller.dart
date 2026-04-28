@@ -524,7 +524,7 @@ class HomeController extends GetxController {
 
   void _startBannerAutoScroll() {
     _bannerTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
-      if (promotionalBanners.isNotEmpty) {
+      if (promotionalBanners.isNotEmpty && bannerPageController.hasClients) {
         final nextIndex =
             (currentBannerIndex.value + 1) % promotionalBanners.length;
         bannerPageController.animateToPage(

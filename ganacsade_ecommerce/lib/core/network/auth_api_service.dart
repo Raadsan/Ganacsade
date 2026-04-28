@@ -16,20 +16,20 @@ class AuthApiService {
   /// 
   /// Returns: Map containing user data, access token, and refresh token
   Future<Map<String, dynamic>> register({
-    required String email,
+    String? email,
     required String password,
-    required String firstName,
-    required String lastName,
+    String? firstName,
+    String? lastName,
     required String phoneNumber,
   }) async {
     try {
       final response = await _httpClient.post(
         ApiConfig.registerEndpoint,
         data: {
-          'email': email,
+          if (email != null) 'email': email,
           'password': password,
-          'firstName': firstName,
-          'lastName': lastName,
+          if (firstName != null) 'firstName': firstName,
+          if (lastName != null) 'lastName': lastName,
           'phoneNumber': phoneNumber,
           'role': 'customer', // Default role for mobile app users
         },
@@ -150,12 +150,21 @@ class AuthApiService {
     String? firstName,
     String? lastName,
     String? phoneNumber,
+    String? email,
+    String? gender,
+    DateTime? dateOfBirth,
   }) async {
     try {
       final data = <String, dynamic>{};
       if (firstName != null) data['firstName'] = firstName;
       if (lastName != null) data['lastName'] = lastName;
       if (phoneNumber != null) data['phoneNumber'] = phoneNumber;
+      if (email != null) data['email'] = email;
+      if (gender != null) data['gender'] = gender;
+      if (dateOfBirth != null) {
+        data['dateOfBirth'] =
+            '${dateOfBirth.year}-${dateOfBirth.month.toString().padLeft(2, '0')}-${dateOfBirth.day.toString().padLeft(2, '0')}';
+      }
 
       final response = await _httpClient.put(
         ApiConfig.profileEndpoint,
@@ -174,12 +183,41 @@ class AuthApiService {
       }
     } on DioException catch (e) {
       if (e.response != null) {
-        throw Exception(e.response!.data['message'] ?? 'Failed to update profile');
+        throw Exception(
+          e.response!.data['message'] ?? 'Failed to update profile',
+        );
       } else {
         throw Exception('Network error. Please check your connection.');
       }
     } catch (e) {
       throw Exception('Failed to update profile: ${e.toString()}');
+    }
+  }
+
+  /// Upload profile image
+  Future<Map<String, dynamic>> uploadProfileImage(String imagePath) async {
+    try {
+      final formData = FormData.fromMap({
+        'image': await MultipartFile.fromFile(
+          imagePath,
+          filename: imagePath.split('/').last,
+        ),
+      });
+
+      final response = await _httpClient.post(
+        '${ApiConfig.authEndpoint}/profile-image',
+        data: formData,
+      );
+
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        return response.data;
+      } else {
+        throw Exception(
+          response.data['message'] ?? 'Failed to upload profile image',
+        );
+      }
+    } catch (e) {
+      throw Exception('Failed to upload profile image: ${e.toString()}');
     }
   }
 

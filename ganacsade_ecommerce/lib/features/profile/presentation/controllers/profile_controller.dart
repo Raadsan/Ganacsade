@@ -4,6 +4,7 @@ import '../../../../shared/models/user_simple.dart';
 import '../../../../shared/models/address.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/network/address_api_service.dart';
+import '../../../../core/network/auth_api_service.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 
 class ProfileController extends GetxController {
@@ -62,14 +63,16 @@ class ProfileController extends GetxController {
           ? authUser.displayName
           : '${authUser.firstName} ${authUser.lastName}'.trim();
 
+      final displayValue = name.isNotEmpty ? name : authUser.phoneNumber;
+
       print('🔍 Creating User with:');
-      print('   - Name: $name');
+      print('   - Name: $displayValue');
       print('   - Email: ${authUser.email}');
       print('   - Phone: ${authUser.phoneNumber}');
 
       _currentUser.value = User(
         id: authUser.id,
-        name: name.isNotEmpty ? name : 'User',
+        name: displayValue,
         email: authUser.email,
         phone: authUser.phoneNumber,
         profileImage: authUser.profileImageUrl.isNotEmpty
@@ -120,64 +123,116 @@ class ProfileController extends GetxController {
   }
 
   // User Profile Methods
-  void updateProfile({
+  Future<void> updateProfile({
     required String name,
     required String email,
     required String phone,
     DateTime? dateOfBirth,
     String? gender,
-  }) {
+  }) async {
     if (_currentUser.value != null) {
-      print('💾 Updating profile...');
-      print('   - Name: $name');
-      print('   - Email: $email');
-      print('   - Phone: $phone');
+      try {
+        print('💾 Updating profile via API...');
 
-      _currentUser.value = _currentUser.value!.copyWith(
-        name: name,
-        email: email,
-        phone: phone,
-        dateOfBirth: dateOfBirth,
-        gender: gender,
-      );
-
-      // Also update AuthController
-      final authController = Get.find<AuthController>();
-      final authUser = authController.user;
-      if (authUser != null) {
+        final authApiService = AuthApiService();
         final nameParts = name.trim().split(' ');
         final firstName = nameParts.first;
-        final lastName = nameParts.length > 1
-            ? nameParts.sublist(1).join(' ')
-            : '';
+        final lastName =
+            nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
 
-        // Update auth user data
-        authController.updateUserData(
+        final response = await authApiService.updateProfile(
           firstName: firstName,
           lastName: lastName,
-          email: email,
           phoneNumber: phone,
+          email: email,
+          gender: gender,
+          dateOfBirth: dateOfBirth,
         );
 
-        print('✅ Profile updated in both controllers');
+        if (response['success'] == true) {
+          // Update local state
+          _currentUser.value = _currentUser.value!.copyWith(
+            name: name,
+            email: email,
+            phone: phone,
+            dateOfBirth: dateOfBirth,
+            gender: gender,
+          );
+
+          // Also update AuthController
+          final authController = Get.find<AuthController>();
+          authController.updateUserData(
+            firstName: firstName,
+            lastName: lastName,
+            email: email,
+            phoneNumber: phone,
+          );
+
+          update(); // Notify GetBuilder widgets
+
+          ScaffoldMessenger.of(Get.context!).showSnackBar(
+            SnackBar(
+              content: const Text('Profile updated successfully'),
+              backgroundColor: AppColors.primaryGreen,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } catch (e) {
+        print('❌ Error updating profile: $e');
+        ScaffoldMessenger.of(Get.context!).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
       }
-
-      update(); // Notify GetBuilder widgets
-
-      ScaffoldMessenger.of(Get.context!).showSnackBar(
-        SnackBar(
-          content: const Text('Profile updated successfully'),
-          backgroundColor: AppColors.primaryGreen,
-        ),
-      );
     }
   }
 
-  void updateProfileImage(String imagePath) {
+  Future<void> updateProfileImage(String imagePath) async {
     if (_currentUser.value != null) {
-      _currentUser.value = _currentUser.value!.copyWith(
-        profileImage: imagePath,
-      );
+      try {
+        print('📸 Uploading profile image...');
+        final authApiService = AuthApiService();
+        final response = await authApiService.uploadProfileImage(imagePath);
+
+        if (response['success'] == true) {
+          final imageUrl = response['data']['profileImageUrl'];
+
+          _currentUser.value = _currentUser.value!.copyWith(
+            profileImage: imageUrl,
+          );
+
+          // Update AuthController too
+          final authController = Get.find<AuthController>();
+          if (authController.user != null) {
+            authController.user = authController.user!.copyWith(
+              profileImageUrl: imageUrl,
+            );
+          }
+
+          update();
+
+          ScaffoldMessenger.of(Get.context!).showSnackBar(
+            SnackBar(
+              content: const Text('Profile image updated'),
+              backgroundColor: AppColors.primaryGreen,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } catch (e) {
+        print('❌ Error uploading image: $e');
+        ScaffoldMessenger.of(Get.context!).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 

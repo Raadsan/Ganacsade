@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:iconly/iconly.dart';
 import '../../core/constants/app_colors.dart';
@@ -24,8 +25,16 @@ class MainNavigation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isTablet = context.isTabletOrLarger;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return GetBuilder<NavigationController>(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        systemNavigationBarColor: isDark ? const Color(0xFF1E1E1E) : AppColors.white,
+        systemNavigationBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+      ),
+      child: GetBuilder<NavigationController>(
       init: NavigationController(),
       builder: (controller) {
         // Use NavigationRail for tablets, BottomNavigationBar for phones
@@ -134,6 +143,7 @@ class MainNavigation extends StatelessWidget {
           ),
         );
       },
+      ),
     );
   }
 

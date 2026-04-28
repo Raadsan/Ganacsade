@@ -26,7 +26,11 @@ class HomeAppBar extends StatelessWidget {
               Expanded(
                 child: Obx(() {
                   final user = authController.user;
-                  final firstName = user?.firstName ?? 'Guest';
+                  final displayName =
+                      (user?.phoneNumber != null &&
+                          user!.phoneNumber.isNotEmpty)
+                      ? user.phoneNumber
+                      : 'Guest';
 
                   // Get location from default address or fallback
                   String location = 'Mogadishu - Somalia';
@@ -43,13 +47,13 @@ class HomeAppBar extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        firstName.capitalizeFirst!,
+                        displayName,
                         style: AppTextStyles.headlineSmall.copyWith(
                           color: isDark
                               ? AppColors.darkTextPrimary
                               : AppColors.textPrimary,
-                          fontWeight: FontWeight.w500,
-                          fontSize: 22,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 20,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -80,14 +84,6 @@ class HomeAppBar extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: AppColors.grey200,
                     shape: BoxShape.circle,
-
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
                   ),
                   child: ClipOval(
                     child: Obx(() {
@@ -97,18 +93,10 @@ class HomeAppBar extends StatelessWidget {
                           profileUrl,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) =>
-                              const Icon(
-                                Icons.person,
-                                color: Colors.white,
-                                size: 30,
-                              ),
+                              Icon(Icons.person, color: Colors.black, size: 30),
                         );
                       }
-                      return const Icon(
-                        Icons.person,
-                        color: Colors.white,
-                        size: 30,
-                      );
+                      return Icon(Icons.person, color: Colors.black, size: 30);
                     }),
                   ),
                 ),

@@ -65,17 +65,12 @@ class AuthController extends GetxController {
       
       // Validate inputs
       if ((email == null || email.isEmpty) && (phoneNumber == null || phoneNumber.isEmpty)) {
-        errorMessage.value = 'Please enter your email or phone number';
+        errorMessage.value = 'Please enter your phone number or email';
         return false;
       }
 
       if (password.isEmpty) {
         errorMessage.value = 'Please enter your password';
-        return false;
-      }
-      
-      if (email != null && email.isNotEmpty && !GetUtils.isEmail(email)) {
-        errorMessage.value = 'Please enter a valid email address';
         return false;
       }
       
@@ -92,13 +87,15 @@ class AuthController extends GetxController {
       // Create user object
       final user = app_user.User(
         id: userData['id'],
-        email: userData['email'],
+        email: userData['email'] ?? '',
         phoneNumber: userData['phoneNumber'] ?? '',
-        firstName: userData['firstName'],
-        lastName: userData['lastName'],
-        displayName: '${userData['firstName']} ${userData['lastName']}',
+        firstName: userData['firstName'] ?? '',
+        lastName: userData['lastName'] ?? '',
+        displayName: userData['firstName'] != null 
+            ? '${userData['firstName']} ${userData['lastName'] ?? ''}'
+            : (userData['phoneNumber'] ?? 'User'),
         profileImageUrl: '',
-        isEmailVerified: true,
+        isEmailVerified: userData['isEmailVerified'] ?? false,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
         lastLoginAt: DateTime.now(),
@@ -114,8 +111,6 @@ class AuthController extends GetxController {
       print('   - Phone: ${user.phoneNumber}');
       
       return true;
-      
-      return true;
     } catch (e) {
       errorMessage.value = e.toString().replaceAll('Exception: ', '');
       return false;
@@ -124,25 +119,20 @@ class AuthController extends GetxController {
     }
   }
   
-  Future<bool> signUpWithEmail({
-    required String email,
+  Future<bool> signUp({
+    String? email,
+    required String phoneNumber,
     required String password,
-    required String firstName,
-    required String lastName,
-    String? phoneNumber,
+    String? firstName,
+    String? lastName,
   }) async {
     try {
       isLoading.value = true;
       errorMessage.value = '';
       
       // Validate inputs
-      if (email.isEmpty || password.isEmpty || firstName.isEmpty || lastName.isEmpty) {
-        errorMessage.value = 'Please fill in all required fields';
-        return false;
-      }
-      
-      if (!GetUtils.isEmail(email)) {
-        errorMessage.value = 'Please enter a valid email address';
+      if (phoneNumber.isEmpty || password.isEmpty) {
+        errorMessage.value = 'Please enter phone number and password';
         return false;
       }
       
@@ -150,13 +140,6 @@ class AuthController extends GetxController {
         errorMessage.value = 'Password must be at least 6 characters';
         return false;
       }
-      
-      if (phoneNumber == null || phoneNumber.isEmpty) {
-        errorMessage.value = 'Phone number is required';
-        return false;
-      }
-      
-      // No need to split name anymore as we receive them separately
       
       // Call API to register
       final response = await _authApiService.register(
@@ -173,13 +156,15 @@ class AuthController extends GetxController {
       // Create user object
       final user = app_user.User(
         id: userData['id'],
-        email: userData['email'],
+        email: userData['email'] ?? '',
         phoneNumber: userData['phoneNumber'] ?? '',
-        firstName: userData['firstName'],
-        lastName: userData['lastName'],
-        displayName: '${userData['firstName']} ${userData['lastName']}',
+        firstName: userData['firstName'] ?? '',
+        lastName: userData['lastName'] ?? '',
+        displayName: userData['firstName'] != null 
+            ? '${userData['firstName']} ${userData['lastName'] ?? ''}'
+            : (userData['phoneNumber'] ?? 'User'),
         profileImageUrl: '',
-        isEmailVerified: true,
+        isEmailVerified: userData['isEmailVerified'] ?? false,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
         lastLoginAt: DateTime.now(),
@@ -191,11 +176,7 @@ class AuthController extends GetxController {
       await _userBox.put('current_user', user.toJson());
       
       print('✅ User signed up and saved:');
-      print('   - Email: ${user.email}');
       print('   - Phone: ${user.phoneNumber}');
-      print('   - Name: ${user.firstName} ${user.lastName}');
-      
-      return true;
       
       return true;
     } catch (e) {
@@ -242,23 +223,19 @@ class AuthController extends GetxController {
     String? lastName,
     String? email,
     String? phoneNumber,
+    String? profileImageUrl,
   }) {
     if (_user.value != null) {
-      final updatedUser = app_user.User(
-        id: _user.value!.id,
+      final updatedUser = _user.value!.copyWith(
         email: email ?? _user.value!.email,
         phoneNumber: phoneNumber ?? _user.value!.phoneNumber,
         firstName: firstName ?? _user.value!.firstName,
         lastName: lastName ?? _user.value!.lastName,
-        displayName: '${firstName ?? _user.value!.firstName} ${lastName ?? _user.value!.lastName}',
-        profileImageUrl: _user.value!.profileImageUrl,
-        gender: _user.value!.gender,
-        dateOfBirth: _user.value!.dateOfBirth,
-        isEmailVerified: _user.value!.isEmailVerified,
-        status: _user.value!.status,
-        createdAt: _user.value!.createdAt,
+        displayName: firstName != null || lastName != null
+            ? '${firstName ?? _user.value!.firstName} ${lastName ?? _user.value!.lastName}'
+            : _user.value!.displayName,
+        profileImageUrl: profileImageUrl ?? _user.value!.profileImageUrl,
         updatedAt: DateTime.now(),
-        lastLoginAt: _user.value!.lastLoginAt,
       );
       
       _user.value = updatedUser;
@@ -267,6 +244,13 @@ class AuthController extends GetxController {
       _userBox.put('current_user', updatedUser.toJson());
       
       print('✅ AuthController user data updated and saved');
+    }
+  }
+
+  set user(app_user.User? value) {
+    _user.value = value;
+    if (value != null) {
+      _userBox.put('current_user', value.toJson());
     }
   }
 

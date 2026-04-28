@@ -15,23 +15,17 @@ class SignUpScreen extends StatefulWidget {
 
 class _SignUpScreenState extends State<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final AuthController _authController = Get.find<AuthController>();
   
   bool _obscurePassword = true;
-  bool _isNameFocused = false;
-  bool _isEmailFocused = false;
   bool _isPhoneFocused = false;
   bool _isPasswordFocused = false;
   bool _agreeToTerms = false;
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _emailController.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -121,119 +115,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 
                 const SizedBox(height: 32),
                 
-                // Full Name Field
-                Text(
-                  'auth_full_name'.tr,
-                  style: AppTextStyles.titleSmall.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Focus(
-                  onFocusChange: (hasFocus) {
-                    setState(() {
-                      _isNameFocused = hasFocus;
-                    });
-                  },
-                  child: TextFormField(
-                    controller: _nameController,
-                    textInputAction: TextInputAction.next,
-                    textCapitalization: TextCapitalization.words,
-                    decoration: InputDecoration(
-                      hintText: 'auth_full_name_hint'.tr,
-                      prefixIcon: Icon(
-                        Icons.person_outline,
-                        color: _isNameFocused ? AppColors.primaryGreen : AppColors.grey500,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: AppColors.borderLight),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: AppColors.primaryGreen, width: 2),
-                      ),
-                      errorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: AppColors.error, width: 2),
-                      ),
-                      filled: true,
-                      fillColor: _isNameFocused ? AppColors.primaryGreen.withOpacity(0.05) : (isDark ? AppColors.darkElevatedSurface : AppColors.grey50),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your full name';
-                      }
-                      if (value.length < 2) {
-                        return 'Name must be at least 2 characters';
-                      }
-                      return null;
-                    },
-                    onChanged: (value) {
-                      _authController.clearError();
-                    },
-                  ),
-                ),
-                
-                const SizedBox(height: 20),
-                
-                // Email Field
-                Text(
-                  'auth_email'.tr,
-                  style: AppTextStyles.titleSmall.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Focus(
-                  onFocusChange: (hasFocus) {
-                    setState(() {
-                      _isEmailFocused = hasFocus;
-                    });
-                  },
-                  child: TextFormField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    textInputAction: TextInputAction.next,
-                    decoration: InputDecoration(
-                      hintText: 'auth_email_hint'.tr,
-                      prefixIcon: Icon(
-                        Icons.email_outlined,
-                        color: _isEmailFocused ? AppColors.primaryGreen : AppColors.grey500,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: AppColors.borderLight),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: AppColors.primaryGreen, width: 2),
-                      ),
-                      errorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: AppColors.error, width: 2),
-                      ),
-                      filled: true,
-                      fillColor: _isEmailFocused ? AppColors.primaryGreen.withOpacity(0.05) : (isDark ? AppColors.darkElevatedSurface : AppColors.grey50),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your email address';
-                      }
-                      if (!GetUtils.isEmail(value)) {
-                        return 'Please enter a valid email address';
-                      }
-                      return null;
-                    },
-                    onChanged: (value) {
-                      _authController.clearError();
-                    },
-                  ),
-                ),
-                
-                const SizedBox(height: 20),
+
                 
                 // Phone Number Field
                 Text(
@@ -272,7 +154,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       fillColor: _isPhoneFocused ? AppColors.primaryGreen.withOpacity(0.05) : (isDark ? AppColors.darkElevatedSurface : AppColors.grey50),
                     ),
                     validator: (value) {
-                      if (value != null && value.isNotEmpty && value.length < 10) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter your phone number';
+                      }
+                      if (!GetUtils.isPhoneNumber(value)) {
                         return 'Please enter a valid phone number';
                       }
                       return null;
@@ -521,17 +406,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
       
       HapticFeedback.lightImpact();
       
-      final fullName = _nameController.text.trim();
-      final nameParts = fullName.split(' ');
-      final firstName = nameParts.first;
-      final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
-
-      final success = await _authController.signUpWithEmail(
-        email: _emailController.text.trim(),
+      final success = await _authController.signUp(
+        phoneNumber: _phoneController.text.trim(),
         password: _passwordController.text,
-        firstName: firstName,
-        lastName: lastName.isEmpty ? '.' : lastName, // Backend requires lastName
-        phoneNumber: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
       );
       
       if (success && mounted) {

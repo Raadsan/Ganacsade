@@ -16,9 +16,6 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _firstNameController = TextEditingController();
-  final _lastNameController = TextEditingController();
-  final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -30,9 +27,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   void dispose() {
-    _firstNameController.dispose();
-    _lastNameController.dispose();
-    _emailController.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -99,70 +93,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget _buildRegistrationForm() {
     return Column(
       children: [
-        // Name Fields
-        Row(
-          children: [
-            Expanded(
-              child: CustomTextField(
-                controller: _firstNameController,
-                labelText: 'First Name',
-                hintText: 'Enter first name',
-                prefixIcon: Icons.person_outlined,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your first name';
-                  }
-                  return null;
-                },
-              )
-                  .animate()
-                  .fadeIn(delay: 300.ms, duration: 500.ms)
-                  .slideX(begin: -0.2, end: 0),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: CustomTextField(
-                controller: _lastNameController,
-                labelText: 'Last Name',
-                hintText: 'Enter last name',
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your last name';
-                  }
-                  return null;
-                },
-              )
-                  .animate()
-                  .fadeIn(delay: 400.ms, duration: 500.ms)
-                  .slideX(begin: 0.2, end: 0),
-            ),
-          ],
-        ),
-        
-        const SizedBox(height: 20),
-        
-        // Email Field
-        CustomTextField(
-          controller: _emailController,
-          labelText: 'Email',
-          hintText: 'Enter your email',
-          keyboardType: TextInputType.emailAddress,
-          prefixIcon: Icons.email_outlined,
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Please enter your email';
-            }
-            if (!GetUtils.isEmail(value)) {
-              return 'Please enter a valid email';
-            }
-            return null;
-          },
-        )
-            .animate()
-            .fadeIn(delay: 500.ms, duration: 500.ms)
-            .slideX(begin: -0.2, end: 0),
-        
-        const SizedBox(height: 20),
+
         
         // Phone Field
         CustomTextField(
@@ -338,12 +269,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Future<void> _handleRegister() async {
     if (_formKey.currentState!.validate() && _agreeToTerms) {
-      final success = await _authController.signUpWithEmail(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-        firstName: _firstNameController.text.trim(),
-        lastName: _lastNameController.text.trim(),
+      final success = await _authController.signUp(
         phoneNumber: _phoneController.text.trim(),
+        password: _passwordController.text,
       );
       
       if (success) {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../controllers/profile_controller.dart';
@@ -572,20 +573,29 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ),
           elevation: 2,
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.save_outlined, size: 20),
-            const SizedBox(width: 8),
-            Text(
-              'Save Changes',
-              style: AppTextStyles.titleMedium.copyWith(
-                color: AppColors.white,
-                fontWeight: FontWeight.w600,
+        child: _isSaving
+            ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  color: AppColors.white,
+                  strokeWidth: 2,
+                ),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.save_outlined, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Save Changes',
+                    style: AppTextStyles.titleMedium.copyWith(
+                      color: AppColors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
       ),
     )
         .animate()
@@ -732,37 +742,68 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
+  final ImagePicker _picker = ImagePicker();
+  bool _isSaving = false;
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: source,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 75,
+      );
+
+      if (image != null) {
+        // Upload immediately or wait for save? 
+        // Let's upload immediately as per ProfileController implementation
+        await _profileController.updateProfileImage(image.path);
+      }
+    } catch (e) {
+      print('Error picking image: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error picking image: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
   void _pickImageFromCamera() {
-    Get.snackbar(
-      'Camera',
-      'Camera functionality will be available soon',
-      backgroundColor: AppColors.primaryGreen.withOpacity(0.9),
-      colorText: AppColors.white,
-    );
+    _pickImage(ImageSource.camera);
   }
 
   void _pickImageFromGallery() {
-    Get.snackbar(
-      'Gallery',
-      'Gallery functionality will be available soon',
-      backgroundColor: AppColors.primaryGreen.withOpacity(0.9),
-      colorText: AppColors.white,
-    );
+    _pickImage(ImageSource.gallery);
   }
 
-  void _saveProfile() {
+  Future<void> _saveProfile() async {
     if (_formKey.currentState!.validate()) {
+      setState(() => _isSaving = true);
       HapticFeedback.lightImpact();
       
-      _profileController.updateProfile(
-        name: _nameController.text.trim(),
-        email: _emailController.text.trim(),
-        phone: _phoneController.text.trim(),
-        dateOfBirth: _selectedDateOfBirth,
-        gender: _selectedGender,
-      );
-      
-      Get.back();
+      try {
+        await _profileController.updateProfile(
+          name: _nameController.text.trim(),
+          email: _emailController.text.trim(),
+          phone: _phoneController.text.trim(),
+          dateOfBirth: _selectedDateOfBirth,
+          gender: _selectedGender,
+        );
+        
+        if (mounted) {
+          Get.back();
+        }
+      } catch (e) {
+        // Error is handled in controller and shows snackbar
+      } finally {
+        if (mounted) {
+          setState(() => _isSaving = false);
+        }
+      }
     }
   }
 }
