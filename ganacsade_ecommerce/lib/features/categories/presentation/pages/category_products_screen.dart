@@ -3,6 +3,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_text_styles.dart';
+import '../../../../core/network/api_config.dart';
+import '../../../../core/network/products_api_service.dart';
 import '../../../../shared/models/category.dart';
 import '../../../../shared/models/product.dart';
 import '../../../../shared/widgets/advertisement_banner.dart';
@@ -21,144 +23,224 @@ class CategoryProductsScreen extends StatefulWidget {
 }
 
 class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
+  final ProductsApiService _productsApi = ProductsApiService();
+
+  List<Product> _allProducts = [];
+  bool _isLoading = true;
+  String? _error;
+
   String _selectedSort = 'Popular';
   String _selectedFilter = 'All';
-  
-  final List<String> _sortOptions = ['Popular', 'Price: Low to High', 'Price: High to Low', 'Newest', 'Rating'];
-  final List<String> _filterOptions = ['All', 'In Stock', 'On Sale', 'Free Shipping'];
 
-  // Mock products for demonstration
-  List<Product> get _mockProducts => [
-    Product(
-      id: '1',
-      name: 'Samsung Galaxy S24',
-      nameAr: 'سامسونج جالاكسي S24',
-      nameSo: 'Samsung Galaxy S24',
-      description: 'Latest flagship smartphone with advanced camera system and AI features.',
-      descriptionAr: 'أحدث هاتف ذكي رائد مع نظام كاميرا متقدم وميزات الذكاء الاصطناعي.',
-      descriptionSo: 'Taleefanka ugu cusub ee horumarsan oo leh nidaamka kamaradda horumarsan iyo astaamaha AI.',
-      price: 899.99,
-      discountPrice: 799.99,
-      categoryId: widget.category.id,
-      images: ['placeholder'],
-      rating: 4.8,
-      reviewCount: 1250,
-      inStock: true,
-      stockQuantity: 50,
-      brand: 'Samsung',
-      isFeatured: true,
-    ),
-    Product(
-      id: '2',
-      name: 'iPhone 15 Pro',
-      nameAr: 'آيفون 15 برو',
-      nameSo: 'iPhone 15 Pro',
-      description: 'Premium iPhone with titanium design and professional camera system.',
-      descriptionAr: 'آيفون متميز بتصميم التيتانيوم ونظام كاميرا احترافي.',
-      descriptionSo: 'iPhone heer sare ah oo leh naqshad titanium ah iyo nidaam kameradda xirfadeed.',
-      price: 1199.99,
-      categoryId: widget.category.id,
-      images: ['placeholder'],
-      rating: 4.9,
-      reviewCount: 2100,
-      inStock: true,
-      stockQuantity: 30,
-      brand: 'Apple',
-      isFeatured: true,
-    ),
-    Product(
-      id: '3',
-      name: 'MacBook Air M3',
-      nameAr: 'ماك بوك إير M3',
-      nameSo: 'MacBook Air M3',
-      description: 'Ultra-thin laptop with M3 chip for exceptional performance and battery life.',
-      descriptionAr: 'لابتوب رفيع جداً مع شريحة M3 للأداء الاستثنائي وعمر البطارية.',
-      descriptionSo: 'Laptop aad u dhuuban oo leh chip M3 waxqabad gaar ah iyo nolol baytari.',
-      price: 1299.99,
-      discountPrice: 1199.99,
-      categoryId: widget.category.id,
-      images: ['placeholder'],
-      rating: 4.7,
-      reviewCount: 890,
-      inStock: true,
-      stockQuantity: 25,
-      brand: 'Apple',
-    ),
-    Product(
-      id: '4',
-      name: 'Sony WH-1000XM5',
-      nameAr: 'سوني WH-1000XM5',
-      nameSo: 'Sony WH-1000XM5',
-      description: 'Premium noise-canceling headphones with industry-leading sound quality.',
-      descriptionAr: 'سماعات رأس متميزة بإلغاء الضوضاء مع جودة صوت رائدة في الصناعة.',
-      descriptionSo: 'Dhegaysiga madaxa heer sare ah oo joojiya buuqa oo leh tayada codka ugu fiican.',
-      price: 399.99,
-      discountPrice: 349.99,
-      categoryId: widget.category.id,
-      images: ['placeholder'],
-      rating: 4.6,
-      reviewCount: 1580,
-      inStock: true,
-      stockQuantity: 75,
-      brand: 'Sony',
-    ),
-    Product(
-      id: '5',
-      name: 'Dell XPS 13',
-      nameAr: 'ديل XPS 13',
-      nameSo: 'Dell XPS 13',
-      description: 'Compact premium laptop with stunning InfinityEdge display.',
-      descriptionAr: 'لابتوب متميز مدمج مع شاشة InfinityEdge المذهلة.',
-      descriptionSo: 'Laptop heer sare ah oo is-dhex-gal ah oo leh shaashadda InfinityEdge oo cajiib ah.',
-      price: 999.99,
-      categoryId: widget.category.id,
-      images: ['placeholder'],
-      rating: 4.5,
-      reviewCount: 720,
-      inStock: false,
-      stockQuantity: 0,
-      brand: 'Dell',
-    ),
-    Product(
-      id: '6',
-      name: 'iPad Pro 12.9"',
-      nameAr: 'آيباد برو 12.9"',
-      nameSo: 'iPad Pro 12.9"',
-      description: 'Professional tablet with M2 chip and Liquid Retina XDR display.',
-      descriptionAr: 'جهاز لوحي احترافي مع شريحة M2 وشاشة Liquid Retina XDR.',
-      descriptionSo: 'Tablet xirfadeed ah oo leh chip M2 iyo shaashadda Liquid Retina XDR.',
-      price: 1099.99,
-      discountPrice: 999.99,
-      categoryId: widget.category.id,
-      images: ['placeholder'],
-      rating: 4.8,
-      reviewCount: 950,
-      inStock: true,
-      stockQuantity: 40,
-      brand: 'Apple',
-      isFeatured: true,
-    ),
+  final List<String> _sortOptions = [
+    'Popular',
+    'Price: Low to High',
+    'Price: High to Low',
+    'Newest',
+    'Rating',
   ];
+  final List<String> _filterOptions = ['All', 'In Stock', 'On Sale'];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProducts();
+  }
+
+  Future<void> _loadProducts() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      final response = await _productsApi.getProducts(
+        category: widget.category.id,
+        limit: 100,
+      );
+      final productsData = response['products'] as List? ?? [];
+      final products = productsData.map((json) => _parseProduct(json)).toList();
+      setState(() {
+        _allProducts = products;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Error loading category products: $e');
+      setState(() {
+        _isLoading = false;
+        _error = 'Failed to load products';
+      });
+    }
+  }
+
+  Product _parseProduct(Map<String, dynamic> json) {
+    double price = 0.0;
+    if (json['price'] != null) {
+      price = json['price'] is String
+          ? double.tryParse(json['price']) ?? 0.0
+          : (json['price'] as num).toDouble();
+    }
+
+    double discountPrice = 0.0;
+    final isFlashSale = json['is_flash_sale'] == true;
+    if (isFlashSale && json['flash_sale_price'] != null) {
+      discountPrice = json['flash_sale_price'] is String
+          ? double.tryParse(json['flash_sale_price']) ?? 0.0
+          : (json['flash_sale_price'] as num).toDouble();
+    } else if (json['discount_price'] != null) {
+      discountPrice = json['discount_price'] is String
+          ? double.tryParse(json['discount_price']) ?? 0.0
+          : (json['discount_price'] as num).toDouble();
+    }
+
+    double rating = 0.0;
+    if (json['rating'] != null) {
+      rating = json['rating'] is String
+          ? double.tryParse(json['rating']) ?? 0.0
+          : (json['rating'] as num).toDouble();
+    }
+
+    List<String> images = [];
+    if (json['images'] != null && json['images'] is List) {
+      images = (json['images'] as List).map((e) {
+        final imgPath = e.toString();
+        if (imgPath.startsWith('/uploads')) {
+          return '${ApiConfig.getServerUrl()}$imgPath';
+        }
+        return imgPath;
+      }).toList();
+    }
+
+    // 🔍 DEBUG: Log raw API image data
+    print('-------------------------------------------');
+    print('📦 Product: ${json['name_en']}');
+    print('   Raw images from API: ${json['images']}');
+    print('   Parsed images (${images.length}):');
+    for (int i = 0; i < images.length; i++) {
+      print('   [$i] ${images[i]}');
+    }
+
+    if (images.isEmpty) images = ['placeholder'];
+
+
+    return Product(
+      id: json['id']?.toString() ?? '',
+      name: json['name_en'] ?? '',
+      nameAr: json['name_ar'] ?? '',
+      nameSo: json['name_so'] ?? '',
+      description: json['description_en'] ?? '',
+      descriptionAr: json['description_ar'] ?? '',
+      descriptionSo: json['description_so'] ?? '',
+      price: price,
+      discountPrice: discountPrice,
+      categoryId: json['category_id']?.toString() ?? '',
+      images: images,
+      rating: rating,
+      reviewCount: json['review_count'] ?? 0,
+      inStock: json['in_stock'] ?? true,
+      stockQuantity: json['stock_quantity'] ?? 0,
+      brand: json['brand'] ?? '',
+      sku: json['sku'] ?? '',
+      isFeatured: json['is_featured'] ?? false,
+      isHalal: json['is_halal'] ?? false,
+    );
+  }
+
+  List<Product> get _filteredProducts {
+    List<Product> result = List.from(_allProducts);
+
+    // Filter
+    switch (_selectedFilter) {
+      case 'In Stock':
+        result = result.where((p) => p.inStock).toList();
+        break;
+      case 'On Sale':
+        result = result.where((p) => p.hasDiscount).toList();
+        break;
+    }
+
+    // Sort
+    switch (_selectedSort) {
+      case 'Price: Low to High':
+        result.sort((a, b) => a.finalPrice.compareTo(b.finalPrice));
+        break;
+      case 'Price: High to Low':
+        result.sort((a, b) => b.finalPrice.compareTo(a.finalPrice));
+        break;
+      case 'Newest':
+        result.sort((a, b) =>
+            (b.createdAt ?? DateTime(2000))
+                .compareTo(a.createdAt ?? DateTime(2000)));
+        break;
+      case 'Rating':
+        result.sort((a, b) => b.rating.compareTo(a.rating));
+        break;
+      case 'Popular':
+      default:
+        result.sort((a, b) => b.reviewCount.compareTo(a.reviewCount));
+        break;
+    }
+    return result;
+  }
+
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Scaffold(
-      backgroundColor: isDark ? AppColors.darkScaffoldBackground : AppColors.scaffoldBackground,
+      backgroundColor:
+          isDark ? AppColors.darkScaffoldBackground : AppColors.scaffoldBackground,
       appBar: _buildAppBar(isDark),
-      body: Column(
+      body: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.primaryGreen),
+            )
+          : _error != null
+              ? _buildErrorState(isDark)
+              : Column(
+                  children: [
+                    const AdvertisementBanner(
+                      placement: 'category_page',
+                      height: 100,
+                      margin: EdgeInsets.fromLTRB(16, 8, 16, 0),
+                      showTitle: false,
+                    ),
+                    _buildFilterBar(isDark),
+                    Expanded(
+                      child: _buildProductGrid(isDark),
+                    ),
+                  ],
+                ),
+    );
+  }
+
+  Widget _buildErrorState(bool isDark) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Category Page Advertisement Banner
-          const AdvertisementBanner(
-            placement: 'category_page',
-            height: 100,
-            margin: EdgeInsets.fromLTRB(16, 8, 16, 0),
-            showTitle: false,
+          Icon(
+            Icons.cloud_off,
+            size: 72,
+            color: isDark ? AppColors.darkTextSecondary : AppColors.grey400,
           ),
-          _buildFilterBar(isDark),
-          Expanded(
-            child: _buildProductGrid(isDark),
+          const SizedBox(height: 16),
+          Text(
+            _error ?? 'Something went wrong',
+            style: AppTextStyles.bodyLarge.copyWith(
+              color: isDark ? AppColors.darkTextSecondary : AppColors.grey600,
+            ),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: _loadProducts,
+            icon: const Icon(Icons.refresh),
+            label: const Text('Retry'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryGreen,
+              foregroundColor: AppColors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+            ),
           ),
         ],
       ),
@@ -320,19 +402,53 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
   }
 
   Widget _buildProductGrid(bool isDark) {
-    return GridView.builder(
-      padding: const EdgeInsets.all(16),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 0.63,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
+    final products = _filteredProducts;
+
+    if (products.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.inventory_2_outlined,
+              size: 72,
+              color: isDark ? AppColors.darkTextSecondary : AppColors.grey400,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No products found',
+              style: AppTextStyles.titleMedium.copyWith(
+                color: isDark ? AppColors.darkTextPrimary : AppColors.grey600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Try adjusting your filters',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: isDark ? AppColors.darkTextSecondary : AppColors.grey500,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadProducts,
+      color: AppColors.primaryGreen,
+      child: GridView.builder(
+        padding: const EdgeInsets.all(16),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          childAspectRatio: 0.63,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+        ),
+        itemCount: products.length,
+        itemBuilder: (context, index) {
+          return _buildProductCard(products[index], index, isDark);
+        },
       ),
-      itemCount: _mockProducts.length,
-      itemBuilder: (context, index) {
-        final product = _mockProducts[index];
-        return _buildProductCard(product, index, isDark);
-      },
     );
   }
 

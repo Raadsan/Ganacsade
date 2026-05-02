@@ -42,6 +42,19 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     super.initState();
     _loadReviews();
     _loadRelatedProducts();
+
+    // 🔍 DEBUG: Print product image URLs
+    print('============================================');
+    print('🖼️  PRODUCT: ${widget.product.name}');
+    print('🆔  ID: ${widget.product.id}');
+    print('📦  Images count: ${widget.product.images.length}');
+    for (int i = 0; i < widget.product.images.length; i++) {
+      print('   [$i] ${widget.product.images[i]}');
+    }
+    if (widget.product.images.isEmpty) {
+      print('   ⚠️  NO IMAGES — will show placeholder');
+    }
+    print('============================================');
   }
 
   Future<void> _loadReviews() async {

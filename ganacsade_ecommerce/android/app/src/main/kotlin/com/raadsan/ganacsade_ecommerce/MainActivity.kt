@@ -1,4 +1,4 @@
-package com.example.ganacsade_ecommerce
+package com.raadsan.ganacsade_ecommerce
 
 import io.flutter.embedding.android.FlutterActivity
 

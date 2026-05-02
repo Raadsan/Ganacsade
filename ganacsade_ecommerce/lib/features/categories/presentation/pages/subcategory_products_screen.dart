@@ -24,12 +24,13 @@ class SubcategoryProductsScreen extends StatefulWidget {
   });
 
   @override
-  State<SubcategoryProductsScreen> createState() => _SubcategoryProductsScreenState();
+  State<SubcategoryProductsScreen> createState() =>
+      _SubcategoryProductsScreenState();
 }
 
 class _SubcategoryProductsScreenState extends State<SubcategoryProductsScreen> {
   final ProductsApiService _productsApi = ProductsApiService();
-  
+
   List<Product> _products = [];
   bool _isLoading = true;
   String? _error;
@@ -47,11 +48,13 @@ class _SubcategoryProductsScreenState extends State<SubcategoryProductsScreen> {
     });
 
     try {
-      final response = await _productsApi.getProducts(subcategory: widget.subcategoryId);
+      final response = await _productsApi.getProducts(
+        subcategory: widget.subcategoryId,
+      );
       final productsData = response['products'] as List? ?? [];
-      
+
       final products = productsData.map((json) => _parseProduct(json)).toList();
-      
+
       setState(() {
         _products = products;
         _isLoading = false;
@@ -75,7 +78,7 @@ class _SubcategoryProductsScreenState extends State<SubcategoryProductsScreen> {
         price = (json['price'] as num).toDouble();
       }
     }
-    
+
     // Parse discount price - prefer flash sale price if product is in active flash sale
     double discountPrice = 0.0;
     final isFlashSale = json['is_flash_sale'] == true;
@@ -94,7 +97,7 @@ class _SubcategoryProductsScreenState extends State<SubcategoryProductsScreen> {
         discountPrice = (json['discount_price'] as num).toDouble();
       }
     }
-    
+
     // Parse rating
     double rating = 0.0;
     if (json['rating'] != null) {
@@ -104,7 +107,7 @@ class _SubcategoryProductsScreenState extends State<SubcategoryProductsScreen> {
         rating = (json['rating'] as num).toDouble();
       }
     }
-    
+
     // Parse images array
     List<String> images = [];
     if (json['images'] != null && json['images'] is List) {
@@ -116,7 +119,7 @@ class _SubcategoryProductsScreenState extends State<SubcategoryProductsScreen> {
         return imageUrl;
       }).toList();
     }
-    
+
     return Product(
       id: json['id']?.toString() ?? '',
       name: json['name_en'] ?? '',
@@ -143,12 +146,16 @@ class _SubcategoryProductsScreenState extends State<SubcategoryProductsScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Scaffold(
-      backgroundColor: isDark ? AppColors.darkScaffoldBackground : AppColors.grey50,
+      backgroundColor: isDark
+          ? AppColors.darkScaffoldBackground
+          : AppColors.grey50,
       appBar: AppBar(
         title: Text(widget.subcategoryName),
-        backgroundColor: isDark ? AppColors.darkScaffoldBackground : widget.categoryColor,
+        backgroundColor: isDark
+            ? AppColors.darkScaffoldBackground
+            : widget.categoryColor,
         foregroundColor: isDark ? AppColors.darkTextPrimary : AppColors.white,
         elevation: 0,
         leading: IconButton(
@@ -157,10 +164,12 @@ class _SubcategoryProductsScreenState extends State<SubcategoryProductsScreen> {
         ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primaryGreen))
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.primaryGreen),
+            )
           : _error != null
-              ? _buildErrorState(isDark)
-              : _buildContent(isDark),
+          ? _buildErrorState(isDark)
+          : _buildContent(isDark),
     );
   }
 
@@ -169,17 +178,20 @@ class _SubcategoryProductsScreenState extends State<SubcategoryProductsScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.error_outline, size: 64, color: isDark ? AppColors.darkTextSecondary : AppColors.grey400),
+          Icon(
+            Icons.error_outline,
+            size: 64,
+            color: isDark ? AppColors.darkTextSecondary : AppColors.grey400,
+          ),
           const SizedBox(height: 16),
           Text(
             _error ?? 'Something went wrong',
-            style: AppTextStyles.bodyLarge.copyWith(color: isDark ? AppColors.darkTextSecondary : AppColors.grey600),
+            style: AppTextStyles.bodyLarge.copyWith(
+              color: isDark ? AppColors.darkTextSecondary : AppColors.grey600,
+            ),
           ),
           const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: _loadProducts,
-            child: const Text('Retry'),
-          ),
+          ElevatedButton(onPressed: _loadProducts, child: const Text('Retry')),
         ],
       ),
     );
@@ -199,7 +211,7 @@ class _SubcategoryProductsScreenState extends State<SubcategoryProductsScreen> {
           margin: EdgeInsets.fromLTRB(16, 8, 16, 0),
           showTitle: false,
         ),
-        
+
         // Products Grid
         Expanded(
           child: GridView.builder(
@@ -225,16 +237,24 @@ class _SubcategoryProductsScreenState extends State<SubcategoryProductsScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.inventory_2_outlined, size: 64, color: isDark ? AppColors.darkTextSecondary : AppColors.grey400),
+          Icon(
+            Icons.inventory_2_outlined,
+            size: 64,
+            color: isDark ? AppColors.darkTextSecondary : AppColors.grey400,
+          ),
           const SizedBox(height: 16),
           Text(
             'No products available',
-            style: AppTextStyles.bodyLarge.copyWith(color: isDark ? AppColors.darkTextPrimary : AppColors.grey600),
+            style: AppTextStyles.bodyLarge.copyWith(
+              color: isDark ? AppColors.darkTextPrimary : AppColors.grey600,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             'Check back later for new arrivals',
-            style: AppTextStyles.bodyMedium.copyWith(color: isDark ? AppColors.darkTextSecondary : AppColors.grey500),
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: isDark ? AppColors.darkTextSecondary : AppColors.grey500,
+            ),
           ),
         ],
       ),
@@ -243,176 +263,212 @@ class _SubcategoryProductsScreenState extends State<SubcategoryProductsScreen> {
 
   Widget _buildProductCard(Product product, int index, bool isDark) {
     return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        Get.to(() => ProductDetailScreen(product: product));
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.darkCardBackground : AppColors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: isDark ? Colors.black26 : AppColors.shadowLight,
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+          onTap: () {
+            HapticFeedback.lightImpact();
+            Get.to(() => ProductDetailScreen(product: product));
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.darkCardBackground : AppColors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: isDark ? Colors.black26 : AppColors.shadowLight,
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Product Image
-            Expanded(
-              flex: 3,
-              child: Stack(
-                children: [
-                  Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: AppColors.grey100,
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                      child: _buildProductImage(product.mainImage),
-                    ),
-                  ),
-                  if (product.hasDiscount)
-                    Positioned(
-                      top: 8,
-                      left: 8,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Product Image
+                Expanded(
+                  flex: 3,
+                  child: Stack(
+                    children: [
+                      Container(
+                        width: double.infinity,
                         decoration: BoxDecoration(
-                          color: AppColors.error,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          '${product.discountPercentage.round()}% OFF',
-                          style: AppTextStyles.labelSmall.copyWith(
-                            color: AppColors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 10,
+                          color: AppColors.grey100,
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(12),
                           ),
                         ),
-                      ),
-                    ),
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: AppColors.white.withOpacity(0.9),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: const Icon(
-                        Icons.favorite_border,
-                        size: 16,
-                        color: AppColors.grey600,
-                      ),
-                    ),
-                  ),
-                  if (!product.inStock)
-                    Positioned.fill(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: AppColors.black.withOpacity(0.6),
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                        ),
-                        child: const Center(
-                          child: Text(
-                            'Out of Stock',
-                            style: TextStyle(color: AppColors.white, fontWeight: FontWeight.bold),
+                        child: ClipRRect(
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(12),
                           ),
+                          child: _buildProductImage(product.mainImage),
                         ),
                       ),
-                    ),
-                ],
-              ),
-            ),
-            // Product Details
-            Expanded(
-              flex: 2,
-              child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (product.brand.isNotEmpty)
-                      Text(
-                        product.brand,
-                        style: AppTextStyles.labelSmall.copyWith(color: isDark ? AppColors.darkTextSecondary : AppColors.grey600, fontSize: 10),
-                      ),
-                    Flexible(
-                      child: Text(
-                        product.name,
-                        style: AppTextStyles.bodyMedium.copyWith(
-                          fontWeight: FontWeight.w600, 
-                          fontSize: 12,
-                          color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Row(
-                      children: [
-                        Icon(Icons.star, size: 12, color: AppColors.warning),
-                        const SizedBox(width: 2),
-                        Text(
-                          '${product.rating}',
-                          style: AppTextStyles.labelSmall.copyWith(
-                            fontWeight: FontWeight.w600, 
-                            fontSize: 10,
-                            color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            '(${product.reviewCount})',
-                            style: AppTextStyles.labelSmall.copyWith(color: isDark ? AppColors.darkTextSecondary : AppColors.grey600, fontSize: 10),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Spacer(),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            '\$${product.finalPrice.toStringAsFixed(2)}',
-                            style: AppTextStyles.titleSmall.copyWith(
-                              color: AppColors.primaryGreen,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
+                      if (product.hasDiscount)
+                        Positioned(
+                          top: 8,
+                          left: 8,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.error,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              '${product.discountPercentage.round()}% OFF',
+                              style: AppTextStyles.labelSmall.copyWith(
+                                color: AppColors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 10,
+                              ),
                             ),
                           ),
                         ),
-                        if (product.hasDiscount)
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: AppColors.white.withOpacity(0.9),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Icon(
+                            Icons.favorite_border,
+                            size: 16,
+                            color: AppColors.grey600,
+                          ),
+                        ),
+                      ),
+                      if (!product.inStock)
+                        Positioned.fill(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: AppColors.black.withOpacity(0.6),
+                              borderRadius: const BorderRadius.vertical(
+                                top: Radius.circular(12),
+                              ),
+                            ),
+                            child: const Center(
+                              child: Text(
+                                'Out of Stock',
+                                style: TextStyle(
+                                  color: AppColors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                // Product Details
+                Expanded(
+                  flex: 2,
+                  child: Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (product.brand.isNotEmpty)
                           Text(
-                            '\$${product.price.toStringAsFixed(2)}',
+                            product.brand,
                             style: AppTextStyles.labelSmall.copyWith(
-                              color: isDark ? AppColors.darkTextSecondary : AppColors.grey600,
-                              decoration: TextDecoration.lineThrough,
+                              color: isDark
+                                  ? AppColors.darkTextSecondary
+                                  : AppColors.grey600,
                               fontSize: 10,
                             ),
                           ),
+                        Flexible(
+                          child: Text(
+                            product.name,
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12,
+                              color: isDark
+                                  ? AppColors.darkTextPrimary
+                                  : AppColors.textPrimary,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.star,
+                              size: 12,
+                              color: AppColors.warning,
+                            ),
+                            const SizedBox(width: 2),
+                            Text(
+                              '${product.rating}',
+                              style: AppTextStyles.labelSmall.copyWith(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 10,
+                                color: isDark
+                                    ? AppColors.darkTextPrimary
+                                    : AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                '(${product.reviewCount})',
+                                style: AppTextStyles.labelSmall.copyWith(
+                                  color: isDark
+                                      ? AppColors.darkTextSecondary
+                                      : AppColors.grey600,
+                                  fontSize: 10,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const Spacer(),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                '\$${product.finalPrice.toStringAsFixed(2)}',
+                                style: AppTextStyles.titleSmall.copyWith(
+                                  color: AppColors.primaryGreen,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                            if (product.hasDiscount)
+                              Text(
+                                '\$${product.price.toStringAsFixed(2)}',
+                                style: AppTextStyles.labelSmall.copyWith(
+                                  color: isDark
+                                      ? AppColors.darkTextSecondary
+                                      : AppColors.grey600,
+                                  decoration: TextDecoration.lineThrough,
+                                  fontSize: 10,
+                                ),
+                              ),
+                          ],
+                        ),
                       ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
-      ),
-    ).animate()
-        .fadeIn(delay: Duration(milliseconds: 50 * index), duration: 400.ms)
+          ),
+        )
+        .animate()
+        .fadeIn(
+          delay: Duration(milliseconds: 50 * index),
+          duration: 400.ms,
+        )
         .slideY(begin: 0.2, end: 0);
   }
 
@@ -433,7 +489,8 @@ class _SubcategoryProductsScreenState extends State<SubcategoryProductsScreen> {
           return Center(
             child: CircularProgressIndicator(
               value: loadingProgress.expectedTotalBytes != null
-                  ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                  ? loadingProgress.cumulativeBytesLoaded /
+                        loadingProgress.expectedTotalBytes!
                   : null,
               strokeWidth: 2,
             ),
