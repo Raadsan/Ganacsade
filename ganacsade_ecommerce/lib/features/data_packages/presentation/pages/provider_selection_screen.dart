@@ -251,7 +251,7 @@ class _ProviderSelectionScreenState extends State<ProviderSelectionScreen> {
   ) {
     return Obx(() {
       final isSelected = controller.isProviderSelected(provider);
-      final providerColor = provider.primaryColor;
+
 
       final hasPackages = provider.packages.isNotEmpty;
 
