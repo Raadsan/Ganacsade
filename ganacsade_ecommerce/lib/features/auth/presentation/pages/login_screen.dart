@@ -318,7 +318,7 @@ class _LoginScreenState extends State<LoginScreen> {
         password: _passwordController.text,
       ).then((success) {
         if (success) {
-          Get.offAllNamed('/main');
+          Get.offAllNamed(_authController.mainRoute);
         }
       });
     }

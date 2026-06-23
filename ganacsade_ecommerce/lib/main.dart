@@ -20,17 +20,16 @@ import 'features/auth/presentation/controllers/auth_controller.dart';
 import 'features/auth/presentation/pages/sign_in_screen_enhanced.dart';
 import 'features/auth/presentation/pages/sign_up_screen.dart';
 import 'features/navigation/main_navigation.dart';
+import 'features/navigation/delivery_main_navigation.dart';
 import 'features/wishlist/presentation/controllers/wishlist_controller.dart';
+import 'features/notifications/presentation/controllers/app_notifications_controller.dart';
+import 'core/services/push_notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Firebase removed - using Node.js API instead
-
-  // Initialize Hive
   await Hive.initFlutter();
 
-  // Initialize GetX controllers
   Get.put(ThemeController());
   Get.put(LanguageController());
   Get.put(AuthController());
@@ -39,6 +38,9 @@ void main() async {
   Get.put(ProfileController());
   Get.put(search_ctrl.SearchController());
   Get.put(WishlistController());
+  Get.put(AppNotificationsController());
+
+  await PushNotificationService().initialize();
 
   // Set system UI overlay style
   SystemChrome.setSystemUIOverlayStyle(
@@ -99,6 +101,7 @@ class GStoreApp extends StatelessWidget {
             GetPage(name: '/login', page: () => const SignInScreenEnhanced()),
             GetPage(name: '/register', page: () => const SignUpScreen()),
             GetPage(name: '/main', page: () => const MainNavigation()),
+            GetPage(name: '/delivery-main', page: () => const DeliveryMainNavigation()),
           ],
 
           // GetX configuration

@@ -1,13 +1,19 @@
 class AppConstants {
   // API Configuration
-  
-   static const String baseUrl =
-      'http://178.18.241.5:5002/api'; // Backend API URL for real device // Backend API URL for real device
- 
+  //
+  // Android emulator → local backend:
+  //   http://10.0.2.2:5002/api
+  //
+  // Real phone on same WiFi → replace with your PC IP:
+  //   http://192.168.x.x:5002/api
+  //
+  // Deployment server:
+  //   http://178.18.241.5:5002/api';
+  //
+  // IMPORTANT: after changing server, logout/login so a fresh token is saved.
+  // static const String baseUrl = 'http://10.0.2.2:5002/api';
+  static const String baseUrl = 'http://178.18.241.5:5002/api';
 
-// //  kan waa kan localka 
-//     static const String baseUrl =
-//       'http://10.0.2.2:5002/api'; 
   static const String apiVersion = 'v1';
 
   // App Configuration

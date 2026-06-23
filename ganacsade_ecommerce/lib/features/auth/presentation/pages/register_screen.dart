@@ -283,7 +283,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
       
       if (success) {
-        Get.offAllNamed('/main');
+        Get.offAllNamed(_authController.mainRoute);
       }
     }
   }

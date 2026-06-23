@@ -432,7 +432,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         // Reset navigation to home tab
         Get.find<NavigationController>().resetToHome();
         // Navigate to main app
-        Get.offAllNamed('/main');
+        Get.offAllNamed(_authController.mainRoute);
       }
     }
   }

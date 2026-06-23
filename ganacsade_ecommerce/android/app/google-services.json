@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "672314564532",
+    "project_id": "ganacsade-app",
+    "storage_bucket": "ganacsade-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:672314564532:android:b876dcb608a2bdc4eb1ce1",
+        "android_client_info": {
+          "package_name": "com.raadsan.ganacsade_ecommerce"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBRmHTKOYSuneAPqkaqWcq6-7aaamzYFJI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -4,8 +4,10 @@ import 'api_config.dart';
 
 class HttpClient {
   static final HttpClient _instance = HttpClient._internal();
+  static Future<void> Function()? onSessionExpired;
   late Dio _dio;
   Box? _storageBox;
+  bool _handlingSessionExpiry = false;
 
   factory HttpClient() {
     return _instance;
@@ -58,33 +60,69 @@ class HttpClient {
             print('❌ ERROR DATA: ${error.response?.data}');
           }
           
-          // Handle 401 Unauthorized - Token expired
-          // IMPORTANT: Never attempt refresh if the failing request IS the refresh endpoint
           final isRefreshRequest = error.requestOptions.path.contains('refresh-token');
+          final responseMessage = error.response?.data is Map
+              ? error.response?.data['message']?.toString() ?? ''
+              : '';
+          final isInvalidated = responseMessage.toLowerCase().contains('invalidated');
+
           if (error.response?.statusCode == 401 && !isRefreshRequest) {
-            // Try to refresh token
-            final refreshed = await _refreshToken();
+            final accessToken = _storageBox?.get(ApiConfig.accessTokenKey);
+            final refreshToken = _storageBox?.get(ApiConfig.refreshTokenKey);
+            final hadSession = accessToken != null || refreshToken != null;
+            final isMissingToken = responseMessage.toLowerCase().contains('no token provided');
+
+            // Not logged in yet — don't treat as session expiry.
+            if (!hadSession && isMissingToken) {
+              return handler.next(error);
+            }
+
+            final refreshed = isInvalidated ? false : await _refreshToken();
             if (refreshed) {
-              // Retry the original request
               final options = error.requestOptions;
               final token = _storageBox?.get(ApiConfig.accessTokenKey);
               if (token != null) {
                 options.headers['Authorization'] = 'Bearer $token';
               }
-              
+
               try {
                 final response = await _dio.fetch(options);
                 return handler.resolve(response);
               } catch (e) {
+                await _handleSessionExpired();
                 return handler.reject(error);
               }
             }
+
+            await _handleSessionExpired();
           }
           
           return handler.next(error);
         },
       ),
     );
+  }
+
+  Future<void> _handleSessionExpired() async {
+    if (_handlingSessionExpiry) return;
+    _handlingSessionExpiry = true;
+
+    try {
+      await clearTokens();
+      try {
+        final userBox = await Hive.openBox('user_data');
+        await userBox.delete('current_user');
+        await userBox.delete('user_role');
+      } catch (e) {
+        print('Error clearing saved user: $e');
+      }
+
+      if (onSessionExpired != null) {
+        await onSessionExpired!();
+      }
+    } finally {
+      _handlingSessionExpiry = false;
+    }
   }
 
   Future<bool> _refreshToken() async {
@@ -191,6 +229,20 @@ class HttpClient {
     Options? options,
   }) async {
     return await _dio.put(
+      path,
+      data: data,
+      queryParameters: queryParameters,
+      options: options,
+    );
+  }
+
+  Future<Response> patch(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) async {
+    return await _dio.patch(
       path,
       data: data,
       queryParameters: queryParameters,

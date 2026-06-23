@@ -419,7 +419,7 @@ class _SignInScreenEnhancedState extends State<SignInScreenEnhanced> {
       );
       
       if (success) {
-        Get.offAllNamed('/main');
+        Get.offAllNamed(_authController.mainRoute);
       }
     }
   }

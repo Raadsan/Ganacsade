@@ -27,10 +27,13 @@ class _SplashScreenState extends State<SplashScreen> {
       Future.delayed(const Duration(seconds: 3)),
       _authController.storageReady,
     ]);
-    // Check if user is already logged in (session persists across app restarts)
+
+    if (_authController.completePendingLoginRedirect()) return;
+
     if (_authController.isLoggedIn) {
-      Get.offAllNamed('/main');
-    } else {
+      await _authController.refreshSessionRole();
+      Get.offAllNamed(_authController.mainRoute);
+    } else if (Get.currentRoute != '/login') {
       Get.offAllNamed('/register');
     }
   }

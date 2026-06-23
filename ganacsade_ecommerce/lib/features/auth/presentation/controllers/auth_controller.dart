@@ -1,9 +1,12 @@
 import 'dart:async';
+import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
 import 'package:hive/hive.dart';
 import '../../../../shared/models/user.dart' as app_user;
 import '../../../../core/network/auth_api_service.dart';
 import '../../../../core/network/http_client.dart';
+import '../../../../core/services/push_notification_service.dart';
+import '../../../notifications/presentation/controllers/app_notifications_controller.dart';
 
 class AuthController extends GetxController {
   // Observable variables
@@ -11,6 +14,7 @@ class AuthController extends GetxController {
   final RxBool isLoading = false.obs;
   final RxString errorMessage = ''.obs;
   final RxBool rememberMe = false.obs;
+  final RxString _userRole = 'customer'.obs;
   
   // API Service
   final AuthApiService _authApiService = AuthApiService();
@@ -22,14 +26,56 @@ class AuthController extends GetxController {
   // Completer to signal when storage init is done
   final Completer<void> _storageReady = Completer<void>();
   Future<void> get storageReady => _storageReady.future;
+  bool _pendingLoginRedirect = false;
   
   // Getters
   app_user.User? get user => _user.value;
   bool get isLoggedIn => _user.value != null;
+  String get userRole => _userRole.value;
+  bool get isDeliveryUser => _isDeliveryRole(_userRole.value);
+  String get mainRoute => isDeliveryUser ? '/delivery-main' : '/main';
+
+  static bool _isDeliveryRole(String role) {
+    final normalized = role.trim().toLowerCase();
+    return normalized.contains('delivery') || normalized == 'delivery_person';
+  }
+
+  String _resolveRoleFromUserData(Map<String, dynamic> userData) {
+    final roleModel = userData['roleModel'];
+    if (roleModel is Map && roleModel['name'] != null) {
+      final name = roleModel['name'].toString().trim();
+      if (name.isNotEmpty) return name;
+    }
+    return userData['role']?.toString() ?? 'customer';
+  }
+
+  Future<void> _persistUserRole(String role) async {
+    _userRole.value = role;
+    await _userBox.put('user_role', role);
+  }
+
+  /// Refresh role from server so delivery users are routed correctly after restart.
+  Future<void> refreshSessionRole() async {
+    if (!isLoggedIn) return;
+
+    try {
+      final response = await _authApiService.getProfile();
+      final userData = response['data'];
+      if (userData is! Map) return;
+
+      final role = userData['role']?.toString() ?? _resolveRoleFromUserData(Map<String, dynamic>.from(userData));
+      if (role != _userRole.value) {
+        await _persistUserRole(role);
+      }
+    } catch (e) {
+      print('Could not refresh session role: $e');
+    }
+  }
   
   @override
   void onInit() {
     super.onInit();
+    HttpClient.onSessionExpired = handleSessionExpired;
     _initializeStorage();
   }
   
@@ -53,6 +99,7 @@ class AuthController extends GetxController {
       if (savedUserData != null) {
         _user.value = app_user.User.fromJson(Map<String, dynamic>.from(savedUserData));
       }
+      _userRole.value = _userBox.get('user_role', defaultValue: 'customer')?.toString() ?? 'customer';
     } catch (e) {
       print('Error loading saved user: $e');
     }
@@ -86,6 +133,7 @@ class AuthController extends GetxController {
       
       // Extract user data from response
       final userData = response['data']['user'];
+      final role = _resolveRoleFromUserData(Map<String, dynamic>.from(userData));
       
       // Create user object
       final user = app_user.User(
@@ -105,9 +153,17 @@ class AuthController extends GetxController {
       );
       
       _user.value = user;
+      await _persistUserRole(role);
       
       // Always save user data locally after sign in
       await _userBox.put('current_user', user.toJson());
+
+      if (!Get.isRegistered<AppNotificationsController>()) {
+        Get.put(AppNotificationsController());
+      } else {
+        await Get.find<AppNotificationsController>().ensureStarted();
+      }
+      await PushNotificationService().syncTokenWithServer();
       
       print('✅ User signed in and saved:');
       print('   - Email: ${user.email}');
@@ -179,9 +235,11 @@ class AuthController extends GetxController {
       );
       
       _user.value = user;
+      _userRole.value = 'customer';
       
       // Always save user data locally after sign up
       await _userBox.put('current_user', user.toJson());
+      await _userBox.put('user_role', 'customer');
       
       print('✅ User signed up and saved:');
       print('   - Phone: ${user.phoneNumber}');
@@ -199,20 +257,62 @@ class AuthController extends GetxController {
     try {
       // Call API to logout
       await _authApiService.logout();
-      
-      // Clear current user from storage
-      await _userBox.delete('current_user');
-      
-      // Clear user from memory
-      _user.value = null;
-      
-      // Clear any error messages
-      errorMessage.value = '';
-      
-      // We'll handle navigation and success message in the UI
     } catch (e) {
       print('Error signing out: $e');
+    } finally {
+      await clearLocalSession();
     }
+  }
+
+  Future<void> clearLocalSession() async {
+    await _httpClient.clearTokens();
+
+    try {
+      if (!_storageReady.isCompleted) {
+        await storageReady;
+      }
+      await _userBox.delete('current_user');
+      await _userBox.delete('user_role');
+    } catch (e) {
+      print('Error clearing local session: $e');
+    }
+
+    _user.value = null;
+    _userRole.value = 'customer';
+    errorMessage.value = '';
+  }
+
+  Future<void> handleSessionExpired() async {
+    await clearLocalSession();
+    _pendingLoginRedirect = true;
+    _redirectToLoginIfReady();
+  }
+
+  bool completePendingLoginRedirect() {
+    if (!_pendingLoginRedirect) return false;
+    _redirectToLoginIfReady();
+    if (_pendingLoginRedirect) return false;
+    return true;
+  }
+
+  void _redirectToLoginIfReady() {
+    if (!_pendingLoginRedirect) return;
+    if (Get.key.currentContext == null) return;
+
+    _pendingLoginRedirect = false;
+    final route = Get.currentRoute;
+    if (route == '/login' || route == '/register') return;
+
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      if (Get.key.currentContext == null) return;
+      Get.offAllNamed('/login');
+      Get.snackbar(
+        'Session expired',
+        'Please sign in again to continue.',
+        snackPosition: SnackPosition.TOP,
+        duration: const Duration(seconds: 4),
+      );
+    });
   }
   
   // Toggle remember me

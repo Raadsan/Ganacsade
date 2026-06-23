@@ -1,0 +1,12 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "ganacsade (debug)",
+      "request": "launch",
+      "type": "dart",
+      "cwd": "${workspaceFolder}/ganacsade_ecommerce",
+      "program": "lib/main.dart"
+    }
+  ]
+}
