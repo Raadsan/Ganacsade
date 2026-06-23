@@ -27,7 +27,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Search, MoreVertical, Eye, Download, Filter, DollarSign } from "lucide-react"
+import { Search, MoreVertical, Eye, Download, DollarSign } from "lucide-react"
 import { Transaction } from "@/types"
 import { TransactionDetailsDialog } from "@/components/dashboard/transaction-details-dialog"
 import { exportTransactionsToCSV } from "@/lib/export-transactions"
@@ -43,7 +43,6 @@ export default function TransactionsPage() {
   const [typeFilter, setTypeFilter] = useState<string>("all")
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
   const [isDetailsOpen, setIsDetailsOpen] = useState(false)
-  const [showFilters, setShowFilters] = useState(false)
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState({
     totalRevenue: 0,
@@ -253,54 +252,43 @@ export default function TransactionsPage() {
                 className="pl-10"
               />
             </div>
-            <Button
-              variant="outline"
-              onClick={() => setShowFilters(!showFilters)}
-            >
-              <Filter className="mr-2 h-4 w-4" />
-              Filters
-            </Button>
           </div>
 
-          {/* Advanced Filters */}
-          {showFilters && (
-            <div className="grid gap-4 pt-4 border-t md:grid-cols-3">
-              <div className="space-y-2">
-                <Label>Status</Label>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="All Statuses" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Statuses</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="processing">Processing</SelectItem>
-                    <SelectItem value="failed">Failed</SelectItem>
-                    <SelectItem value="cancelled">Cancelled</SelectItem>
-                    <SelectItem value="refunded">Refunded</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Transaction Type</Label>
-                <Select value={typeFilter} onValueChange={setTypeFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="All Types" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Types</SelectItem>
-                    <SelectItem value="order_payment">Order Payment</SelectItem>
-                    <SelectItem value="refund">Refund</SelectItem>
-                    <SelectItem value="wallet_topup">Wallet Top-up</SelectItem>
-                    <SelectItem value="wallet_withdrawal">Wallet Withdrawal</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
+          <div className="grid gap-4 pt-4 border-t md:grid-cols-3">
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All Statuses" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="processing">Processing</SelectItem>
+                  <SelectItem value="failed">Failed</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                  <SelectItem value="refunded">Refunded</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          )}
+
+            <div className="space-y-2">
+              <Label>Transaction Type</Label>
+              <Select value={typeFilter} onValueChange={setTypeFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All Types" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="order_payment">Order Payment</SelectItem>
+                  <SelectItem value="refund">Refund</SelectItem>
+                  <SelectItem value="wallet_topup">Wallet Top-up</SelectItem>
+                  <SelectItem value="wallet_withdrawal">Wallet Withdrawal</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
         </div>
       </Card>
 

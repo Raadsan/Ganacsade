@@ -13,11 +13,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { authApi } from "@/lib/api/auth"
+import { rbacApi } from "@/lib/api/rbac"
 import { toast } from "sonner"
 
 export function Header() {
   const router = useRouter()
   const [userInfo, setUserInfo] = useState<{ name: string; email: string } | null>(null)
+  const [accountPath, setAccountPath] = useState("/settings")
+  const [accountLabel, setAccountLabel] = useState("Account Settings")
 
   useEffect(() => {
     try {
@@ -32,6 +35,27 @@ export function Header() {
     } catch {
       // ignore
     }
+
+    const loadAccountMenu = async () => {
+      try {
+        const response = await rbacApi.getMyMenus()
+        const menus = response?.data || []
+        const profileMenu = menus.find((menu) => menu.url === "/profile")
+        if (profileMenu) {
+          setAccountPath("/profile")
+          setAccountLabel("My Profile")
+          return
+        }
+        const settingsMenu = menus.find((menu) => menu.url === "/settings")
+        if (settingsMenu) {
+          setAccountPath("/settings")
+          setAccountLabel("Account Settings")
+        }
+      } catch {
+        // keep defaults
+      }
+    }
+    loadAccountMenu()
   }, [])
 
   const handleLogout = async () => {
@@ -60,9 +84,9 @@ export function Header() {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => router.push("/settings")}>
+          <DropdownMenuItem onClick={() => router.push(accountPath)}>
             <SettingsIcon className="mr-2 h-4 w-4" />
-            Account Settings
+            {accountLabel}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">

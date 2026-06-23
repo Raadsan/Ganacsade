@@ -1,21 +1,53 @@
 import { axiosInstance, apiClient } from './client';
 import { ApiResponse } from '@/types';
-import { AdminUser } from '@/types';
 
 export interface LoginCredentials {
-  email: string;
+  identifier: string;
+  password: string;
+}
+
+export interface RegisterDto {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phoneNumber?: string;
   password: string;
 }
 
 export interface LoginResponse {
-  user: AdminUser;
+  user: LoggedInUser;
   token: string;
+  refreshToken?: string;
+}
+
+export interface LoggedInUser {
+  id: string;
+  email?: string;
+  phoneNumber?: string;
+  role: string;
+  roleId?: number | null;
+  roleModel?: {
+    id: number;
+    name: string;
+  } | null;
+  firstName?: string;
+  lastName?: string;
+  displayName?: string;
 }
 
 export interface UpdateProfileDto {
   firstName?: string;
   lastName?: string;
+  displayName?: string;
   phoneNumber?: string;
+  preferredLanguage?: string;
+}
+
+export interface UpdateDeliveryProfileDto extends UpdateProfileDto {
+  vehicleType?: string | null;
+  vehicleNumber?: string;
+  licenseNumber?: string;
+  isAvailable?: boolean;
 }
 
 export interface ChangePasswordDto {
@@ -23,21 +55,37 @@ export interface ChangePasswordDto {
   newPassword: string;
 }
 
+const buildIdentifierPayload = (identifier: string) => {
+  const value = identifier.trim();
+  if (value.includes('@')) {
+    return { email: value };
+  }
+  return { phoneNumber: value };
+};
+
 export const authApi = {
+  persistSession(data: LoginResponse) {
+    apiClient.setToken(data.token);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('user', JSON.stringify(data.user));
+    }
+  },
+
   /**
-   * Admin login
+   * Unified login — email or phone. Role decides redirect on the client.
    */
   async login(credentials: LoginCredentials): Promise<LoginResponse> {
     const response = await axiosInstance.post<ApiResponse<LoginResponse>>(
-      '/auth/admin/login',
-      credentials
+      '/auth/login',
+      {
+        identifier: credentials.identifier.trim(),
+        ...buildIdentifierPayload(credentials.identifier),
+        password: credentials.password,
+      }
     );
 
     if (response.data.success && response.data.data) {
-      apiClient.setToken(response.data.data.token);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('user', JSON.stringify(response.data.data.user));
-      }
+      this.persistSession(response.data.data);
       return response.data.data;
     }
 
@@ -45,13 +93,38 @@ export const authApi = {
   },
 
   /**
-   * Logout (calls backend to invalidate session, then clears local storage)
+   * Customer registration only
    */
+  async register(data: RegisterDto): Promise<LoginResponse> {
+    const response = await axiosInstance.post<ApiResponse<LoginResponse>>(
+      '/auth/register',
+      data
+    );
+
+    if (response.data.success && response.data.data) {
+      this.persistSession(response.data.data);
+      return response.data.data;
+    }
+
+    throw new Error(response.data.message || 'Registration failed');
+  },
+
+  getCurrentUser(): LoggedInUser | null {
+    if (typeof window === 'undefined') return null;
+    const rawUser = localStorage.getItem('user');
+    if (!rawUser) return null;
+    try {
+      return JSON.parse(rawUser) as LoggedInUser;
+    } catch {
+      return null;
+    }
+  },
+
   async logout(): Promise<void> {
     try {
       await axiosInstance.post('/auth/logout');
     } catch {
-      // Even if backend fails (e.g. token already expired), we still clear locally
+      // Even if backend fails, clear locally
     } finally {
       apiClient.removeToken();
       if (typeof window !== 'undefined') {
@@ -60,25 +133,37 @@ export const authApi = {
     }
   },
 
-  /**
-   * Get current admin profile
-   */
   async getProfile() {
     const response = await axiosInstance.get<ApiResponse<any>>('/auth/profile');
     return response.data;
   },
 
-  /**
-   * Update current user profile
-   */
   async updateProfile(data: UpdateProfileDto) {
     const response = await axiosInstance.put<ApiResponse<any>>('/auth/profile', data);
     return response.data;
   },
 
-  /**
-   * Change current user password
-   */
+  async uploadProfileImage(file: File) {
+    const formData = new FormData();
+    formData.append('image', file);
+    const response = await axiosInstance.post<ApiResponse<{ profileImageUrl: string }>>(
+      '/auth/profile-image',
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
+    );
+    return response.data;
+  },
+
+  async getDeliveryProfile() {
+    const response = await axiosInstance.get<ApiResponse<any>>('/auth/delivery-profile');
+    return response.data;
+  },
+
+  async updateDeliveryProfile(data: UpdateDeliveryProfileDto) {
+    const response = await axiosInstance.put<ApiResponse<any>>('/auth/delivery-profile', data);
+    return response.data;
+  },
+
   async changePassword(data: ChangePasswordDto) {
     const response = await axiosInstance.post<ApiResponse<any>>(
       '/auth/change-password',
@@ -87,9 +172,6 @@ export const authApi = {
     return response.data;
   },
 
-  /**
-   * Check if user is authenticated (presence + JWT expiration)
-   */
   isAuthenticated(): boolean {
     if (typeof window === 'undefined') return false;
     const token = localStorage.getItem('token');

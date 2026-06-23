@@ -1,18 +1,31 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 import { toast } from 'sonner';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const RAW_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5002/api';
+const API_URL = RAW_API_URL.replace(/\/+$/, '');
+const LOCAL_API_URL = 'http://localhost:5002/api';
+
+const resolveApiUrl = () => {
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    if (host === 'localhost' || host === '127.0.0.1') {
+      return LOCAL_API_URL;
+    }
+  }
+  return API_URL;
+};
 
 // Base URL without /api path - used for image URLs
-export const BACKEND_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api').replace(/\/api$/, '');
+export const BACKEND_URL = API_URL.replace(/\/api$/, '');
 
 class ApiClient {
   private client: AxiosInstance;
 
   constructor() {
     this.client = axios.create({
-      baseURL: API_URL,
+      baseURL: resolveApiUrl(),
       timeout: 30000,
+      withCredentials: true,
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -103,7 +116,11 @@ class ApiClient {
 
   private handleError(error: AxiosError) {
     const isBrowser = typeof window !== 'undefined';
-    const onLoginPage = isBrowser && window.location.pathname === '/login';
+    const onLoginPage = isBrowser && (
+      window.location.pathname === '/login'
+      || window.location.pathname === '/register'
+      || window.location.pathname === '/admin/login'
+    );
     const url = error.config?.url || '';
     const isAuthEndpoint = url.includes('/auth/admin/login') || url.includes('/auth/login');
 

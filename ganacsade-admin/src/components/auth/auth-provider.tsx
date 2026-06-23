@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { authApi } from "@/lib/api/auth"
+import { getPostLoginPath, isCustomerUser } from "@/lib/auth/roles"
+
+const PUBLIC_ROUTES = ["/login", "/register", "/admin/login"]
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter()
@@ -10,11 +13,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [checked, setChecked] = useState(false)
 
   useEffect(() => {
-    const isPublicRoute = pathname === "/login"
+    const isPublicRoute = PUBLIC_ROUTES.includes(pathname)
     const authenticated = authApi.isAuthenticated()
+    const user = authApi.getCurrentUser()
 
     if (!authenticated && !isPublicRoute) {
-      // Clear any stale data
       if (typeof window !== "undefined") {
         localStorage.removeItem("token")
         localStorage.removeItem("user")
@@ -23,16 +26,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return
     }
 
+    if (authenticated && user && isCustomerUser(user)) {
+      router.replace("/my-orders")
+      return
+    }
+
     if (authenticated && isPublicRoute) {
-      router.replace("/")
+      router.replace(getPostLoginPath(user))
       return
     }
 
     setChecked(true)
   }, [pathname, router])
 
-  // Prevent content flash before auth check completes (protected pages only)
-  if (!checked && pathname !== "/login") {
+  if (!checked && !PUBLIC_ROUTES.includes(pathname)) {
     return null
   }
 

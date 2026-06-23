@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { DollarSign, ShoppingCart, Users, Package, TrendingUp, TrendingDown } from "lucide-react"
@@ -22,27 +22,26 @@ import {
   Legend,
 } from "recharts"
 
-// ─── helpers ────────────────────────────────────────────────────────────────
-
 function ChangeLabel({ value }: { value: number }) {
   const positive = value >= 0
   const Icon = positive ? TrendingUp : TrendingDown
   return (
     <span className={`inline-flex items-center gap-1 ${positive ? "text-green-600" : "text-red-600"}`}>
       <Icon className="h-3 w-3" />
-      {positive ? "+" : ""}{value}%
+      {positive ? "+" : ""}
+      {value}%
     </span>
   )
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  pending:    "#f59e0b",
+  pending: "#f59e0b",
   processing: "#3b82f6",
-  confirmed:  "#8b5cf6",
-  shipped:    "#06b6d4",
-  delivered:  "#10b981",
-  cancelled:  "#ef4444",
-  refunded:   "#6b7280",
+  confirmed: "#8b5cf6",
+  shipped: "#06b6d4",
+  delivered: "#10b981",
+  cancelled: "#ef4444",
+  refunded: "#6b7280",
 }
 
 function statusLabel(s: string) {
@@ -53,24 +52,31 @@ function orderStatusBadge(status: string) {
   const map: Record<string, "default" | "secondary" | "destructive" | "success"> = {
     delivered: "success",
     cancelled: "destructive",
-    pending:   "secondary",
+    pending: "secondary",
   }
   return <Badge variant={map[status] ?? "default"}>{statusLabel(status)}</Badge>
 }
 
-// ─── main page ───────────────────────────────────────────────────────────────
-
-export default function DashboardPage() {
+export default function OverviewPage() {
   const [stats, setStats] = useState<DashboardStats>({
-    totalRevenue: 0, totalOrders: 0, totalUsers: 0, totalProducts: 0,
-    revenueChange: 0, ordersChange: 0, usersChange: 0, productsChange: 0,
+    totalRevenue: 0,
+    totalOrders: 0,
+    totalUsers: 0,
+    totalProducts: 0,
+    revenueChange: 0,
+    ordersChange: 0,
+    usersChange: 0,
+    productsChange: 0,
   })
   const [salesData, setSalesData] = useState<SalesData[]>([])
   const [topProducts, setTopProducts] = useState<TopProduct[]>([])
   const [ordersByStatus, setOrdersByStatus] = useState<OrdersByStatus[]>([])
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([])
   const [quickStats, setQuickStats] = useState({
-    pending_orders: 0, low_stock_products: 0, out_of_stock: 0, new_users_today: 0,
+    pending_orders: 0,
+    low_stock_products: 0,
+    out_of_stock: 0,
+    new_users_today: 0,
   })
   const [loading, setLoading] = useState(true)
 
@@ -86,12 +92,12 @@ export default function DashboardPage() {
           dashboardApi.getRecentOrders(5),
           dashboardApi.getQuickStats(),
         ])
-        if (s.success && s.data)             setStats(s.data)
-        if (sales.success && sales.data)     setSalesData(sales.data)
-        if (top.success && top.data)         setTopProducts(top.data)
+        if (s.success && s.data) setStats(s.data)
+        if (sales.success && sales.data) setSalesData(sales.data)
+        if (top.success && top.data) setTopProducts(top.data)
         if (byStatus.success && byStatus.data) setOrdersByStatus(byStatus.data)
-        if (orders.success && orders.data)   setRecentOrders(orders.data)
-        if (quick.success && quick.data)     setQuickStats(quick.data)
+        if (orders.success && orders.data) setRecentOrders(orders.data)
+        if (quick.success && quick.data) setQuickStats(quick.data)
       } catch {
         // axios interceptor shows toast on error
       } finally {
@@ -101,17 +107,24 @@ export default function DashboardPage() {
     load()
   }, [])
 
+  const chartSalesData = useMemo(
+    () =>
+      salesData.map((d) => ({
+        ...d,
+        month: new Date(d.date).toLocaleDateString("en-US", { month: "short", year: "2-digit" }),
+      })),
+    [salesData]
+  )
+
   const totalOrdersForPie = ordersByStatus.reduce((a, b) => a + b.count, 0)
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Overview</h1>
         <p className="text-muted-foreground">Welcome back to GANACSADE Admin</p>
       </div>
 
-      {/* ── Stat cards ───────────────────────────────────────────────────────── */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Total Revenue"
@@ -143,25 +156,23 @@ export default function DashboardPage() {
         />
       </div>
 
-      {/* ── Revenue chart + Order status ─────────────────────────────────────── */}
       <div className="grid gap-4 lg:grid-cols-3">
-        {/* Revenue & Orders over time */}
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle>Revenue &amp; Orders — Last 12 Months</CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="flex h-64 items-center justify-center text-muted-foreground text-sm">
+              <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
                 Loading chart…
               </div>
-            ) : salesData.length === 0 ? (
-              <div className="flex h-64 items-center justify-center text-muted-foreground text-sm">
+            ) : chartSalesData.length === 0 ? (
+              <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
                 No sales data available yet
               </div>
             ) : (
               <ResponsiveContainer width="100%" height={260}>
-                <AreaChart data={salesData} margin={{ top: 4, right: 12, left: 0, bottom: 0 }}>
+                <AreaChart data={chartSalesData} margin={{ top: 4, right: 12, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.25} />
@@ -177,8 +188,8 @@ export default function DashboardPage() {
                   <YAxis yAxisId="rev" tick={{ fontSize: 11 }} tickFormatter={(v) => `$${v}`} />
                   <YAxis yAxisId="ord" orientation="right" tick={{ fontSize: 11 }} />
                   <Tooltip
-                    formatter={(value: any, name: string) =>
-                      name === "revenue" ? [formatCurrency(value), "Revenue"] : [value, "Orders"]
+                    formatter={(value: number | string, name: string) =>
+                      name === "revenue" ? [formatCurrency(Number(value)), "Revenue"] : [value, "Orders"]
                     }
                   />
                   <Legend />
@@ -206,18 +217,17 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Order status pie */}
         <Card>
           <CardHeader>
             <CardTitle>Orders by Status</CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="flex h-64 items-center justify-center text-muted-foreground text-sm">
+              <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
                 Loading…
               </div>
             ) : ordersByStatus.length === 0 ? (
-              <div className="flex h-64 items-center justify-center text-muted-foreground text-sm">
+              <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
                 No orders yet
               </div>
             ) : (
@@ -241,7 +251,7 @@ export default function DashboardPage() {
                         />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(v: any) => [v, "Orders"]} />
+                    <Tooltip formatter={(v: number | string) => [v, "Orders"]} />
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="mt-2 space-y-1">
@@ -256,7 +266,7 @@ export default function DashboardPage() {
                       </span>
                       <span className="font-medium">
                         {s.count}
-                        <span className="ml-1 text-muted-foreground text-xs">
+                        <span className="ml-1 text-xs text-muted-foreground">
                           ({totalOrdersForPie ? Math.round((s.count / totalOrdersForPie) * 100) : 0}%)
                         </span>
                       </span>
@@ -269,24 +279,24 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* ── Top products + Recent orders + Quick stats ──────────────────────── */}
       <div className="grid gap-4 lg:grid-cols-3">
-        {/* Top products */}
         <Card>
           <CardHeader>
             <CardTitle>Top Products</CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="flex h-40 items-center justify-center text-muted-foreground text-sm">Loading…</div>
+              <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">Loading…</div>
             ) : topProducts.length === 0 ? (
-              <div className="flex h-40 items-center justify-center text-muted-foreground text-sm">No products sold yet</div>
+              <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
+                No products sold yet
+              </div>
             ) : (
               <div className="space-y-3">
                 {topProducts.map((p, i) => (
                   <div key={p.id} className="flex items-center gap-3">
-                    <span className="text-xs font-bold text-muted-foreground w-4">{i + 1}</span>
-                    <div className="h-9 w-9 rounded-md overflow-hidden bg-muted flex-shrink-0">
+                    <span className="w-4 text-xs font-bold text-muted-foreground">{i + 1}</span>
+                    <div className="h-9 w-9 flex-shrink-0 overflow-hidden rounded-md bg-muted">
                       {p.image ? (
                         <img
                           src={p.image.startsWith("http") ? p.image : `${BACKEND_URL}${p.image}`}
@@ -294,16 +304,16 @@ export default function DashboardPage() {
                           className="h-full w-full object-cover"
                         />
                       ) : (
-                        <div className="h-full w-full flex items-center justify-center">
+                        <div className="flex h-full w-full items-center justify-center">
                           <Package className="h-4 w-4 text-muted-foreground" />
                         </div>
                       )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{p.name}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{p.name}</p>
                       <p className="text-xs text-muted-foreground">{p.totalSold} sold</p>
                     </div>
-                    <span className="text-sm font-semibold text-right">{formatCurrency(p.revenue)}</span>
+                    <span className="text-right text-sm font-semibold">{formatCurrency(p.revenue)}</span>
                   </div>
                 ))}
               </div>
@@ -311,25 +321,24 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Recent orders */}
         <Card>
           <CardHeader>
             <CardTitle>Recent Orders</CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="flex h-40 items-center justify-center text-muted-foreground text-sm">Loading…</div>
+              <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">Loading…</div>
             ) : recentOrders.length === 0 ? (
-              <div className="flex h-40 items-center justify-center text-muted-foreground text-sm">No orders yet</div>
+              <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">No orders yet</div>
             ) : (
               <div className="space-y-3">
                 {recentOrders.map((o) => (
                   <div key={o.id} className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">#{o.orderNumber}</p>
-                      <p className="text-xs text-muted-foreground truncate">{o.customerName}</p>
+                      <p className="truncate text-sm font-medium">#{o.orderNumber}</p>
+                      <p className="truncate text-xs text-muted-foreground">{o.customerName}</p>
                     </div>
-                    <div className="text-right flex-shrink-0">
+                    <div className="flex-shrink-0 text-right">
                       <p className="text-sm font-semibold">
                         {formatCurrency(typeof o.total === "string" ? parseFloat(o.total) : o.total)}
                       </p>
@@ -342,7 +351,6 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Quick stats */}
         <Card>
           <CardHeader>
             <CardTitle>Quick Stats</CardTitle>
@@ -377,10 +385,12 @@ export default function DashboardPage() {
   )
 }
 
-// ─── sub-components ──────────────────────────────────────────────────────────
-
 function StatCard({
-  title, value, change, icon, loading,
+  title,
+  value,
+  change,
+  icon,
+  loading,
 }: {
   title: string
   value: string
@@ -398,8 +408,14 @@ function StatCard({
         <div className="text-2xl font-bold">
           {loading ? <span className="text-muted-foreground">—</span> : value}
         </div>
-        <p className="text-xs text-muted-foreground mt-1">
-          {loading ? "Loading…" : <><ChangeLabel value={change} /> from last month</>}
+        <p className="mt-1 text-xs text-muted-foreground">
+          {loading ? (
+            "Loading…"
+          ) : (
+            <>
+              <ChangeLabel value={change} /> from last month
+            </>
+          )}
         </p>
       </CardContent>
     </Card>
@@ -407,7 +423,9 @@ function StatCard({
 }
 
 function QuickStatRow({
-  label, value, color,
+  label,
+  value,
+  color,
 }: {
   label: string
   value: string | number

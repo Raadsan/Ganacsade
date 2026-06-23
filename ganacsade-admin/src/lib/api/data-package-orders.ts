@@ -33,9 +33,17 @@ export interface DataPackageOrdersQuery {
 
 export const dataPackageOrdersApi = {
   async getOrders(params?: DataPackageOrdersQuery) {
+    const queryParams: Record<string, string | number> = {};
+    if (params?.status) queryParams.status = params.status;
+    if (params?.search) queryParams.search = params.search;
+    if (params?.dateFrom) queryParams.start_date = params.dateFrom;
+    if (params?.dateTo) queryParams.end_date = params.dateTo;
+    if (params?.page) queryParams.page = params.page;
+    if (params?.limit) queryParams.limit = params.limit;
+
     const response = await axiosInstance.get<ApiResponse<DataPackageOrder[]>>(
       '/admin/data-package-orders',
-      { params }
+      { params: queryParams }
     );
     return response.data;
   },

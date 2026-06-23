@@ -28,34 +28,56 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Search, MoreVertical, Eye, Ban, CheckCircle, Download, Users as UsersIcon } from "lucide-react"
 import { User, usersApi } from "@/lib/api/users"
+import { rbacApi, type Role } from "@/lib/api/rbac"
 import { toast } from "sonner"
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([])
+  const [roles, setRoles] = useState<Role[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
+  const [roleFilter, setRoleFilter] = useState<string>("all")
+  const [appliedSearchQuery, setAppliedSearchQuery] = useState("")
+  const [appliedStatusFilter, setAppliedStatusFilter] = useState<string>("all")
+  const [appliedRoleFilter, setAppliedRoleFilter] = useState<string>("all")
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetchUsers()
+    const init = async () => {
+      try {
+        const rolesResponse = await rbacApi.getRoles()
+        setRoles(rolesResponse?.data || [])
+      } catch {
+        toast.error("Failed to load roles from server")
+      }
+      await fetchUsers()
+    }
+    init()
   }, [])
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (filters?: {
+    search?: string
+    status?: string
+    roleId?: number
+  }) => {
     try {
       setLoading(true)
-      const response: any = await usersApi.getUsers({ role: 'customer' })
+      const response: any = await usersApi.getUsers({
+        search: filters?.search || undefined,
+        status: filters?.status && filters.status !== "all" ? filters.status : undefined,
+        roleId: filters?.roleId,
+      })
       if (response.success && response.data) {
-        // Map response to add computed fields
         const mappedUsers = response.data.map((user: any) => ({
           ...user,
-          name: user.display_name || `${user.first_name} ${user.last_name}`,
-          phone: user.phone_number
+          name: user.display_name || `${user.first_name || ""} ${user.last_name || ""}`.trim(),
+          phone: user.phone_number,
         }))
         setUsers(mappedUsers)
       }
     } catch (error) {
-      console.error('Error fetching users:', error)
-      toast.error('Failed to load users')
+      console.error("Error fetching users:", error)
+      toast.error("Failed to load users")
     } finally {
       setLoading(false)
     }
@@ -63,27 +85,103 @@ export default function UsersPage() {
 
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
-      (user.name && user.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (user.display_name && user.display_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (user.phone && user.phone.toLowerCase().includes(searchQuery.toLowerCase()))
+      !appliedSearchQuery ||
+      (user.name && user.name.toLowerCase().includes(appliedSearchQuery.toLowerCase())) ||
+      (user.display_name && user.display_name.toLowerCase().includes(appliedSearchQuery.toLowerCase())) ||
+      user.email?.toLowerCase().includes(appliedSearchQuery.toLowerCase()) ||
+      (user.phone && user.phone.toLowerCase().includes(appliedSearchQuery.toLowerCase()))
 
-    const matchesStatus = statusFilter === "all" || user.status === statusFilter
+    const matchesStatus = appliedStatusFilter === "all" || user.status === appliedStatusFilter
 
-    return matchesSearch && matchesStatus
+    const userRoleId = user.role_id ?? user.roleModel?.id
+    const matchesRole =
+      appliedRoleFilter === "all" || String(userRoleId) === appliedRoleFilter
+
+    return matchesSearch && matchesStatus && matchesRole
   })
+
+  const handleApplyFilters = async () => {
+    setAppliedSearchQuery(searchQuery)
+    setAppliedStatusFilter(statusFilter)
+    setAppliedRoleFilter(roleFilter)
+    await fetchUsers({
+      search: searchQuery.trim() || undefined,
+      status: statusFilter,
+      roleId: roleFilter === "all" ? undefined : Number(roleFilter),
+    })
+  }
+
+  const handleResetFilters = async () => {
+    setSearchQuery("")
+    setStatusFilter("all")
+    setRoleFilter("all")
+    setAppliedSearchQuery("")
+    setAppliedStatusFilter("all")
+    setAppliedRoleFilter("all")
+    await fetchUsers()
+  }
+
+  const handleExportUsers = () => {
+    if (!filteredUsers.length) {
+      toast.error("No users to export")
+      return
+    }
+
+    const rows = filteredUsers.map((user) => ({
+      Name: user.name || user.display_name || `${user.first_name} ${user.last_name}`.trim(),
+      Email: user.email || "",
+      Phone: user.phone || user.phone_number || "",
+      Role: user.roleModel?.name || user.role || "",
+      Status: user.status || "",
+      Verified: user.is_verified ? "Yes" : "No",
+      Joined: user.created_at ? new Date(user.created_at).toISOString() : "",
+    }))
+
+    const headers = Object.keys(rows[0])
+    const csv = [
+      headers.join(","),
+      ...rows.map((row) =>
+        headers
+          .map((header) => {
+            const cell = String(row[header as keyof typeof row] ?? "")
+            return `"${cell.replace(/"/g, '""')}"`
+          })
+          .join(",")
+      ),
+    ].join("\n")
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = `users-${new Date().toISOString().slice(0, 10)}.csv`
+    link.click()
+    URL.revokeObjectURL(url)
+  }
 
   const handleStatusChange = async (userId: string, newStatus: string) => {
     try {
       const response: any = await usersApi.updateStatus(userId, newStatus)
       if (response.success) {
         toast.success(`User status updated to ${newStatus}`)
-        fetchUsers()
+        await fetchUsers({
+          search: appliedSearchQuery || undefined,
+          status: appliedStatusFilter,
+          roleId: appliedRoleFilter === "all" ? undefined : Number(appliedRoleFilter),
+        })
       }
     } catch (error) {
-      console.error('Error updating user status:', error)
-      toast.error('Failed to update user status')
+      console.error("Error updating user status:", error)
+      toast.error("Failed to update user status")
     }
+  }
+
+  const getRoleBadgeVariant = (roleName: string) => {
+    const name = roleName.toLowerCase()
+    if (name.includes("admin")) return "default"
+    if (name.includes("delivery")) return "warning"
+    if (name.includes("customer")) return "secondary"
+    return "outline"
   }
 
   const getStatusBadge = (status: string) => {
@@ -101,24 +199,22 @@ export default function UsersPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Users</h1>
           <p className="text-muted-foreground">
-            Manage customer accounts ({filteredUsers.length} users)
+            All users from database — customer, delivery, admin, and staff ({filteredUsers.length})
           </p>
         </div>
-        <Button>
+        <Button onClick={handleExportUsers}>
           <Download className="mr-2 h-4 w-4" />
           Export Users
         </Button>
       </div>
 
-      {/* Search and Filters */}
       <Card className="p-4">
-        <div className="flex gap-4">
-          <div className="relative flex-1">
+        <div className="flex flex-wrap gap-4">
+          <div className="relative min-w-[220px] flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Search users by name, email, or phone..."
@@ -127,6 +223,19 @@ export default function UsersPage() {
               className="pl-9"
             />
           </div>
+          <Select value={roleFilter} onValueChange={setRoleFilter}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="All Roles" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Roles</SelectItem>
+              {roles.map((role) => (
+                <SelectItem key={role.id} value={String(role.id)}>
+                  {role.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="All Status" />
@@ -138,16 +247,18 @@ export default function UsersPage() {
               <SelectItem value="suspended">Suspended</SelectItem>
             </SelectContent>
           </Select>
+          <Button onClick={handleApplyFilters}>Filter</Button>
+          <Button variant="outline" onClick={handleResetFilters}>Reset</Button>
         </div>
       </Card>
 
-      {/* Users Table */}
       <Card>
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>User</TableHead>
               <TableHead>Contact</TableHead>
+              <TableHead>Role</TableHead>
               <TableHead>Verification</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Joined</TableHead>
@@ -157,102 +268,109 @@ export default function UsersPage() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-12">
+                <TableCell colSpan={7} className="py-12 text-center">
                   <div className="flex flex-col items-center gap-2">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
                     <p className="text-muted-foreground">Loading users...</p>
                   </div>
                 </TableCell>
               </TableRow>
             ) : filteredUsers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-12">
+                <TableCell colSpan={7} className="py-12 text-center">
                   <div className="flex flex-col items-center gap-3">
-                    <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
                       <UsersIcon className="h-8 w-8 text-muted-foreground" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-lg">No Users Found</h3>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {searchQuery || statusFilter !== "all"
-                          ? "No users match your current filters. Try adjusting your search criteria."
-                          : "There are no users yet. Users will appear here once they register."}
+                      <h3 className="text-lg font-semibold">No Users Found</h3>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        No users match your current filters.
                       </p>
                     </div>
                   </div>
                 </TableCell>
               </TableRow>
             ) : (
-              filteredUsers.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                        <span className="text-sm font-semibold text-primary">
-                          {(user.name || user.display_name || user.first_name).charAt(0).toUpperCase()}
-                        </span>
+              filteredUsers.map((user) => {
+                const roleName = user.roleModel?.name || user.role || "—"
+                return (
+                  <TableRow key={user.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                          <span className="text-sm font-semibold text-primary">
+                            {(user.name || user.display_name || user.first_name || "?")
+                              .charAt(0)
+                              .toUpperCase()}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="font-medium">
+                            {user.name ||
+                              user.display_name ||
+                              `${user.first_name} ${user.last_name}`.trim()}
+                          </p>
+                        </div>
                       </div>
+                    </TableCell>
+                    <TableCell>
                       <div>
-                        <p className="font-medium">{user.name || user.display_name || `${user.first_name} ${user.last_name}`}</p>
-                        <p className="text-sm text-muted-foreground">{user.role}</p>
+                        <p className="text-sm">{user.email}</p>
+                        {user.phone ? (
+                          <p className="text-sm text-muted-foreground">{user.phone}</p>
+                        ) : null}
                       </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div>
-                      <p className="text-sm">{user.email}</p>
-                      {user.phone && (
-                        <p className="text-sm text-muted-foreground">{user.phone}</p>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={getRoleBadgeVariant(roleName)}>{roleName}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      {user.is_verified ? (
+                        <Badge variant="success" className="gap-1">
+                          <CheckCircle className="h-3 w-3" />
+                          Verified
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary">Not Verified</Badge>
                       )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {user.is_verified ? (
-                      <Badge variant="success" className="gap-1">
-                        <CheckCircle className="h-3 w-3" />
-                        Email ✓
-                      </Badge>
-                    ) : (
-                      <Badge variant="secondary">Not Verified</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>{getStatusBadge(user.status)}</TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {new Date(user.created_at).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
-                          <Eye className="mr-2 h-4 w-4" />
-                          View Details
-                        </DropdownMenuItem>
-                        {user.status === "active" ? (
-                          <DropdownMenuItem
-                            onClick={() => handleStatusChange(user.id, "suspended")}
-                            className="text-destructive"
-                          >
-                            <Ban className="mr-2 h-4 w-4" />
-                            Suspend User
+                    </TableCell>
+                    <TableCell>{getStatusBadge(user.status)}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {user.created_at ? new Date(user.created_at).toLocaleDateString() : "—"}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem>
+                            <Eye className="mr-2 h-4 w-4" />
+                            View Details
                           </DropdownMenuItem>
-                        ) : (
-                          <DropdownMenuItem
-                            onClick={() => handleStatusChange(user.id, "active")}
-                          >
-                            <CheckCircle className="mr-2 h-4 w-4" />
-                            Activate User
-                          </DropdownMenuItem>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))
+                          {user.status === "active" ? (
+                            <DropdownMenuItem
+                              onClick={() => handleStatusChange(user.id, "suspended")}
+                              className="text-destructive"
+                            >
+                              <Ban className="mr-2 h-4 w-4" />
+                              Suspend User
+                            </DropdownMenuItem>
+                          ) : (
+                            <DropdownMenuItem onClick={() => handleStatusChange(user.id, "active")}>
+                              <CheckCircle className="mr-2 h-4 w-4" />
+                              Activate User
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                )
+              })
             )}
           </TableBody>
         </Table>

@@ -9,7 +9,12 @@ export interface User {
   email: string;
   phone_number?: string;
   phone?: string; // Alias for convenience
-  role: 'customer' | 'admin';
+  role_id?: number | null;
+  roleModel?: {
+    id: number;
+    name: string;
+  } | null;
+  role: string;
   status: 'active' | 'inactive' | 'suspended';
   is_verified: boolean;
   created_at: string;
@@ -19,6 +24,11 @@ export interface User {
 
 export interface UserFilters {
   role?: string;
+  roleName?: string;
+  excludeRole?: string;
+  excludeRoles?: string;
+  excludeRoleNames?: string;
+  roleId?: number;
   status?: string;
   is_verified?: string;
   search?: string;
@@ -31,14 +41,14 @@ export interface CreateUserDto {
   email: string;
   phone?: string;
   password: string;
-  role?: 'customer' | 'admin';
+  roleId?: number;
 }
 
 export interface UpdateUserDto {
   name?: string;
   email?: string;
   phone?: string;
-  role?: string;
+  roleId?: number;
   status?: string;
 }
 

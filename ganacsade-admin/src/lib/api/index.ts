@@ -5,3 +5,5 @@ export * from './orders';
 export * from './categories';
 export * from './users';
 export * from './dashboard';
+export * from './rbac';
+export * from './delivery-persons';

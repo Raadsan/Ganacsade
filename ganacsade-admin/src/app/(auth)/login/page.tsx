@@ -1,31 +1,48 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Image from "next/image"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { toast } from "sonner"
+import { Eye, EyeOff } from "lucide-react"
 import { authApi } from "@/lib/api/auth"
+import { getPostLoginPath } from "@/lib/auth/roles"
 
 export default function LoginPage() {
   const router = useRouter()
-  const [email, setEmail] = useState("")
+  const searchParams = useSearchParams()
+  const redirectTo = searchParams.get("redirect")
+  const [identifier, setIdentifier] = useState("")
   const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!identifier.trim()) {
+      toast.error("Email or phone number is required")
+      return
+    }
+
     setIsLoading(true)
 
     try {
-      await authApi.login({ email, password })
+      const session = await authApi.login({
+        identifier: identifier.trim(),
+        password,
+      })
       toast.success("Login successful!")
-      router.push("/")
-    } catch (err: any) {
-      const msg = err?.response?.data?.message || err?.message || "Login failed"
+      const destination = redirectTo || getPostLoginPath(session.user)
+      router.push(destination)
+      router.refresh()
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } }; message?: string }
+      const msg = error?.response?.data?.message || error?.message || "Login failed"
       toast.error(msg)
     } finally {
       setIsLoading(false)
@@ -39,39 +56,65 @@ export default function LoginPage() {
           <div className="mx-auto mb-4 flex items-center justify-center">
             <Image src="/logo.png" alt="Ganacsade" width={180} height={60} className="object-contain" priority />
           </div>
-          <CardTitle className="text-2xl font-bold">Admin Dashboard</CardTitle>
+          <CardTitle className="text-2xl font-bold">Sign In</CardTitle>
           <CardDescription>
-            Sign in to access the admin dashboard
+            Use your email or phone number — same as the mobile app
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="identifier">Email or Phone</Label>
               <Input
-                id="email"
-                type="email"
-                placeholder="admin@ganacsade.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                id="identifier"
+                type="text"
+                placeholder="email@example.com or 0612345678"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                autoComplete="username"
                 required
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="pr-10"
+                  autoComplete="current-password"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Signing in..." : "Sign In"}
             </Button>
           </form>
+          <p className="mt-4 text-center text-sm text-muted-foreground">
+            New customer?{" "}
+            <Link
+              href={
+                redirectTo
+                  ? `/register?redirect=${encodeURIComponent(redirectTo)}`
+                  : "/register"
+              }
+              className="font-medium text-primary hover:underline"
+            >
+              Create account
+            </Link>
+          </p>
         </CardContent>
       </Card>
     </div>

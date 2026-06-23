@@ -7,10 +7,15 @@ export interface ApiResponse<T> {
 }
 
 export interface PaginationMeta {
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
+  page?: number;
+  limit?: number;
+  total?: number;
+  totalPages?: number;
+  assignedOnly?: boolean;
+  canAssign?: boolean;
+  canAdd?: boolean;
+  canEdit?: boolean;
+  canDelete?: boolean;
 }
 
 export interface PaginationParams {

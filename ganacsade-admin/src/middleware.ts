@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const PUBLIC_PATHS = ['/login'];
+const PUBLIC_PATHS = ['/', '/about', '/service', '/contact', '/products', '/login', '/register', '/admin/login'];
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -10,7 +10,6 @@ export function middleware(req: NextRequest) {
 
   const token = req.cookies.get('token')?.value;
 
-  // Fallback: also check Authorization header (some SSR requests forward it)
   const authHeader = req.headers.get('authorization');
   const hasToken = Boolean(token) || Boolean(authHeader?.startsWith('Bearer '));
 
