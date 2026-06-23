@@ -100,7 +100,7 @@ backend/
 │   │
 │   ├── services/                # Business logic
 │   │   ├── auth.service.js
-│   │   ├── email.service.js
+│   │   ├── emailService.js
 │   │   ├── sms.service.js
 │   │   ├── payment.service.js
 │   │   └── upload.service.js

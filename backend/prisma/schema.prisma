@@ -1,0 +1,913 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["partialIndexes"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model activity_logs {
+  id          String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id     String     @db.Uuid
+  user_name   String?    @db.VarChar(200)
+  user_role   user_role?
+  action      String     @db.VarChar(100)
+  entity_type String     @db.VarChar(50)
+  entity_id   String?    @db.Uuid
+  description String?
+  changes     Json?
+  ip_address  String?    @db.Inet
+  user_agent  String?
+  created_at  DateTime?  @default(now()) @db.Timestamp(6)
+  users       users      @relation(fields: [user_id], references: [id], onDelete: SetNull, onUpdate: NoAction, map: "fk_activity_logs_user")
+
+  @@index([created_at(sort: Desc)], map: "idx_activity_logs_created_at")
+  @@index([entity_type, entity_id], map: "idx_activity_logs_entity")
+  @@index([user_id], map: "idx_activity_logs_user_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model addresses {
+  id            String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id       String        @db.Uuid
+  label         String        @db.VarChar(100)
+  full_name     String        @db.VarChar(200)
+  phone_number  String        @db.VarChar(20)
+  address_line1 String        @db.VarChar(255)
+  address_line2 String?       @db.VarChar(255)
+  city          String        @db.VarChar(100)
+  state         String        @db.VarChar(100)
+  country       String        @default("Somalia") @db.VarChar(100)
+  postal_code   String?       @db.VarChar(20)
+  type          address_type? @default(home)
+  is_default    Boolean?      @default(false)
+  latitude      Decimal?      @db.Decimal(10, 8)
+  longitude     Decimal?      @db.Decimal(11, 8)
+  created_at    DateTime?     @default(now()) @db.Timestamp(6)
+  updated_at    DateTime?     @default(now()) @db.Timestamp(6)
+  users         users         @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_addresses_user")
+
+  @@index([user_id, is_default], map: "idx_addresses_is_default", where: raw("(is_default = true)"))
+  @@index([type], map: "idx_addresses_type")
+  @@index([user_id], map: "idx_addresses_user_id")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model advertisements {
+  id            String                  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  title         String                  @db.VarChar(255)
+  description   String?
+  image_url     String
+  target_url    String?
+  placement     advertisement_placement
+  display_order Int?                    @default(0)
+  is_active     Boolean?                @default(true)
+  start_date    DateTime?               @db.Timestamp(6)
+  end_date      DateTime?               @db.Timestamp(6)
+  view_count    Int?                    @default(0)
+  click_count   Int?                    @default(0)
+  created_at    DateTime?               @default(now()) @db.Timestamp(6)
+  updated_at    DateTime?               @default(now()) @db.Timestamp(6)
+
+  @@index([placement, is_active, display_order], map: "idx_advertisements_active_placement", where: raw("(is_active = true)"))
+  @@index([display_order], map: "idx_advertisements_display_order")
+  @@index([end_date], map: "idx_advertisements_end_date")
+  @@index([is_active], map: "idx_advertisements_is_active")
+  @@index([placement], map: "idx_advertisements_placement")
+  @@index([start_date], map: "idx_advertisements_start_date")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model brands {
+  id            String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name          String     @unique @db.VarChar(100)
+  description   String?
+  logo_url      String?
+  website_url   String?    @db.VarChar(255)
+  is_active     Boolean?   @default(true)
+  product_count Int?       @default(0)
+  created_at    DateTime?  @default(now()) @db.Timestamp(6)
+  updated_at    DateTime?  @default(now()) @db.Timestamp(6)
+  products      products[]
+
+  @@index([is_active], map: "idx_brands_is_active")
+  @@index([name], map: "idx_brands_name")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model cart {
+  id          String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id     String       @unique @db.Uuid
+  subtotal    Decimal?     @default(0) @db.Decimal(10, 2)
+  tax         Decimal?     @default(0) @db.Decimal(10, 2)
+  shipping    Decimal?     @default(0) @db.Decimal(10, 2)
+  discount    Decimal?     @default(0) @db.Decimal(10, 2)
+  total       Decimal?     @default(0) @db.Decimal(10, 2)
+  coupon_code String?      @db.VarChar(50)
+  created_at  DateTime?    @default(now()) @db.Timestamp(6)
+  updated_at  DateTime?    @default(now()) @db.Timestamp(6)
+  users       users        @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_cart_user")
+  cart_items  cart_items[]
+
+  @@index([updated_at(sort: Desc)], map: "idx_cart_updated_at")
+  @@index([user_id], map: "idx_cart_user_id")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model cart_items {
+  id               String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  cart_id          String            @db.Uuid
+  product_id       String            @db.Uuid
+  variant_id       String?           @db.Uuid
+  quantity         Int
+  unit_price       Decimal           @db.Decimal(10, 2)
+  discount_amount  Decimal?          @default(0) @db.Decimal(10, 2)
+  added_at         DateTime?         @default(now()) @db.Timestamp(6)
+  updated_at       DateTime?         @default(now()) @db.Timestamp(6)
+  cart             cart              @relation(fields: [cart_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_cart_items_cart")
+  products         products          @relation(fields: [product_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_cart_items_product")
+  product_variants product_variants? @relation(fields: [variant_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_cart_items_variant")
+
+  @@unique([cart_id, product_id, variant_id])
+  @@index([cart_id], map: "idx_cart_items_cart_id")
+  @@index([product_id], map: "idx_cart_items_product_id")
+  @@index([variant_id], map: "idx_cart_items_variant_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model categories {
+  id             String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name_en        String          @db.VarChar(100)
+  name_so        String          @db.VarChar(100)
+  name_ar        String          @db.VarChar(100)
+  description_en String?
+  description_so String?
+  description_ar String?
+  icon_path      String?         @db.VarChar(255)
+  color          String?         @db.VarChar(7)
+  image_url      String?
+  is_active      Boolean?        @default(true)
+  display_order  Int?            @default(0)
+  product_count  Int?            @default(0)
+  created_at     DateTime?       @default(now()) @db.Timestamp(6)
+  updated_at     DateTime?       @default(now()) @db.Timestamp(6)
+  products       products[]
+  subcategories  subcategories[]
+
+  @@index([display_order], map: "idx_categories_display_order")
+  @@index([is_active], map: "idx_categories_is_active")
+  @@index([name_ar(ops: raw("gin_trgm_ops"))], map: "idx_categories_name_ar_trgm", type: Gin)
+  @@index([name_en(ops: raw("gin_trgm_ops"))], map: "idx_categories_name_en_trgm", type: Gin)
+  @@index([name_so(ops: raw("gin_trgm_ops"))], map: "idx_categories_name_so_trgm", type: Gin)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model delivery_persons {
+  id                  String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id             String?       @unique @db.Uuid
+  name                String        @db.VarChar(200)
+  email               String        @unique @db.Citext
+  phone               String        @db.VarChar(20)
+  password_hash       String        @db.VarChar(255)
+  user_photo_url      String?
+  vehicle_photos      Json?         @default("[]")
+  location            String?       @db.VarChar(500)
+  latitude            Decimal?      @db.Decimal(10, 8)
+  longitude           Decimal?      @db.Decimal(11, 8)
+  vehicle_type        vehicle_type?
+  vehicle_number      String?       @db.VarChar(50)
+  license_number      String?       @db.VarChar(50)
+  is_active           Boolean?      @default(true)
+  is_available        Boolean?      @default(true)
+  current_assignments Int?          @default(0)
+  total_deliveries    Int?          @default(0)
+  rating              Decimal?      @default(5.0) @db.Decimal(2, 1)
+  created_at          DateTime?     @default(now()) @db.Timestamp(6)
+  updated_at          DateTime?     @default(now()) @db.Timestamp(6)
+  orders              orders[]
+  users               users?        @relation(fields: [user_id], references: [id], onUpdate: NoAction, onDelete: SetNull, map: "fk_delivery_persons_user")
+
+  @@index([is_active, is_available], map: "idx_delivery_persons_available", where: raw("((is_active = true) AND (is_available = true))"))
+  @@index([email], map: "idx_delivery_persons_email")
+  @@index([is_active], map: "idx_delivery_persons_is_active")
+  @@index([is_available], map: "idx_delivery_persons_is_available")
+  @@index([phone], map: "idx_delivery_persons_phone")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model featured_products {
+  id            String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  product_id    String    @unique @db.Uuid
+  display_order Int?      @default(0)
+  is_active     Boolean?  @default(true)
+  created_at    DateTime? @default(now()) @db.Timestamp(6)
+  updated_at    DateTime? @default(now()) @db.Timestamp(6)
+  products      products  @relation(fields: [product_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_featured_products_product")
+
+  @@index([display_order], map: "idx_featured_products_display_order")
+  @@index([is_active], map: "idx_featured_products_is_active")
+  @@index([product_id], map: "idx_featured_products_product_id")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model flash_sale_products {
+  id                  String      @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  flash_sale_id       String      @db.Uuid
+  product_id          String      @db.Uuid
+  product_name        String      @db.VarChar(255)
+  product_image_url   String?
+  original_price      Decimal     @db.Decimal(10, 2)
+  sale_price          Decimal     @db.Decimal(10, 2)
+  discount_percentage Int?        @default(dbgenerated("(round((((original_price - sale_price) / original_price) * (100)::numeric), 0))::integer"))
+  stock_limit         Int
+  sold_count          Int?        @default(0)
+  created_at          DateTime?   @default(now()) @db.Timestamp(6)
+  flash_sales         flash_sales @relation(fields: [flash_sale_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_flash_sale_products_flash_sale")
+  products            products    @relation(fields: [product_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_flash_sale_products_product")
+
+  @@unique([flash_sale_id, product_id])
+  @@index([flash_sale_id], map: "idx_flash_sale_products_flash_sale_id")
+  @@index([product_id], map: "idx_flash_sale_products_product_id")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model flash_sales {
+  id                  String                @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  title               String                @db.VarChar(255)
+  description         String?
+  start_time          DateTime              @db.Timestamp(6)
+  end_time            DateTime              @db.Timestamp(6)
+  status              flash_sale_status?    @default(scheduled)
+  is_active           Boolean?              @default(true)
+  created_at          DateTime?             @default(now()) @db.Timestamp(6)
+  updated_at          DateTime?             @default(now()) @db.Timestamp(6)
+  flash_sale_products flash_sale_products[]
+
+  @@index([start_time, end_time, is_active], map: "idx_flash_sales_active", where: raw("(is_active = true)"))
+  @@index([end_time], map: "idx_flash_sales_end_time")
+  @@index([is_active], map: "idx_flash_sales_is_active")
+  @@index([start_time], map: "idx_flash_sales_start_time")
+  @@index([status], map: "idx_flash_sales_status")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model order_items {
+  id                 String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  order_id           String            @db.Uuid
+  product_id         String            @db.Uuid
+  variant_id         String?           @db.Uuid
+  product_name       String            @db.VarChar(255)
+  product_image_url  String?
+  unit_price         Decimal           @db.Decimal(10, 2)
+  discount_amount    Decimal?          @default(0) @db.Decimal(10, 2)
+  quantity           Int
+  total              Decimal           @db.Decimal(10, 2)
+  variant_name       String?           @db.VarChar(100)
+  variant_attributes Json?
+  created_at         DateTime?         @default(now()) @db.Timestamp(6)
+  package_name       String?           @db.VarChar(255)
+  provider_name      String?           @db.VarChar(255)
+  recipient_phone    String?           @db.VarChar(20)
+  package_duration   String?           @db.VarChar(50)
+  package_data       String?           @db.VarChar(100)
+  orders             orders            @relation(fields: [order_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_order_items_order")
+  products           products          @relation(fields: [product_id], references: [id], onUpdate: NoAction, map: "fk_order_items_product")
+  product_variants   product_variants? @relation(fields: [variant_id], references: [id], onUpdate: NoAction, map: "fk_order_items_variant")
+
+  @@index([order_id], map: "idx_order_items_order_id")
+  @@index([product_id], map: "idx_order_items_product_id")
+  @@index([variant_id], map: "idx_order_items_variant_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model order_status_history {
+  id              String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  order_id        String       @db.Uuid
+  status          order_status
+  notes           String?
+  updated_by      String?      @db.Uuid
+  updated_by_name String?      @db.VarChar(200)
+  created_at      DateTime?    @default(now()) @db.Timestamp(6)
+  orders          orders       @relation(fields: [order_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_order_status_history_order")
+  users           users?       @relation(fields: [updated_by], references: [id], onUpdate: NoAction, map: "fk_order_status_history_user")
+
+  @@index([created_at(sort: Desc)], map: "idx_order_status_history_created_at")
+  @@index([order_id], map: "idx_order_status_history_order_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model orders {
+  id                    String                 @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id               String                 @db.Uuid
+  order_number          String                 @unique @db.VarChar(50)
+  subtotal              Decimal                @default(0) @db.Decimal(10, 2)
+  tax                   Decimal                @default(0) @db.Decimal(10, 2)
+  shipping              Decimal                @default(0) @db.Decimal(10, 2)
+  discount              Decimal                @default(0) @db.Decimal(10, 2)
+  total                 Decimal                @default(0) @db.Decimal(10, 2)
+  status                order_status?          @default(pending)
+  payment_status        payment_status?        @default(pending)
+  shipping_address      Json
+  payment_method        Json
+  delivery_person_id    String?                @db.Uuid
+  delivery_person_name  String?                @db.VarChar(200)
+  delivery_assigned_at  DateTime?              @db.Timestamp(6)
+  delivery_picked_up_at DateTime?              @db.Timestamp(6)
+  delivery_delivered_at DateTime?              @db.Timestamp(6)
+  tracking_number       String?                @db.VarChar(100)
+  estimated_delivery    DateTime?              @db.Timestamp(6)
+  actual_delivery       DateTime?              @db.Timestamp(6)
+  notes                 String?
+  customer_notes        String?
+  admin_notes           String?
+  coupon_code           String?                @db.VarChar(50)
+  created_at            DateTime?              @default(now()) @db.Timestamp(6)
+  updated_at            DateTime?              @default(now()) @db.Timestamp(6)
+  order_type            String?                @default("product") @db.VarChar(50)
+  order_items           order_items[]
+  order_status_history  order_status_history[]
+  delivery_persons      delivery_persons?      @relation(fields: [delivery_person_id], references: [id], onUpdate: NoAction, map: "fk_orders_delivery_person")
+  users                 users                  @relation(fields: [user_id], references: [id], onUpdate: NoAction, map: "fk_orders_user")
+  product_reviews       product_reviews[]
+  transactions          transactions[]
+
+  @@index([created_at(sort: Desc)], map: "idx_orders_created_at")
+  @@index([delivery_person_id], map: "idx_orders_delivery_person_id")
+  @@index([delivery_person_id, status], map: "idx_orders_delivery_status")
+  @@index([order_number], map: "idx_orders_order_number")
+  @@index([order_type], map: "idx_orders_order_type")
+  @@index([payment_status], map: "idx_orders_payment_status")
+  @@index([status], map: "idx_orders_status")
+  @@index([status, created_at(sort: Desc)], map: "idx_orders_status_created")
+  @@index([tracking_number], map: "idx_orders_tracking_number")
+  @@index([user_id], map: "idx_orders_user_id")
+  @@index([user_id, status], map: "idx_orders_user_status")
+  @@index([user_id, order_type], map: "idx_orders_user_type")
+}
+
+model notifications {
+  id         String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id    String    @db.Uuid
+  title      String    @db.VarChar(255)
+  body       String
+  type       String?   @db.VarChar(50)
+  data       Json?     @default("{}")
+  is_read    Boolean?  @default(false)
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+  users      users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_notifications_user")
+
+  @@index([user_id, created_at(sort: Desc)], map: "idx_notifications_user_created")
+  @@index([user_id, is_read], map: "idx_notifications_user_read")
+}
+
+model passwordresets {
+  id        Int       @id @default(autoincrement())
+  email     String    @db.VarChar(255)
+  otp       String    @db.VarChar(6)
+  expiresat DateTime  @db.Timestamp(6)
+  isused    Boolean?  @default(false)
+  createdat DateTime? @default(now()) @db.Timestamp(6)
+
+  @@index([email], map: "idx_password_resets_email")
+  @@index([otp], map: "idx_password_resets_otp")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model payment_methods {
+  id           String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id      String              @db.Uuid
+  type         payment_method_type
+  display_name String              @db.VarChar(100)
+  is_default   Boolean?            @default(false)
+  is_active    Boolean?            @default(true)
+  details      Json?               @default("{}")
+  last_four    String?             @db.VarChar(4)
+  card_brand   String?             @db.VarChar(50)
+  expiry_month Int?
+  expiry_year  Int?
+  phone_number String?             @db.VarChar(20)
+  created_at   DateTime?           @default(now()) @db.Timestamp(6)
+  updated_at   DateTime?           @default(now()) @db.Timestamp(6)
+  users        users               @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_payment_methods_user")
+
+  @@index([user_id, is_default], map: "idx_payment_methods_is_default", where: raw("(is_default = true)"))
+  @@index([type], map: "idx_payment_methods_type")
+  @@index([user_id], map: "idx_payment_methods_user_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model product_images {
+  id            String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  product_id    String    @db.Uuid
+  image_url     String
+  display_order Int?      @default(0)
+  is_primary    Boolean?  @default(false)
+  alt_text      String?   @db.VarChar(255)
+  created_at    DateTime? @default(now()) @db.Timestamp(6)
+  products      products  @relation(fields: [product_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_product_images_product")
+
+  @@index([product_id, is_primary], map: "idx_product_images_is_primary", where: raw("(is_primary = true)"))
+  @@index([product_id], map: "idx_product_images_product_id")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model product_reviews {
+  id                   String                 @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  product_id           String                 @db.Uuid
+  user_id              String                 @db.Uuid
+  order_id             String?                @db.Uuid
+  rating               Int
+  title                String?                @db.VarChar(255)
+  comment              String?
+  is_verified_purchase Boolean?               @default(false)
+  is_approved          Boolean?               @default(true)
+  is_featured          Boolean?               @default(false)
+  helpful_count        Int?                   @default(0)
+  not_helpful_count    Int?                   @default(0)
+  created_at           DateTime?              @default(now()) @db.Timestamp(6)
+  updated_at           DateTime?              @default(now()) @db.Timestamp(6)
+  orders               orders?                @relation(fields: [order_id], references: [id], onUpdate: NoAction)
+  products             products               @relation(fields: [product_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users                users                  @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  review_helpful_votes review_helpful_votes[]
+
+  @@unique([product_id, user_id])
+  @@index([created_at(sort: Desc)], map: "idx_reviews_created_at")
+  @@index([product_id], map: "idx_reviews_product_id")
+  @@index([rating], map: "idx_reviews_rating")
+  @@index([user_id], map: "idx_reviews_user_id")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model product_variants {
+  id             String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  product_id     String        @db.Uuid
+  name_en        String        @db.VarChar(100)
+  name_so        String        @db.VarChar(100)
+  name_ar        String        @db.VarChar(100)
+  price          Decimal       @db.Decimal(10, 2)
+  discount_price Decimal?      @db.Decimal(10, 2)
+  stock_quantity Int?          @default(0)
+  in_stock       Boolean?      @default(dbgenerated("(stock_quantity > 0)"))
+  sku            String        @unique @db.VarChar(100)
+  barcode        String?       @db.VarChar(100)
+  attributes     Json?         @default("{}")
+  created_at     DateTime?     @default(now()) @db.Timestamp(6)
+  updated_at     DateTime?     @default(now()) @db.Timestamp(6)
+  cart_items     cart_items[]
+  order_items    order_items[]
+  products       products      @relation(fields: [product_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_product_variants_product")
+
+  @@index([product_id], map: "idx_product_variants_product_id")
+  @@index([sku], map: "idx_product_variants_sku")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model products {
+  id                  String                @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name_en             String                @db.VarChar(255)
+  name_so             String                @db.VarChar(255)
+  name_ar             String                @db.VarChar(255)
+  description_en      String?
+  description_so      String?
+  description_ar      String?
+  category_id         String                @db.Uuid
+  subcategory_id      String?               @db.Uuid
+  brand_id            String?               @db.Uuid
+  price               Decimal               @db.Decimal(10, 2)
+  discount_price      Decimal?              @db.Decimal(10, 2)
+  stock_quantity      Int?                  @default(0)
+  in_stock            Boolean?              @default(dbgenerated("(stock_quantity > 0)"))
+  low_stock_threshold Int?                  @default(10)
+  sku                 String                @unique @db.VarChar(100)
+  barcode             String?               @db.VarChar(100)
+  tags                String[]
+  rating              Decimal?              @default(0.0) @db.Decimal(2, 1)
+  review_count        Int?                  @default(0)
+  status              product_status?       @default(draft)
+  is_featured         Boolean?              @default(false)
+  is_halal            Boolean?              @default(false)
+  metadata            Json?                 @default("{}")
+  slug                String?               @unique @db.VarChar(255)
+  meta_title          String?               @db.VarChar(255)
+  meta_description    String?
+  created_at          DateTime?             @default(now()) @db.Timestamp(6)
+  updated_at          DateTime?             @default(now()) @db.Timestamp(6)
+  deleted_at          DateTime?             @db.Timestamp(6)
+  cart_items          cart_items[]
+  featured_products   featured_products?
+  flash_sale_products flash_sale_products[]
+  order_items         order_items[]
+  product_images      product_images[]
+  product_reviews     product_reviews[]
+  product_variants    product_variants[]
+  brands              brands?               @relation(fields: [brand_id], references: [id], onUpdate: NoAction, map: "fk_products_brand")
+  categories          categories            @relation(fields: [category_id], references: [id], onUpdate: NoAction, map: "fk_products_category")
+  subcategories       subcategories?        @relation(fields: [subcategory_id], references: [id], onUpdate: NoAction, map: "fk_products_subcategory")
+  wishlist            wishlist[]
+
+  @@index([brand_id], map: "idx_products_brand_id")
+  @@index([category_id], map: "idx_products_category_id")
+  @@index([category_id, status], map: "idx_products_category_status")
+  @@index([created_at(sort: Desc)], map: "idx_products_created_at")
+  @@index([deleted_at], map: "idx_products_deleted_at", where: raw("(deleted_at IS NULL)"))
+  @@index([is_featured], map: "idx_products_is_featured", where: raw("(is_featured = true)"))
+  @@index([name_ar(ops: raw("gin_trgm_ops"))], map: "idx_products_name_ar_trgm", type: Gin)
+  @@index([name_en(ops: raw("gin_trgm_ops"))], map: "idx_products_name_en_trgm", type: Gin)
+  @@index([name_so(ops: raw("gin_trgm_ops"))], map: "idx_products_name_so_trgm", type: Gin)
+  @@index([price], map: "idx_products_price")
+  @@index([rating(sort: Desc)], map: "idx_products_rating")
+  @@index([sku], map: "idx_products_sku")
+  @@index([status], map: "idx_products_status")
+  @@index([status, is_featured], map: "idx_products_status_featured")
+  @@index([subcategory_id], map: "idx_products_subcategory_id")
+  @@index([tags], map: "idx_products_tags", type: Gin)
+}
+
+model review_helpful_votes {
+  id              String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  review_id       String          @db.Uuid
+  user_id         String          @db.Uuid
+  is_helpful      Boolean
+  created_at      DateTime?       @default(now()) @db.Timestamp(6)
+  product_reviews product_reviews @relation(fields: [review_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users           users           @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([review_id, user_id])
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model settings {
+  id          String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  key         String    @unique @db.VarChar(100)
+  value       Json
+  category    String?   @db.VarChar(50)
+  description String?
+  is_public   Boolean?  @default(false)
+  created_at  DateTime? @default(now()) @db.Timestamp(6)
+  updated_at  DateTime? @default(now()) @db.Timestamp(6)
+
+  @@index([category], map: "idx_settings_category")
+  @@index([is_public], map: "idx_settings_is_public", where: raw("(is_public = true)"))
+  @@index([key], map: "idx_settings_key")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model subcategories {
+  id             String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  category_id    String     @db.Uuid
+  name_en        String     @db.VarChar(100)
+  name_so        String     @db.VarChar(100)
+  name_ar        String     @db.VarChar(100)
+  description_en String?
+  description_so String?
+  description_ar String?
+  image_url      String?
+  is_active      Boolean?   @default(true)
+  display_order  Int?       @default(0)
+  product_count  Int?       @default(0)
+  created_at     DateTime?  @default(now()) @db.Timestamp(6)
+  updated_at     DateTime?  @default(now()) @db.Timestamp(6)
+  products       products[]
+  categories     categories @relation(fields: [category_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_subcategories_category")
+
+  @@index([category_id], map: "idx_subcategories_category_id")
+  @@index([display_order], map: "idx_subcategories_display_order")
+  @@index([is_active], map: "idx_subcategories_is_active")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model transactions {
+  id               String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  transaction_id   String              @unique @db.VarChar(100)
+  type             transaction_type
+  status           transaction_status? @default(pending)
+  amount           Decimal             @db.Decimal(10, 2)
+  currency         String?             @default("USD") @db.VarChar(3)
+  payment_method   payment_method_type
+  user_id          String              @db.Uuid
+  user_name        String?             @db.VarChar(200)
+  user_email       String?             @db.VarChar(255)
+  order_id         String?             @db.Uuid
+  description      String?
+  gateway_response Json?
+  metadata         Json?               @default("{}")
+  failure_reason   String?
+  created_at       DateTime?           @default(now()) @db.Timestamp(6)
+  updated_at       DateTime?           @default(now()) @db.Timestamp(6)
+  completed_at     DateTime?           @db.Timestamp(6)
+  failed_at        DateTime?           @db.Timestamp(6)
+  orders           orders?             @relation(fields: [order_id], references: [id], onUpdate: NoAction, map: "fk_transactions_order")
+  users            users               @relation(fields: [user_id], references: [id], onUpdate: NoAction, map: "fk_transactions_user")
+
+  @@index([created_at(sort: Desc)], map: "idx_transactions_created_at")
+  @@index([order_id], map: "idx_transactions_order_id")
+  @@index([status], map: "idx_transactions_status")
+  @@index([transaction_id], map: "idx_transactions_transaction_id")
+  @@index([type], map: "idx_transactions_type")
+  @@index([type, status], map: "idx_transactions_type_status")
+  @@index([user_id], map: "idx_transactions_user_id")
+  @@index([user_id, status], map: "idx_transactions_user_status")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model user_addresses {
+  id           Int       @id @default(autoincrement())
+  user_id      String    @db.Uuid
+  title        String    @db.VarChar(50)
+  full_name    String    @db.VarChar(255)
+  phone_number String    @db.VarChar(20)
+  street       String
+  city         String    @db.VarChar(100)
+  state        String?   @db.VarChar(100)
+  country      String    @default("Somalia") @db.VarChar(100)
+  postal_code  String?   @db.VarChar(20)
+  is_default   Boolean?  @default(false)
+  created_at   DateTime? @default(now()) @db.Timestamp(6)
+  updated_at   DateTime? @default(now()) @db.Timestamp(6)
+  users        users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([user_id, is_default], map: "idx_user_addresses_default")
+  @@index([user_id], map: "idx_user_addresses_user_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model users {
+  id                       String                 @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  email                    String?                @unique @db.Citext
+  phone_number             String?                @unique @db.VarChar(20)
+  password_hash            String                 @db.VarChar(255)
+  role_id                  Int?
+  role                     user_role              @default(customer)
+  first_name               String?                @db.VarChar(100)
+  last_name                String?                @db.VarChar(100)
+  display_name             String?                @db.VarChar(200)
+  profile_image_url        String?
+  gender                   user_gender?           @default(not_specified)
+  date_of_birth            DateTime?              @db.Date
+  preferred_language       language_code?         @default(en)
+  preferred_currency       String?                @default("USD") @db.VarChar(3)
+  is_email_verified        Boolean?               @default(false)
+  is_phone_verified        Boolean?               @default(false)
+  email_verification_token String?                @db.VarChar(255)
+  phone_verification_code  String?                @db.VarChar(10)
+  status                   user_status?           @default(active)
+  preferences              Json?                  @default("{\"darkMode\": false, \"themeMode\": \"light\", \"biometricAuth\": false, \"marketingEmails\": false, \"smsNotifications\": true, \"pushNotifications\": true, \"emailNotifications\": true}")
+  reset_password_token     String?                @db.VarChar(255)
+  reset_password_expires   DateTime?              @db.Timestamp(6)
+  last_login_at            DateTime?              @db.Timestamp(6)
+  created_at               DateTime?              @default(now()) @db.Timestamp(6)
+  updated_at               DateTime?              @default(now()) @db.Timestamp(6)
+  deleted_at               DateTime?              @db.Timestamp(6)
+  token_invalidated_at     DateTime?              @db.Timestamp(6)
+  fcm_token                String?                @db.VarChar(512)
+  activity_logs            activity_logs[]
+  addresses                addresses[]
+  cart                     cart?
+  order_status_history     order_status_history[]
+  orders                   orders[]
+  payment_methods          payment_methods[]
+  product_reviews          product_reviews[]
+  review_helpful_votes     review_helpful_votes[]
+  transactions             transactions[]
+  user_addresses           user_addresses[]
+  wishlist                 wishlist[]
+  delivery_person          delivery_persons?
+  notifications            notifications[]
+  roleModel                Role?                  @relation(fields: [role_id], references: [id], onUpdate: NoAction, map: "fk_users_role_model")
+
+  @@index([created_at(sort: Desc)], map: "idx_users_created_at")
+  @@index([deleted_at], map: "idx_users_deleted_at", where: raw("(deleted_at IS NULL)"))
+  @@index([email], map: "idx_users_email")
+  @@index([phone_number], map: "idx_users_phone")
+  @@index([role_id], map: "idx_users_role_id")
+  @@index([role], map: "idx_users_role")
+  @@index([status], map: "idx_users_status")
+  @@index([id, token_invalidated_at], map: "idx_users_token_invalidated_at", where: raw("(token_invalidated_at IS NOT NULL)"))
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model wishlist {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id    String    @db.Uuid
+  product_id String    @db.Uuid
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+  deleted_at DateTime? @db.Timestamp(6)
+  products   products  @relation(fields: [product_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users      users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([user_id, product_id, deleted_at])
+  @@index([created_at(sort: Desc)], map: "idx_wishlist_created_at")
+  @@index([product_id], map: "idx_wishlist_product_id", where: raw("(deleted_at IS NULL)"))
+  @@index([user_id], map: "idx_wishlist_user_id", where: raw("(deleted_at IS NULL)"))
+  @@index([user_id, product_id], map: "idx_wishlist_user_product", where: raw("(deleted_at IS NULL)"))
+}
+
+model Role {
+  id              Int               @id @default(autoincrement())
+  name            String            @unique
+  description     String?
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+  rolePermissions RolePermissions?
+  users           users[]
+
+  @@map("roles")
+}
+
+model Menu {
+  id            Int              @id @default(autoincrement())
+  title         String           @unique
+  icon          String?
+  url           String?
+  isCollapsible Boolean          @default(false) @map("is_collapsible")
+  order         Int              @default(0)
+  createdAt     DateTime         @default(now()) @map("created_at")
+  updatedAt     DateTime         @updatedAt @map("updated_at")
+  roleMenus     RoleMenuAccess[]
+  subMenus      SubMenu[]
+
+  @@map("menus")
+}
+
+model SubMenu {
+  id           Int                 @id @default(autoincrement())
+  title        String
+  url          String
+  menuId       Int                 @map("menu_id")
+  order        Int                 @default(0)
+  createdAt    DateTime            @default(now()) @map("created_at")
+  updatedAt    DateTime            @updatedAt @map("updated_at")
+  roleSubMenus RoleSubMenuAccess[]
+  menu         Menu                @relation(fields: [menuId], references: [id], onDelete: Cascade)
+
+  @@index([menuId], map: "idx_sub_menus_menu_id")
+  @@map("sub_menus")
+}
+
+model RolePermissions {
+  id        Int              @id @default(autoincrement())
+  roleId    Int              @unique @map("role_id")
+  createdAt DateTime         @default(now()) @map("created_at")
+  updatedAt DateTime         @updatedAt @map("updated_at")
+  menus     RoleMenuAccess[]
+  role      Role             @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@map("role_permissions")
+}
+
+model RoleMenuAccess {
+  id                Int                 @id @default(autoincrement())
+  rolePermissionsId Int                 @map("role_permissions_id")
+  menuId            Int                 @map("menu_id")
+  canView           Boolean             @default(true) @map("can_view")
+  canAdd            Boolean             @default(false) @map("can_add")
+  canEdit           Boolean             @default(false) @map("can_edit")
+  canDelete         Boolean             @default(false) @map("can_delete")
+  canAssign         Boolean             @default(false) @map("can_assign")
+  canViewAllOrders  Boolean             @default(false) @map("can_view_all_orders")
+  canViewByRole     Boolean             @default(false) @map("can_view_by_role")
+  createdAt         DateTime            @default(now()) @map("created_at")
+  updatedAt         DateTime            @updatedAt @map("updated_at")
+  menu              Menu                @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  rolePermissions   RolePermissions     @relation(fields: [rolePermissionsId], references: [id], onDelete: Cascade)
+  subMenus          RoleSubMenuAccess[]
+
+  @@unique([rolePermissionsId, menuId], map: "uq_role_menu_access_role_permissions_menu")
+  @@index([menuId], map: "idx_role_menu_access_menu_id")
+  @@map("role_menu_access")
+}
+
+model RoleSubMenuAccess {
+  id               Int            @id @default(autoincrement())
+  roleMenuAccessId Int            @map("role_menu_access_id")
+  subMenuId        Int            @map("sub_menu_id")
+  canView          Boolean        @default(true) @map("can_view")
+  canAdd           Boolean        @default(false) @map("can_add")
+  canEdit          Boolean        @default(false) @map("can_edit")
+  canDelete        Boolean        @default(false) @map("can_delete")
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
+  roleMenuAccess   RoleMenuAccess @relation(fields: [roleMenuAccessId], references: [id], onDelete: Cascade)
+  subMenu          SubMenu        @relation(fields: [subMenuId], references: [id], onDelete: Cascade)
+
+  @@unique([roleMenuAccessId, subMenuId], map: "uq_role_sub_menu_access_role_menu_sub_menu")
+  @@index([subMenuId], map: "idx_role_sub_menu_access_sub_menu_id")
+  @@map("role_sub_menu_access")
+}
+
+enum address_type {
+  home
+  work
+  other
+}
+
+enum advertisement_placement {
+  home_slider
+  home_banner
+  category_page
+  product_page
+  checkout
+}
+
+enum flash_sale_status {
+  scheduled
+  active
+  expired
+}
+
+enum language_code {
+  en
+  so
+  ar
+}
+
+enum order_status {
+  pending
+  confirmed
+  processing
+  ready_for_pickup
+  out_for_delivery
+  delivered
+  cancelled
+  returned
+  refunded
+}
+
+enum payment_method_type {
+  waafi_pay
+  edahab
+  premier_wallet
+  cash_on_delivery
+  credit_card
+  debit_card
+}
+
+enum payment_status {
+  pending
+  processing
+  completed
+  failed
+  cancelled
+  refunded
+}
+
+enum product_status {
+  active
+  inactive
+  draft
+  archived
+}
+
+enum transaction_status {
+  pending
+  processing
+  completed
+  failed
+  cancelled
+  refunded
+}
+
+enum transaction_type {
+  order_payment
+  refund
+  wallet_topup
+  wallet_withdrawal
+}
+
+enum user_gender {
+  male
+  female
+  not_specified
+}
+
+enum user_role {
+  customer
+  admin
+  delivery_person
+  staff
+}
+
+enum user_status {
+  active
+  inactive
+  suspended
+  deleted
+}
+
+enum vehicle_type {
+  motorcycle
+  car
+  bicycle
+  on_foot
+}
