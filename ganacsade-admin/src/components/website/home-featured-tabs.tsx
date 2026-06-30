@@ -100,7 +100,6 @@ export function HomeFeaturedTabs({
                   <ProductCard
                     key={product.id}
                     product={product}
-                    variant="storefront"
                     badge={
                       product.is_flash_sale
                         ? "Flash Sale"

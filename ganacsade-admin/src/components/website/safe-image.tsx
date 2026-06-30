@@ -10,6 +10,7 @@ type SafeImageProps = {
   fill?: boolean
   width?: number
   height?: number
+  priority?: boolean
   fallback?: ReactNode
 }
 
@@ -20,6 +21,7 @@ export function SafeImage({
   fill,
   width,
   height,
+  priority,
   fallback,
 }: SafeImageProps) {
   if (!src || !isValidImageUrl(src)) {
@@ -43,6 +45,7 @@ export function SafeImage({
         alt={alt}
         fill
         className={className}
+        priority={priority}
         unoptimized
       />
     )
@@ -55,6 +58,7 @@ export function SafeImage({
       width={width || 40}
       height={height || 40}
       className={className}
+      priority={priority}
       unoptimized
     />
   )

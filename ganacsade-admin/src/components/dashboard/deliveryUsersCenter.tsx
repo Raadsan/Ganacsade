@@ -190,11 +190,10 @@ export function DeliveryUsersCenter() {
 
     try {
       setSaving(true)
-      const payload = {
+      const sharedFields = {
         name: form.name.trim(),
         email: form.email.trim(),
         phone: form.phone.trim(),
-        password: form.password.trim() || undefined,
         vehicleType: form.vehicleType || undefined,
         vehicleNumber: form.vehicleNumber.trim() || undefined,
         licenseNumber: form.licenseNumber.trim() || undefined,
@@ -202,14 +201,20 @@ export function DeliveryUsersCenter() {
         userPhotoUrl: form.userPhotoUrl || undefined,
         vehiclePhotos: form.vehiclePhotos,
         isAvailable: form.isAvailable,
-        status: form.status,
       }
 
       if (formMode === "create") {
-        await deliveryPersonsApi.create(payload)
+        await deliveryPersonsApi.create({
+          ...sharedFields,
+          password: form.password.trim(),
+        })
         toast.success("Delivery user registered")
       } else if (editingId) {
-        await deliveryPersonsApi.update(editingId, payload)
+        await deliveryPersonsApi.update(editingId, {
+          ...sharedFields,
+          password: form.password.trim() || undefined,
+          status: form.status,
+        })
         toast.success("Delivery user updated")
       }
 

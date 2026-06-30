@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { Suspense, useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,6 +13,22 @@ import { Eye, EyeOff } from "lucide-react"
 import { authApi } from "@/lib/api/auth"
 
 export default function RegisterPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-muted/40 px-4 py-10">
+          <Card className="w-full max-w-md">
+            <CardContent className="py-12 text-center text-muted-foreground">Loading...</CardContent>
+          </Card>
+        </div>
+      }
+    >
+      <RegisterForm />
+    </Suspense>
+  )
+}
+
+function RegisterForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get("redirect")

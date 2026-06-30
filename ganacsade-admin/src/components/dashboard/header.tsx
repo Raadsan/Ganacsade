@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { authApi } from "@/lib/api/auth"
-import { rbacApi } from "@/lib/api/rbac"
+import { rbacApi, type Menu } from "@/lib/api/rbac"
 import { toast } from "sonner"
 
 export function Header() {
@@ -39,7 +39,7 @@ export function Header() {
     const loadAccountMenu = async () => {
       try {
         const response = await rbacApi.getMyMenus()
-        const menus = response?.data || []
+        const menus: Menu[] = response?.data || []
         const profileMenu = menus.find((menu) => menu.url === "/profile")
         if (profileMenu) {
           setAccountPath("/profile")
