@@ -110,7 +110,15 @@ class AppNotificationsController extends GetxController with WidgetsBindingObser
         }
       }
     } catch (e) {
-      errorMessage.value = e.toString().replaceAll('Exception: ', '');
+      final message = e.toString().replaceAll('Exception: ', '');
+      if (message.toLowerCase().contains('route not found') ||
+          message.toLowerCase().contains('not found')) {
+        notifications.value = [];
+        unreadCount.value = 0;
+        errorMessage.value = '';
+      } else {
+        errorMessage.value = message;
+      }
     } finally {
       isLoading.value = false;
     }

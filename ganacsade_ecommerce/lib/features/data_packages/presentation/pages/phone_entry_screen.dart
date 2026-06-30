@@ -172,7 +172,7 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> {
                   const Spacer(),
                   // Audio toggle button
                   IconButton(
-                    icon: Icon(
+                    icon: Icon(                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
                       _isAudioPlaying ? Icons.volume_up : Icons.volume_off,
                       color: textColor,
                       size: 24,

@@ -16,7 +16,7 @@ class NotificationsApiService {
 
   Future<NotificationFeedResult> getNotifications() async {
     try {
-      final response = await _httpClient.get('/auth/notifications');
+      final response = await _httpClient.get('/customer/notifications');
 
       if (response.statusCode == 200 && response.data['success'] == true) {
         final data = response.data['data'];
@@ -32,11 +32,18 @@ class NotificationsApiService {
       }
       return const NotificationFeedResult(items: [], unreadCount: 0);
     } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        return const NotificationFeedResult(items: [], unreadCount: 0);
+      }
       throw Exception(e.response?.data['message'] ?? 'Failed to load notifications');
     }
   }
 
   Future<void> markAsRead(String notificationId) async {
-    await _httpClient.patch('/auth/notifications/$notificationId/read');
+    await _httpClient.patch('/customer/notifications/$notificationId/read');
+  }
+
+  Future<void> markAllAsRead() async {
+    await _httpClient.patch('/customer/notifications/read-all');
   }
 }
