@@ -36,7 +36,7 @@ export function SiteHeader() {
   const handleLogout = async () => {
     await authApi.logout()
     setUser(null)
-    router.push("/")
+    router.push("/login")
     router.refresh()
   }
 
@@ -61,7 +61,7 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-        <Link href="/" className="flex items-center gap-2 font-bold text-primary">
+        <Link href="/shop" className="flex items-center gap-2 font-bold text-primary">
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-sm text-primary-foreground">
             G
           </span>
