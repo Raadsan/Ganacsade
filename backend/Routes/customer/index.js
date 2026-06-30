@@ -10,6 +10,7 @@ import paymentsRoutes from './paymentsRoutes.js';
 import wishlistRoutes from './wishlistRoutes.js';
 import addressesRoutes from './addressesRoutes.js';
 import dataPackageOrdersRoutes from './dataPackageOrdersRoutes.js';
+import notificationsRoutes from './notificationsRoutes.js';
 import { getCustomerHealth } from '../../controllers/customer/healthController.js';
 
 const router = express.Router();
@@ -25,6 +26,7 @@ router.use('/payments', paymentsRoutes);
 router.use('/wishlist', wishlistRoutes);
 router.use('/addresses', addressesRoutes);
 router.use('/data-package-orders', dataPackageOrdersRoutes);
+router.use('/notifications', notificationsRoutes);
 
 // Health check
 router.get('/health', getCustomerHealth);

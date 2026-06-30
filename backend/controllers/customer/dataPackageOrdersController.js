@@ -1,4 +1,8 @@
 import prisma from '../../lib/config/prisma.js';
+import {
+  getOrCreateDataPackageProductId,
+  normalizePaymentMethod,
+} from '../../lib/dataPackages.js';
 
 function generateDataPackageOrderNumber() {
   const timestamp = Date.now().toString().slice(-8);
@@ -31,22 +35,25 @@ export const createDataPackageOrder = async (req, res) => {
     }
 
     const orderNumber = generateDataPackageOrderNumber();
+    const normalizedPayment = normalizePaymentMethod(paymentMethod, paymentPhone, transactionId);
+    const numericAmount = Number(amount);
 
     const order = await prisma.$transaction(async (tx) => {
+      const productId = await getOrCreateDataPackageProductId(tx);
+
       const createdOrder = await tx.orders.create({
         data: {
           user_id: userId,
           order_number: orderNumber,
-          subtotal: amount,
+          subtotal: numericAmount,
           tax: 0,
           shipping: 0,
           discount: 0,
-          total: amount,
+          total: numericAmount,
           status: 'delivered',
           payment_status: 'completed',
-          payment_transaction_id: transactionId || null,
           shipping_address: { recipientPhone },
-          payment_method: { method: paymentMethod || 'mobile_money', phone: paymentPhone || null },
+          payment_method: normalizedPayment,
           customer_notes: JSON.stringify({
             type: 'data_package',
             packageId,
@@ -57,9 +64,26 @@ export const createDataPackageOrder = async (req, res) => {
             paymentPhone: paymentPhone || null,
             packageDuration: packageDuration || null,
             packageData: packageData || null,
+            transactionId: transactionId || null,
           }),
           notes: `Data package: ${packageName} for ${recipientPhone}`,
           order_type: 'data_package',
+        },
+      });
+
+      await tx.order_items.create({
+        data: {
+          order_id: createdOrder.id,
+          product_id: productId,
+          product_name: packageName,
+          unit_price: numericAmount,
+          quantity: 1,
+          total: numericAmount,
+          package_name: packageName,
+          provider_name: providerName,
+          recipient_phone: recipientPhone,
+          package_duration: packageDuration || null,
+          package_data: packageData || null,
         },
       });
 
@@ -84,7 +108,7 @@ export const createDataPackageOrder = async (req, res) => {
         packageName,
         providerName,
         recipientPhone,
-        amount,
+        amount: numericAmount,
         status: 'completed',
       },
     });

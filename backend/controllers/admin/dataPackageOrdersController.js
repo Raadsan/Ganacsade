@@ -1,4 +1,5 @@
 import prisma from '../../lib/config/prisma.js';
+import { extractDataPackageFields } from '../../lib/dataPackages.js';
 
 const toNumber = (value) => {
   if (value === null || value === undefined) return 0;
@@ -63,6 +64,7 @@ export const getDataPackageOrders = async (req, res, next) => {
           status: true,
           payment_status: true,
           shipping_address: true,
+          customer_notes: true,
           payment_method: true,
           created_at: true,
           updated_at: true,
@@ -93,7 +95,7 @@ export const getDataPackageOrders = async (req, res, next) => {
     ]);
 
     const data = orders.map((order) => {
-      const firstItem = order.order_items?.[0] || null;
+      const packageFields = extractDataPackageFields(order);
       return {
         id: order.id,
         order_number: order.order_number,
@@ -108,11 +110,7 @@ export const getDataPackageOrders = async (req, res, next) => {
         payment_method: order.payment_method,
         created_at: order.created_at,
         updated_at: order.updated_at,
-        package_name: firstItem?.package_name || null,
-        provider_name: firstItem?.provider_name || null,
-        recipient_phone: firstItem?.recipient_phone || null,
-        package_duration: firstItem?.package_duration || null,
-        package_data: firstItem?.package_data || null,
+        ...packageFields,
       };
     });
 

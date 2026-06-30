@@ -65,6 +65,23 @@ export default {
     apiSecret: process.env.CLOUDINARY_API_SECRET,
   },
 
+  // AWS S3 — used for image uploads when credentials are configured
+  aws: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY?.replace(/^"|"$/g, ''),
+    region: process.env.AWS_REGION,
+    bucketName: process.env.AWS_BUCKET_NAME,
+    uploadPrefix: process.env.AWS_S3_UPLOAD_PREFIX || 'ganacsade_uploads',
+    get isConfigured() {
+      return Boolean(
+        this.accessKeyId
+        && this.secretAccessKey
+        && this.region
+        && this.bucketName,
+      );
+    },
+  },
+
   // Email
   email: {
     from: process.env.EMAIL_FROM || 'noreply@ganacsade.com',

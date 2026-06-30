@@ -23,6 +23,27 @@ const advertisementSelect = {
   updated_at: true,
 };
 
+const parseIntField = (value, fallback = null) => {
+  if (value === undefined || value === null || value === '') return fallback;
+  const parsed = Number.parseInt(String(value), 10);
+  return Number.isNaN(parsed) ? fallback : parsed;
+};
+
+const parseBoolField = (value, fallback = null) => {
+  if (value === undefined || value === null || value === '') return fallback;
+  if (typeof value === 'boolean') return value;
+  const normalized = String(value).toLowerCase();
+  if (normalized === 'true' || normalized === '1') return true;
+  if (normalized === 'false' || normalized === '0') return false;
+  return fallback;
+};
+
+const getBodyField = (body, camelKey, snakeKey) => {
+  if (body[camelKey] !== undefined) return body[camelKey];
+  if (body[snakeKey] !== undefined) return body[snakeKey];
+  return undefined;
+};
+
 const deleteLocalImage = async (imageUrl) => {
   if (!imageUrl) return;
   const imagePath = path.join(__dirname, '../../../', imageUrl);
@@ -84,11 +105,21 @@ export const createAdvertisement = async (req, res, next) => {
       description,
       targetUrl,
       placement,
-      displayOrder = 0,
-      isActive = true,
       startDate,
       endDate,
     } = req.body;
+
+    const displayOrder = parseIntField(
+      getBodyField(req.body, 'displayOrder', 'display_order'),
+      0,
+    );
+    const isActive = parseBoolField(
+      getBodyField(req.body, 'isActive', 'is_active'),
+      true,
+    );
+    const resolvedTargetUrl = targetUrl ?? getBodyField(req.body, 'targetUrl', 'target_url');
+    const resolvedStartDate = startDate ?? getBodyField(req.body, 'startDate', 'start_date');
+    const resolvedEndDate = endDate ?? getBodyField(req.body, 'endDate', 'end_date');
 
     if (!title || !placement) {
       return res.status(400).json({
@@ -110,12 +141,12 @@ export const createAdvertisement = async (req, res, next) => {
         title,
         description: description || null,
         image_url: imageUrl,
-        target_url: targetUrl || null,
+        target_url: resolvedTargetUrl || null,
         placement,
         display_order: displayOrder,
         is_active: isActive,
-        start_date: startDate ? new Date(startDate) : null,
-        end_date: endDate ? new Date(endDate) : null,
+        start_date: resolvedStartDate ? new Date(resolvedStartDate) : null,
+        end_date: resolvedEndDate ? new Date(resolvedEndDate) : null,
       },
       select: advertisementSelect,
     });
@@ -138,11 +169,15 @@ export const updateAdvertisement = async (req, res, next) => {
       description,
       targetUrl,
       placement,
-      displayOrder,
-      isActive,
       startDate,
       endDate,
     } = req.body;
+
+    const displayOrderRaw = getBodyField(req.body, 'displayOrder', 'display_order');
+    const isActiveRaw = getBodyField(req.body, 'isActive', 'is_active');
+    const resolvedTargetUrl = targetUrl ?? getBodyField(req.body, 'targetUrl', 'target_url');
+    const resolvedStartDate = startDate ?? getBodyField(req.body, 'startDate', 'start_date');
+    const resolvedEndDate = endDate ?? getBodyField(req.body, 'endDate', 'end_date');
 
     const current = await prisma.advertisements.findUnique({
       where: { id },
@@ -170,12 +205,20 @@ export const updateAdvertisement = async (req, res, next) => {
         ...(title !== undefined ? { title } : {}),
         ...(description !== undefined ? { description } : {}),
         ...(imageUrl !== undefined ? { image_url: imageUrl } : {}),
-        ...(targetUrl !== undefined ? { target_url: targetUrl } : {}),
+        ...(resolvedTargetUrl !== undefined ? { target_url: resolvedTargetUrl } : {}),
         ...(placement !== undefined ? { placement } : {}),
-        ...(displayOrder !== undefined ? { display_order: displayOrder } : {}),
-        ...(isActive !== undefined ? { is_active: isActive } : {}),
-        ...(startDate !== undefined ? { start_date: startDate ? new Date(startDate) : null } : {}),
-        ...(endDate !== undefined ? { end_date: endDate ? new Date(endDate) : null } : {}),
+        ...(displayOrderRaw !== undefined
+          ? { display_order: parseIntField(displayOrderRaw, 0) }
+          : {}),
+        ...(isActiveRaw !== undefined
+          ? { is_active: parseBoolField(isActiveRaw, true) }
+          : {}),
+        ...(resolvedStartDate !== undefined
+          ? { start_date: resolvedStartDate ? new Date(resolvedStartDate) : null }
+          : {}),
+        ...(resolvedEndDate !== undefined
+          ? { end_date: resolvedEndDate ? new Date(resolvedEndDate) : null }
+          : {}),
         updated_at: new Date(),
       },
       select: advertisementSelect,

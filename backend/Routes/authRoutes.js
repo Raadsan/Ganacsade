@@ -186,14 +186,14 @@ router.post('/logout', authenticate, authController.logout);
 router.get('/notifications', authenticate, notificationsController.getMyNotifications);
 
 /**
- * @route   PATCH /api/auth/notifications/:id/read
- */
-router.patch('/notifications/:id/read', authenticate, notificationsController.markNotificationRead);
-
-/**
  * @route   PATCH /api/auth/notifications/read-all
  */
 router.patch('/notifications/read-all', authenticate, notificationsController.markAllNotificationsRead);
+
+/**
+ * @route   PATCH /api/auth/notifications/:id/read
+ */
+router.patch('/notifications/:id/read', authenticate, notificationsController.markNotificationRead);
 
 /**
  * @route   POST /api/auth/fcm-token
