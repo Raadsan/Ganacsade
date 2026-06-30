@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { productsApi } from "@/lib/api/products"
 import { BACKEND_URL, axiosInstance } from "@/lib/api/client"
+import { resolveImageUrl } from "@/lib/utils/image-url"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -220,9 +221,7 @@ export default function ProductsPage() {
           discountPrice: fullProduct.discount_price ? parseFloat(fullProduct.discount_price.toString()) : undefined,
           categoryId: fullProduct.category_id || '',
           subcategoryId: fullProduct.subcategory_id || '',
-          images: fullProduct.images?.map((img: any) => 
-            img.image_url?.startsWith('/uploads') ? `${BACKEND_URL}${img.image_url}` : img.image_url
-          ) || [],
+          images: fullProduct.images?.map((img: any) => resolveImageUrl(img.image_url)).filter(Boolean) || [],
           rating: parseFloat(fullProduct.rating?.toString() || '0'),
           reviewCount: fullProduct.review_count || 0,
           inStock: fullProduct.in_stock !== false,
@@ -622,7 +621,7 @@ export default function ProductsPage() {
                     <div className="h-10 w-10 rounded-md border bg-muted overflow-hidden flex-shrink-0">
                       {product.primary_image ? (
                         <img
-                          src={`${BACKEND_URL}${product.primary_image}`}
+                          src={resolveImageUrl(product.primary_image) || ''}
                           alt={product.name_en}
                           className="h-full w-full object-cover"
                           onError={(e: React.SyntheticEvent<HTMLImageElement>) => {

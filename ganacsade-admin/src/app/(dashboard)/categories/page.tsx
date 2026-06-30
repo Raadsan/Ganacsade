@@ -26,7 +26,7 @@ import { SubcategoryFormDialog } from "@/components/dashboard/subcategory-form-d
 import { categoriesApi } from "@/lib/api/categories"
 import { subcategoriesApi } from "@/lib/api/subcategories"
 import { toast } from "sonner"
-import { BACKEND_URL } from "@/lib/api/client"
+import { resolveImageUrl } from "@/lib/utils/image-url"
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([])
@@ -61,7 +61,7 @@ export default function CategoriesPage() {
                 id: cat.id,
                 name: cat.name_en || cat.name,
                 description: cat.description_en || cat.description || '',
-                image: cat.image_url ? `${BACKEND_URL}${cat.image_url}` : undefined,
+                image: resolveImageUrl(cat.image_url) || undefined,
                 productCount: cat.product_count || 0,
                 isActive: cat.is_active,
                 subcategories: subsResponse.success && subsResponse.data ? subsResponse.data.map((sub: any) => ({
@@ -69,7 +69,7 @@ export default function CategoriesPage() {
                   categoryId: sub.category_id,
                   name: sub.name_en || sub.name,
                   description: sub.description_en || sub.description || '',
-                  image: sub.image_url ? `${BACKEND_URL}${sub.image_url}` : undefined,
+                  image: resolveImageUrl(sub.image_url) || undefined,
                   isActive: sub.is_active,
                   productCount: sub.product_count || 0,
                 })) : [],
@@ -79,7 +79,7 @@ export default function CategoriesPage() {
                 id: cat.id,
                 name: cat.name_en || cat.name,
                 description: cat.description_en || cat.description || '',
-                image: cat.image_url ? `${BACKEND_URL}${cat.image_url}` : undefined,
+                image: resolveImageUrl(cat.image_url) || undefined,
                 productCount: cat.product_count || 0,
                 isActive: cat.is_active,
                 subcategories: [],

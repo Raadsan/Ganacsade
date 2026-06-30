@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { BACKEND_URL } from "@/lib/api/client"
+import { resolveImageUrl } from "@/lib/utils/image-url"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -56,7 +56,7 @@ export default function AdvertisementsPage() {
       if (response.success && response.data) {
         // Map API response to Advertisement type
         const mappedAds = response.data.map((ad: any) => {
-          const imageUrl = ad.image_url ? `${BACKEND_URL}${ad.image_url}` : ''
+          const imageUrl = resolveImageUrl(ad.image_url) || ''
           console.log('Advertisement image URL:', ad.title, '→', imageUrl)
           return {
             id: ad.id,
