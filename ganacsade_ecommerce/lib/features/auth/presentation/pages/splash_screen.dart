@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
@@ -22,19 +23,18 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   void _navigateToNext() async {
-    // Wait for both the splash delay AND storage initialization to complete
-    await Future.wait([
-      Future.delayed(const Duration(seconds: 3)),
-      _authController.storageReady,
-    ]);
+    await _authController.storageReady;
 
     if (_authController.completePendingLoginRedirect()) return;
 
     if (_authController.isLoggedIn) {
-      await _authController.refreshSessionRole();
       Get.offAllNamed(_authController.mainRoute);
-    } else if (Get.currentRoute != '/login') {
-      Get.offAllNamed('/register');
+      unawaited(_authController.refreshSessionRole());
+      return;
+    }
+
+    if (Get.currentRoute != '/login') {
+      Get.offAllNamed('/login');
     }
   }
 

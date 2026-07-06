@@ -23,7 +23,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
-  bool _agreeToTerms = false;
 
   @override
   void dispose() {
@@ -186,56 +185,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
             .fadeIn(delay: 800.ms, duration: 500.ms)
             .slideX(begin: 0.2, end: 0),
         
-        const SizedBox(height: 20),
-        
-        // Terms and Conditions
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Checkbox(
-              value: _agreeToTerms,
-              onChanged: (value) {
-                setState(() {
-                  _agreeToTerms = value ?? false;
-                });
-              },
-            ),
-            Expanded(
-              child: RichText(
-                text: TextSpan(
-                  style: AppTextStyles.bodyMedium,
-                  children: [
-                    TextSpan(text: 'I agree to the '),
-                    TextSpan(
-                      text: 'Terms & Conditions',
-                      style: TextStyle(
-                        color: AppColors.primaryGreen,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    TextSpan(text: ' and '),
-                    TextSpan(
-                      text: 'Privacy Policy',
-                      style: TextStyle(
-                        color: AppColors.primaryGreen,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        )
-            .animate()
-            .fadeIn(delay: 900.ms, duration: 500.ms),
-        
         const SizedBox(height: 30),
         
         // Register Button
         Obx(() => CustomButton(
           text: 'Register',
-          onPressed: (_authController.isLoading.value || !_agreeToTerms) ? null : _handleRegister,
+          onPressed: _authController.isLoading.value ? null : _handleRegister,
           isLoading: _authController.isLoading.value,
         ))
             .animate()
@@ -272,7 +227,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _handleRegister() async {
-    if (_formKey.currentState!.validate() && _agreeToTerms) {
+    if (_formKey.currentState!.validate()) {
       final identifier = _identifierController.text.trim();
       final isEmail = GetUtils.isEmail(identifier);
       

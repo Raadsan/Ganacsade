@@ -8,6 +8,9 @@ import '../../../../core/constants/app_text_styles.dart';
 class HelpSupportScreen extends StatelessWidget {
   const HelpSupportScreen({super.key});
 
+  static const String _supportEmail = 'ganacsadesakariye@gmail.com';
+  static const String _supportPhone = '+252 61 5775378';
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -147,11 +150,11 @@ class HelpSupportScreen extends StatelessWidget {
             _buildContactCard(
               icon: Icons.email_outlined,
               title: 'Email Support',
-              subtitle: 'support@ganacsade.com',
+              subtitle: _supportEmail,
               description: 'Get help via email within 24 hours',
               onTap: () {
                 HapticFeedback.lightImpact();
-                _copyToClipboard('support@ganacsade.com', 'Email copied to clipboard');
+                _copyToClipboard(_supportEmail, 'Email copied to clipboard');
               },
               index: 0,
             ),
@@ -159,7 +162,7 @@ class HelpSupportScreen extends StatelessWidget {
             _buildContactCard(
               icon: Icons.phone_outlined,
               title: 'Phone Support',
-              subtitle: '+252 61 XXX XXXX',
+              subtitle: _supportPhone,
               description: 'Call us during business hours',
               onTap: () {
                 HapticFeedback.lightImpact();
@@ -603,7 +606,7 @@ class HelpSupportScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Phone: +252 61 XXX XXXX',
+              'Phone: $_supportPhone',
               style: AppTextStyles.bodyMedium,
             ),
             const SizedBox(height: 8),
@@ -629,7 +632,7 @@ class HelpSupportScreen extends StatelessWidget {
           ElevatedButton(
             onPressed: () {
               Get.back();
-              _copyToClipboard('+252 61 XXX XXXX', 'Phone number copied');
+              _copyToClipboard(_supportPhone, 'Phone number copied');
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryGreen,

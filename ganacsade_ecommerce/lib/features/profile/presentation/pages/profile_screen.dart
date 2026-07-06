@@ -71,118 +71,202 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildSliverAppBar(ProfileController controller) {
     return GetBuilder<ProfileController>(
       builder: (controller) => SliverAppBar(
-        expandedHeight: 280,
+        expandedHeight: 300,
         floating: false,
         pinned: true,
         backgroundColor: AppColors.primaryGreen,
         flexibleSpace: FlexibleSpaceBar(
-          background: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  AppColors.primaryGreen,
-                  AppColors.primaryGreen.withOpacity(0.8),
-                ],
+          background: Stack(
+            fit: StackFit.expand,
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppColors.primaryGreen,
+                      const Color(0xFF5CB85C),
+                      AppColors.primaryGreen.withOpacity(0.85),
+                    ],
+                  ),
+                ),
               ),
-            ),
-            child: SafeArea(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const SizedBox(height: 40),
-                  // Profile Avatar
-                  Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      color: AppColors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.black.withOpacity(0.2),
-                          blurRadius: 15,
-                          offset: const Offset(0, 5),
+              Positioned(
+                top: -40,
+                right: -30,
+                child: Container(
+                  width: 160,
+                  height: 160,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.white.withOpacity(0.08),
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: 20,
+                left: -50,
+                child: Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.white.withOpacity(0.06),
+                  ),
+                ),
+              ),
+              SafeArea(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(height: 36),
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.white,
+                            AppColors.white.withOpacity(0.6),
+                          ],
                         ),
-                      ],
-                    ),
-                    child: controller.currentUser?.profileImage != null
-                        ? ClipOval(
-                            child: Image.network(
-                              controller.currentUser!.profileImage!,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  _buildDefaultAvatar(controller),
-                            ),
-                          )
-                        : _buildDefaultAvatar(controller),
-                  ).animate().scale(duration: 800.ms, curve: Curves.elasticOut),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.black.withOpacity(0.15),
+                            blurRadius: 20,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: Container(
+                        width: 96,
+                        height: 96,
+                        decoration: const BoxDecoration(
+                          color: AppColors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: controller.currentUser?.profileImage != null
+                            ? ClipOval(
+                                child: Image.network(
+                                  controller.currentUser!.profileImage!,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      _buildDefaultAvatar(controller),
+                                ),
+                              )
+                            : _buildDefaultAvatar(controller),
+                      ),
+                    )
+                        .animate()
+                        .scale(duration: 800.ms, curve: Curves.elasticOut),
 
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 14),
 
-                  // User Name
-                  Text(
-                    controller.currentUser?.name ?? 'User Name',
-                    style: const TextStyle(
-                      color: AppColors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ).animate().fadeIn(delay: 300.ms, duration: 600.ms),
+                    Text(
+                      controller.currentUser?.name ?? 'User Name',
+                      style: AppTextStyles.headlineSmall.copyWith(
+                        color: AppColors.white,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.3,
+                      ),
+                    ).animate().fadeIn(delay: 250.ms, duration: 600.ms),
 
-                  const SizedBox(height: 4),
+                    const SizedBox(height: 4),
 
-                  // User Email / Phone fallback
-                  Text(
-                    (controller.currentUser?.email != null && controller.currentUser!.email.isNotEmpty)
-                        ? controller.currentUser!.email
-                        : (controller.currentUser?.phone != null && controller.currentUser!.phone.isNotEmpty)
-                            ? controller.currentUser!.phone
-                            : '',
-                    style: TextStyle(
-                      color: AppColors.white.withOpacity(0.9),
-                      fontSize: 16,
-                    ),
-                  ).animate().fadeIn(delay: 500.ms, duration: 600.ms),
+                    Text(
+                      (controller.currentUser?.email != null &&
+                              controller.currentUser!.email.isNotEmpty)
+                          ? controller.currentUser!.email
+                          : (controller.currentUser?.phone != null &&
+                                  controller.currentUser!.phone.isNotEmpty)
+                              ? controller.currentUser!.phone
+                              : '',
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: AppColors.white.withOpacity(0.92),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ).animate().fadeIn(delay: 400.ms, duration: 600.ms),
 
-                  const SizedBox(height: 12),
+                    const SizedBox(height: 14),
 
-                  // Edit Profile Button
-                  ElevatedButton.icon(
-                        onPressed: () {
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
                           HapticFeedback.lightImpact();
                           _navigateToEditProfile();
                         },
-                        icon: const Icon(Icons.edit, size: 16),
-                        label: const Text('Edit Profile'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.white,
-                          foregroundColor: AppColors.primaryGreen,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(24),
+                        child: Ink(
+                          decoration: BoxDecoration(
+                            color: AppColors.white,
+                            borderRadius: BorderRadius.circular(24),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.black.withOpacity(0.1),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
                           ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 10,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 22,
+                              vertical: 10,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  IconlyBold.edit,
+                                  size: 16,
+                                  color: AppColors.primaryGreen,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Edit Profile',
+                                  style: AppTextStyles.labelLarge.copyWith(
+                                    color: AppColors.primaryGreen,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      )
-                      .animate()
-                      .fadeIn(delay: 700.ms, duration: 600.ms)
-                      .slideY(begin: 0.3, end: 0),
-                ],
+                      ),
+                    )
+                        .animate()
+                        .fadeIn(delay: 600.ms, duration: 600.ms)
+                        .slideY(begin: 0.3, end: 0, curve: Curves.easeOutCubic),
+                  ],
+                ),
               ),
-            ),
+            ],
           ),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.settings, color: AppColors.white),
-            onPressed: () {
-              HapticFeedback.lightImpact();
-              _navigateToSettings();
-            },
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: Container(
+              margin: const EdgeInsets.symmetric(vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: IconButton(
+                icon: const Icon(
+                  IconlyBold.setting,
+                  color: AppColors.white,
+                  size: 22,
+                ),
+                onPressed: () {
+                  HapticFeedback.lightImpact();
+                  _navigateToSettings();
+                },
+              ),
+            ),
           ),
         ],
       ),
@@ -191,19 +275,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildDefaultAvatar(ProfileController controller) {
     return Container(
-      width: 100,
-      height: 100,
-      decoration: const BoxDecoration(
-        color: AppColors.primaryGreen,
+      width: 96,
+      height: 96,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.primaryGreen,
+            AppColors.primaryGreen.withOpacity(0.75),
+          ],
+        ),
         shape: BoxShape.circle,
       ),
       child: Center(
         child: Text(
           controller.currentUser?.initials ?? 'U',
-          style: const TextStyle(
+          style: AppTextStyles.headlineMedium.copyWith(
             color: AppColors.white,
-            fontSize: 36,
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w800,
           ),
         ),
       ),
@@ -219,12 +309,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: isDark ? AppColors.darkCardBackground : AppColors.white,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isDark
+                  ? AppColors.darkBorderLight.withOpacity(0.3)
+                  : AppColors.primaryGreen.withOpacity(0.08),
+            ),
             boxShadow: [
               BoxShadow(
-                color: isDark ? Colors.black26 : AppColors.shadowLight,
-                blurRadius: 8,
-                offset: const Offset(0, 2),
+                color: isDark
+                    ? Colors.black26
+                    : AppColors.primaryGreen.withOpacity(0.06),
+                blurRadius: 16,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
@@ -233,16 +330,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               Row(
                 children: [
-                  Icon(
-                    IconlyBold.profile,
-                    color: AppColors.primaryGreen,
-                    size: 20,
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppColors.primaryGreen.withOpacity(0.15),
+                          AppColors.primaryGreen.withOpacity(0.05),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      IconlyBold.profile,
+                      color: AppColors.primaryGreen,
+                      size: 20,
+                    ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 12),
                   Text(
                     'Personal Information',
                     style: AppTextStyles.titleMedium.copyWith(
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w800,
                       color: isDark
                           ? AppColors.darkTextPrimary
                           : AppColors.textPrimary,
@@ -250,7 +359,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 18),
               if (controller.currentUser?.email != null &&
                   controller.currentUser!.email.isNotEmpty) ...[
                 _buildInfoRow(
@@ -258,8 +367,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   label: 'Email',
                   value: controller.currentUser!.email,
                   isDark: isDark,
+                  index: 0,
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
               ],
               if (controller.currentUser?.phone != null &&
                   controller.currentUser!.phone.isNotEmpty) ...[
@@ -268,19 +378,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   label: 'Phone',
                   value: controller.currentUser!.phone,
                   isDark: isDark,
+                  index: 1,
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
               ],
-              const SizedBox(height: 12),
               _buildInfoRow(
                 icon: IconlyBold.calendar,
                 label: 'Member Since',
                 value: controller.getFormattedJoinDate(),
                 isDark: isDark,
+                index: 2,
               ),
             ],
           ),
-        );
+        )
+            .animate()
+            .fadeIn(delay: 200.ms, duration: 600.ms)
+            .slideY(begin: 0.15, end: 0, curve: Curves.easeOutCubic);
       },
     );
   }
@@ -290,36 +404,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required String label,
     required String value,
     required bool isDark,
+    int index = 0,
   }) {
     return Row(
       children: [
         Container(
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: AppColors.primaryGreen.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppColors.primaryGreen.withOpacity(0.14),
+                AppColors.primaryGreen.withOpacity(0.04),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(icon, size: 18, color: AppColors.primaryGreen),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 14),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 label,
-                style: AppTextStyles.bodySmall.copyWith(
+                style: AppTextStyles.labelMedium.copyWith(
                   color: isDark
                       ? AppColors.darkTextSecondary
                       : AppColors.grey600,
-                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 3),
               Text(
                 value,
-                style: AppTextStyles.bodyMedium.copyWith(
-                  fontWeight: FontWeight.w600,
+                style: AppTextStyles.bodyLarge.copyWith(
+                  fontWeight: FontWeight.w700,
                   color: isDark
                       ? AppColors.darkTextPrimary
                       : AppColors.textPrimary,
@@ -329,41 +451,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
       ],
-    );
+    )
+        .animate(delay: Duration(milliseconds: 150 * index + 300))
+        .fadeIn(duration: 500.ms)
+        .slideX(begin: 0.1, end: 0, curve: Curves.easeOutCubic);
   }
 
-  Widget _buildStatItem(
-    String title,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
-    return Column(
-      children: [
-        Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(icon, color: color, size: 24),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          value,
-          style: AppTextStyles.titleLarge.copyWith(
-            fontWeight: FontWeight.bold,
-            color: AppColors.grey900,
-          ),
-        ),
-        Text(
-          title,
-          style: AppTextStyles.bodySmall.copyWith(color: AppColors.grey600),
-        ),
-      ],
-    );
-  }
 
   Widget _buildMenuSection(ProfileController controller) {
     final menuItems = [
@@ -463,15 +556,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (context) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
         return Container(
-              margin: const EdgeInsets.only(bottom: 12),
+              margin: const EdgeInsets.only(bottom: 10),
               decoration: BoxDecoration(
                 color: isDark ? AppColors.darkCardBackground : AppColors.white,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: isDark
+                      ? AppColors.darkBorderLight.withOpacity(0.2)
+                      : color.withOpacity(0.08),
+                ),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.shadowLight,
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+                    color: isDark
+                        ? Colors.black12
+                        : color.withOpacity(0.06),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
                   ),
                 ],
               ),
@@ -482,17 +582,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     HapticFeedback.lightImpact();
                     onTap();
                   },
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(18),
                   child: Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
                     child: Row(
                       children: [
                         Container(
-                          width: 48,
-                          height: 48,
+                          width: 50,
+                          height: 50,
                           decoration: BoxDecoration(
-                            color: color.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                color.withOpacity(0.18),
+                                color.withOpacity(0.06),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(14),
                           ),
                           child: Icon(icon, color: color, size: 24),
                         ),
@@ -507,25 +617,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   color: isDark
                                       ? AppColors.darkTextPrimary
                                       : AppColors.grey900,
-                                  fontWeight: FontWeight.w600,
+                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
-                              const SizedBox(height: 2),
+                              const SizedBox(height: 3),
                               Text(
                                 subtitle,
                                 style: AppTextStyles.bodySmall.copyWith(
                                   color: isDark
                                       ? AppColors.darkTextSecondary
                                       : AppColors.grey600,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        Icon(
-                          Icons.arrow_forward_ios,
-                          size: 16,
-                          color: isDark ? AppColors.grey500 : AppColors.grey400,
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? AppColors.darkElevatedSurface
+                                : AppColors.grey100,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            IconlyLight.arrow_right_2,
+                            size: 16,
+                            color: isDark
+                                ? AppColors.grey500
+                                : AppColors.grey400,
+                          ),
                         ),
                       ],
                     ),
@@ -533,9 +655,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
             )
-            .animate(delay: Duration(milliseconds: index * 100))
-            .fadeIn(duration: 600.ms)
-            .slideX(begin: 0.3, end: 0);
+            .animate(delay: Duration(milliseconds: index * 80 + 400))
+            .fadeIn(duration: 500.ms)
+            .slideX(begin: 0.2, end: 0, curve: Curves.easeOutCubic);
       },
     );
   }

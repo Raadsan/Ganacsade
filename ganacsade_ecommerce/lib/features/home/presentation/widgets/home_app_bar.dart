@@ -4,8 +4,9 @@ import 'package:get/get.dart';
 import 'package:iconly/iconly.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_text_styles.dart';
-import '../../../navigation/navigation_controller.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../../notifications/presentation/controllers/app_notifications_controller.dart';
+import '../../../profile/presentation/pages/notifications_screen.dart';
 
 class HomeAppBar extends StatelessWidget {
   const HomeAppBar({super.key});
@@ -73,33 +74,89 @@ class HomeAppBar extends StatelessWidget {
                 }),
               ),
 
-              // Profile Avatar
+              // Notifications
               GestureDetector(
-                onTap: () {
-                  Get.find<NavigationController>().changeIndex(4);
-                },
-                child: Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: AppColors.grey200,
-                    shape: BoxShape.circle,
-                  ),
-                  child: ClipOval(
-                    child: Obx(() {
-                      final profileUrl = authController.user?.profileImageUrl;
-                      if (profileUrl != null && profileUrl.isNotEmpty) {
-                        return Image.network(
-                          profileUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                              Icon(Icons.person, color: Colors.black, size: 30),
-                        );
-                      }
-                      return Icon(Icons.person, color: Colors.black, size: 30);
-                    }),
-                  ),
-                ),
+                onTap: () => Get.to(() => const NotificationsScreen()),
+                child: Obx(() {
+                  final unreadCount =
+                      Get.find<AppNotificationsController>().unreadCount.value;
+
+                  return Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        width: 50,
+                        height: 50,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: isDark
+                                ? [
+                                    AppColors.darkCardBackground,
+                                    AppColors.grey400.withOpacity(0.3),
+                                  ]
+                                : [
+                                    const Color(0xFFF8F9FA),
+                                    AppColors.grey200,
+                                  ],
+                          ),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isDark
+                                ? AppColors.grey400.withOpacity(0.4)
+                                : AppColors.grey200,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primaryGreen.withOpacity(0.12),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          IconlyBold.notification,
+                          color: isDark
+                              ? AppColors.darkTextPrimary
+                              : AppColors.textPrimary,
+                          size: 24,
+                        ),
+                      ),
+                      if (unreadCount > 0)
+                        Positioned(
+                          top: -2,
+                          right: -2,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 5,
+                              vertical: 2,
+                            ),
+                            constraints: const BoxConstraints(minWidth: 18),
+                            decoration: BoxDecoration(
+                              color: AppColors.error,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: isDark
+                                    ? AppColors.darkCardBackground
+                                    : AppColors.white,
+                                width: 1.5,
+                              ),
+                            ),
+                            child: Text(
+                              unreadCount > 99 ? '99+' : '$unreadCount',
+                              textAlign: TextAlign.center,
+                              style: AppTextStyles.labelSmall.copyWith(
+                                color: AppColors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  );
+                }),
               ),
             ],
           ),
@@ -111,7 +168,7 @@ class HomeAppBar extends StatelessWidget {
             children: [
               Expanded(
                 child: GestureDetector(
-                  onTap: () => Get.to(() => const SearchScreen()),
+                  onTap: () => SearchScreen.showBottomSheet(context),
                   child: Container(
                     height: 50,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -153,7 +210,7 @@ class HomeAppBar extends StatelessWidget {
                 ),
                 child: IconButton(
                   onPressed: () {
-                    Get.to(() => const SearchScreen());
+                    SearchScreen.showBottomSheet(context);
                   },
                   icon: Icon(
                     IconlyBold.filter,

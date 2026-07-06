@@ -38,6 +38,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
   }
 
   Future<void> _loadOrders() async {
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -46,6 +47,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
     try {
       final response = await _ordersApiService.getOrders();
 
+      if (!mounted) return;
       if (response['success'] == true) {
         final ordersData = response['data']?['orders'] as List? ?? [];
         setState(() {
@@ -59,6 +61,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
         });
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _errorMessage = 'Failed to load orders. Please try again.';
         _isLoading = false;
@@ -505,6 +508,7 @@ class _OrderDetailsSheetState extends State<_OrderDetailsSheet> {
         widget.order.id,
       );
 
+      if (!mounted) return;
       if (response['success'] == true && response['data'] != null) {
         final itemsData = response['data']['items'] as List? ?? [];
         setState(() {
@@ -515,6 +519,7 @@ class _OrderDetailsSheetState extends State<_OrderDetailsSheet> {
         setState(() => _isLoading = false);
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() => _isLoading = false);
     }
   }

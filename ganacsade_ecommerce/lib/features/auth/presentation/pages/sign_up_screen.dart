@@ -22,7 +22,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
   bool _obscurePassword = true;
   bool _isPhoneFocused = false;
   bool _isPasswordFocused = false;
-  bool _agreeToTerms = false;
 
   @override
   void dispose() {
@@ -240,50 +239,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                 ),
                 
-                const SizedBox(height: 12),
-                
-                // Terms and Conditions
-                Row(
-                  children: [
-                    Checkbox(
-                      value: _agreeToTerms,
-                      onChanged: (value) {
-                        setState(() {
-                          _agreeToTerms = value ?? false;
-                        });
-                      },
-                      activeColor: AppColors.primaryGreen,
-                    ),
-                    Expanded(
-                      child: RichText(
-                        text: TextSpan(
-                          style: AppTextStyles.bodyMedium.copyWith(
-                            color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
-                          ),
-                          children: [
-                            const TextSpan(text: 'I agree to the '),
-                            TextSpan(
-                              text: 'Terms of Service',
-                              style: AppTextStyles.bodyMedium.copyWith(
-                                color: AppColors.primaryGreen,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const TextSpan(text: ' and '),
-                            TextSpan(
-                              text: 'Privacy Policy',
-                              style: AppTextStyles.bodyMedium.copyWith(
-                                color: AppColors.primaryGreen,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                
                 const SizedBox(height: 24),
                 
                 // Error Message
@@ -326,7 +281,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   width: double.infinity,
                   height: 56,
                   child: ElevatedButton(
-                    onPressed: _authController.isLoading.value || !_agreeToTerms ? null : _signUp,
+                    onPressed: _authController.isLoading.value ? null : _signUp,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryGreen,
                       foregroundColor: AppColors.white,
@@ -396,18 +351,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   void _signUp() async {
     if (_formKey.currentState!.validate()) {
-      if (!_agreeToTerms) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Please agree to the Terms of Service and Privacy Policy'),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          ),
-        );
-        return;
-      }
-      
       final identifier = _identifierController.text.trim();
       final isEmail = GetUtils.isEmail(identifier);
       

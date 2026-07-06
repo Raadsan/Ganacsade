@@ -9,6 +9,7 @@ import '../../../../core/network/payment_api_service.dart';
 import '../../../../shared/models/product.dart';
 import '../../../../shared/widgets/advertisement_banner.dart';
 import '../../../cart/presentation/controllers/cart_controller.dart';
+import '../../../navigation/navigation_controller.dart';
 import '../../../profile/presentation/controllers/profile_controller.dart';
 import '../../../profile/presentation/pages/addresses_screen.dart';
 import '../../../../shared/models/address.dart';
@@ -35,8 +36,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   @override
   void initState() {
     super.initState();
-    // Auto-select default address if available
     _initializeSelectedAddress();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _profileController.reloadAddresses();
+      if (mounted) _initializeSelectedAddress();
+    });
     
     // Listen for address changes if they load late
     ever(_profileController.addresses, (_) {
@@ -320,7 +324,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               TextButton.icon(
                 onPressed: () async {
                   await Get.to(() => const AddressesScreen());
-                  _initializeSelectedAddress(); // Re-check if a default was added
+                  await _profileController.reloadAddresses();
+                  if (mounted) _initializeSelectedAddress();
                 },
                 icon: const Icon(Icons.add, size: 18),
                 label: const Text('Add New'),
@@ -637,19 +642,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                   ),
                                 ),
                               ],
-                            ),
-                          ),
-                          Container(
-                            width: 24,
-                            height: 24,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: AppColors.primaryGreen,
-                            ),
-                            child: const Icon(
-                              Icons.check,
-                              size: 16,
-                              color: AppColors.white,
                             ),
                           ),
                         ],
@@ -996,12 +988,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           final orderNumber = orderResponse['data']?['orderNumber'] ?? 'N/A';
           
           _cartController.clearCart();
-          
-          // Navigate back
-          Get.back(); // Close checkout screen
-          Get.back(); // Close cart screen if still open
-          
-          // Show success message after navigation
+          _closeLoadingDialog();
+
+          Get.find<NavigationController>().resetToHome();
+          Get.offAllNamed('/main');
+
           await Future.delayed(const Duration(milliseconds: 300));
           
           _showSuccessDialog(
@@ -1010,7 +1001,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           );
         } else {
           // Order creation failed but payment succeeded - this is rare
+          _closeLoadingDialog();
           _cartController.clearCart();
+          Get.find<NavigationController>().resetToHome();
+          Get.offAllNamed('/main');
+          await Future.delayed(const Duration(milliseconds: 300));
           _showSuccessDialog(
             orderNumber: 'Processing',
             transactionId: paymentResponse['data']?['transactionId'],
@@ -1381,7 +1376,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  onPressed: () {
+                    Navigator.of(dialogContext).pop();
+                    Get.find<NavigationController>().resetToHome();
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryGreen,
                     foregroundColor: AppColors.white,

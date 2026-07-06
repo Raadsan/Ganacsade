@@ -96,9 +96,17 @@ class AuthController extends GetxController {
   Future<void> _checkSavedUser() async {
     try {
       final savedUserData = _userBox.get('current_user');
-      if (savedUserData != null) {
-        _user.value = app_user.User.fromJson(Map<String, dynamic>.from(savedUserData));
+      if (savedUserData == null) return;
+
+      final hasSession = _httpClient.hasStoredSession
+          || await _httpClient.tryRestoreSession();
+      if (!hasSession) {
+        await _userBox.delete('current_user');
+        await _userBox.delete('user_role');
+        return;
       }
+
+      _user.value = app_user.User.fromJson(Map<String, dynamic>.from(savedUserData));
       _userRole.value = _userBox.get('user_role', defaultValue: 'customer')?.toString() ?? 'customer';
     } catch (e) {
       print('Error loading saved user: $e');

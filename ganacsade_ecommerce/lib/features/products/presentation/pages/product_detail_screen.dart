@@ -131,7 +131,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
               children: [
                 _buildProductInfo(isDark),
                 _buildQuantitySelector(isDark),
-                _buildActionButtons(isDark),
                 // Product Page Advertisement Banner
                 const AdvertisementBanner(
                   placement: 'product_page',
@@ -142,7 +141,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                 _buildProductDescription(isDark),
                 _buildReviewsSection(isDark),
                 _buildRelatedProducts(isDark),
-                const SizedBox(height: 100), // Space for bottom bar
+                const SizedBox(height: 88), // Space for bottom bar
               ],
             ),
           ),
@@ -460,97 +459,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
         child: Icon(icon, color: AppColors.white, size: 20),
       ),
     );
-  }
-
-  Widget _buildActionButtons(bool isDark) {
-    return Padding(
-          padding: const EdgeInsets.all(20),
-          child: Row(
-            children: [
-              Expanded(
-                child: Obx(
-                  () => OutlinedButton.icon(
-                    onPressed: () async {
-                      await _wishlistController.toggleWishlist(widget.product);
-                      final isInWishlist = _wishlistController.isInWishlist(
-                        widget.product.id,
-                      );
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            isInWishlist
-                                ? '${widget.product.name} added to wishlist'
-                                : '${widget.product.name} removed from wishlist',
-                          ),
-                          backgroundColor: isInWishlist
-                              ? AppColors.primaryGreen
-                              : AppColors.error,
-                          behavior: SnackBarBehavior.floating,
-                          duration: const Duration(seconds: 2),
-                        ),
-                      );
-                    },
-                    icon: Icon(
-                      _wishlistController.isInWishlist(widget.product.id)
-                          ? Icons.favorite
-                          : Icons.favorite_border,
-                    ),
-                    label: const Text('Wishlist'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor:
-                          _wishlistController.isInWishlist(widget.product.id)
-                          ? AppColors.error
-                          : AppColors.primaryGreen,
-                      side: BorderSide(
-                        color:
-                            _wishlistController.isInWishlist(widget.product.id)
-                            ? AppColors.error
-                            : AppColors.primaryGreen,
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                flex: 2,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    _cartController.addToCart(
-                      widget.product,
-                      _selectedQuantity,
-                    );
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('${widget.product.name} added to cart'),
-                        backgroundColor: AppColors.primaryGreen,
-                        behavior: SnackBarBehavior.floating,
-                        duration: const Duration(seconds: 2),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.shopping_cart),
-                  label: const Text('Add to Cart'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryGreen,
-                    foregroundColor: AppColors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        )
-        .animate()
-        .fadeIn(delay: 400.ms, duration: 600.ms)
-        .slideY(begin: 0.3, end: 0);
   }
 
   Widget _buildProductDescription(bool isDark) {
@@ -951,19 +859,21 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   }
 
   Widget _buildBottomActionBar(bool isDark) {
-    return Container(
-      padding: const EdgeInsets.only(top: 20, bottom: 55, left: 20, right: 20),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCardBackground : AppColors.white,
-        boxShadow: [
-          BoxShadow(
-            color: isDark ? Colors.black26 : AppColors.shadowLight,
-            blurRadius: 8,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: Row(
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 6),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.darkCardBackground : AppColors.white,
+          boxShadow: [
+            BoxShadow(
+              color: isDark ? Colors.black26 : AppColors.shadowLight,
+              blurRadius: 8,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: Row(
         children: [
           Expanded(
             child: OutlinedButton(
@@ -1021,6 +931,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
             ),
           ),
         ],
+        ),
       ),
     );
   }

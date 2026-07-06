@@ -190,9 +190,22 @@ class HttpClient {
     }
   }
 
-  // Get access token
+  // Restore session on startup using saved tokens.
+  Future<bool> tryRestoreSession() async {
+    if (_storageBox == null) return false;
+    final accessToken = _storageBox!.get(ApiConfig.accessTokenKey);
+    if (accessToken != null) return true;
+    return _refreshToken();
+  }
+
   String? getAccessToken() {
     return _storageBox?.get(ApiConfig.accessTokenKey);
+  }
+
+  bool get hasStoredSession {
+    if (_storageBox == null) return false;
+    return _storageBox!.get(ApiConfig.accessTokenKey) != null
+        || _storageBox!.get(ApiConfig.refreshTokenKey) != null;
   }
 
   // HTTP Methods

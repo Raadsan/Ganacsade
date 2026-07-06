@@ -40,9 +40,6 @@ void main() async {
   Get.put(WishlistController());
   Get.put(AppNotificationsController());
 
-  await PushNotificationService().initialize();
-
-  // Set system UI overlay style
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -53,6 +50,10 @@ void main() async {
   );
 
   runApp(const GStoreApp());
+
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    PushNotificationService().initialize();
+  });
 }
 
 class GStoreApp extends StatelessWidget {

@@ -30,7 +30,15 @@ class ProfileController extends GetxController {
   void onInit() {
     super.onInit();
     _loadUserData();
-    _loadAddresses();
+    _initAddressesWhenReady();
+  }
+
+  Future<void> _initAddressesWhenReady() async {
+    final authController = Get.find<AuthController>();
+    await authController.storageReady;
+    if (authController.isLoggedIn) {
+      await _loadAddresses();
+    }
   }
 
   @override
@@ -41,6 +49,12 @@ class ProfileController extends GetxController {
     ever(authController.obs, (_) {
       print('🔄 Auth state changed, reloading user data...');
       _loadUserData();
+      if (authController.isLoggedIn) {
+        _loadAddresses();
+      } else {
+        _addresses.clear();
+        update();
+      }
     });
   }
 
