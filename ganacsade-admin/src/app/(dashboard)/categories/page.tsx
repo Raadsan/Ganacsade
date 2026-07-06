@@ -194,14 +194,12 @@ export default function CategoriesPage() {
   const handleSaveSubcategory = async (subcategoryData: CreateSubcategoryDto) => {
     try {
       if (selectedSubcategory) {
-        // Update existing subcategory
         const response = await subcategoriesApi.updateSubcategory(selectedSubcategory.id, subcategoryData)
         if (response.success) {
           toast.success("Subcategory updated successfully")
           fetchCategories()
         }
       } else {
-        // Add new subcategory
         const response = await subcategoriesApi.createSubcategory(subcategoryData)
         if (response.success) {
           toast.success("Subcategory created successfully")
@@ -212,6 +210,55 @@ export default function CategoriesPage() {
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || 'Failed to save subcategory'
       toast.error(errorMessage)
+    }
+  }
+
+  const getStatusBadge = (isActive: boolean) => {
+    if (isActive) return <Badge variant="success">Active</Badge>
+    return <Badge variant="secondary">Inactive</Badge>
+  }
+
+  const handleToggleCategoryStatus = async (category: Category) => {
+    const newIsActive = !category.isActive
+    try {
+      const response = await categoriesApi.updateCategory(category.id, { isActive: newIsActive })
+      if (response.success) {
+        setCategories((prev) =>
+          prev.map((c) => (c.id === category.id ? { ...c, isActive: newIsActive } : c))
+        )
+        toast.success(`Category ${newIsActive ? 'activated' : 'deactivated'}`)
+      }
+    } catch {
+      toast.error('Failed to update category status')
+    }
+  }
+
+  const handleToggleSubcategoryStatus = async (
+    categoryId: string,
+    subcategory: Subcategory
+  ) => {
+    const newIsActive = !subcategory.isActive
+    try {
+      const response = await subcategoriesApi.updateSubcategory(subcategory.id, {
+        isActive: newIsActive,
+      })
+      if (response.success) {
+        setCategories((prev) =>
+          prev.map((cat) =>
+            cat.id === categoryId
+              ? {
+                  ...cat,
+                  subcategories: cat.subcategories?.map((sub) =>
+                    sub.id === subcategory.id ? { ...sub, isActive: newIsActive } : sub
+                  ),
+                }
+              : cat
+          )
+        )
+        toast.success(`Subcategory ${newIsActive ? 'activated' : 'deactivated'}`)
+      }
+    } catch {
+      toast.error('Failed to update subcategory status')
     }
   }
 
@@ -325,11 +372,14 @@ export default function CategoriesPage() {
                     )}
                   </TableCell>
                   <TableCell>
-                    {category.isActive ? (
-                      <Badge variant="success">Active</Badge>
-                    ) : (
-                      <Badge variant="secondary">Inactive</Badge>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleToggleCategoryStatus(category)}
+                      className="cursor-pointer rounded-md transition-opacity hover:opacity-80"
+                      title="Click to toggle Active / Inactive"
+                    >
+                      {getStatusBadge(category.isActive)}
+                    </button>
                   </TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
@@ -393,11 +443,14 @@ export default function CategoriesPage() {
                       </TableCell>
                       <TableCell>-</TableCell>
                       <TableCell>
-                        {sub.isActive ? (
-                          <Badge variant="success" className="text-xs">Active</Badge>
-                        ) : (
-                          <Badge variant="secondary" className="text-xs">Inactive</Badge>
-                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleToggleSubcategoryStatus(category.id, sub)}
+                          className="cursor-pointer rounded-md transition-opacity hover:opacity-80"
+                          title="Click to toggle Active / Inactive"
+                        >
+                          {getStatusBadge(sub.isActive)}
+                        </button>
                       </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>

@@ -148,8 +148,9 @@ export function ProductFormDialog({
   const [tagInput, setTagInput] = useState("")
 
   useEffect(() => {
+    if (!open) return
+
     if (product) {
-      console.log('ProductFormDialog received product:', product)
       setFormData({
         name: product.name || "",
         nameAr: product.nameAr || "",
@@ -170,22 +171,11 @@ export function ProductFormDialog({
         isFeatured: product.isFeatured || false,
         isHalal: product.isHalal || false,
       })
-      // Set preview URLs for existing images
       setPreviewUrls(product.images || [])
       setImageUrl("")
       setTagInput("")
       setSelectedFiles([])
-      console.log('Form data set to:', {
-        name: product.name,
-        price: product.price,
-        categoryId: product.categoryId,
-        brand: product.brand,
-        sku: product.sku,
-        stockQuantity: product.stockQuantity,
-        images: product.images
-      })
     } else {
-      // Reset form for new product
       setFormData({
         name: "",
         nameAr: "",

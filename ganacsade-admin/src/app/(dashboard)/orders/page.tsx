@@ -208,7 +208,11 @@ export default function OrdersPage() {
         prev.map((item) => (item.id === order.id ? { ...item, ...previous } : item))
       )
       console.error("Error assigning delivery:", error)
-      toast.error("Failed to assign delivery")
+      const message = (error as any)?.response?.data?.message
+        || ((error as any)?.message === "Network Error"
+          ? "Server connection lost. Check that the backend is running and try again."
+          : "Failed to assign delivery")
+      toast.error(message)
     }
   }
 
@@ -495,7 +499,10 @@ export default function OrdersPage() {
       }
     } catch (error: any) {
       console.error("Error marking order delivered:", error)
-      const message = error?.response?.data?.message || "Failed to update order status"
+      const message = error?.response?.data?.message
+        || (error?.message === "Network Error"
+          ? "Server connection lost. Check that the backend is running and try again."
+          : "Failed to update order status")
       toast.error(message)
     } finally {
       setAdvanceSaving(false)

@@ -143,6 +143,7 @@ class ApiClient {
           }
           break;
         case 403:
+          if (url.includes('/auth/delivery-profile')) break;
           toast.error(data.message || 'Access forbidden');
           break;
         case 404:

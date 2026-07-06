@@ -196,51 +196,79 @@ export default function ProductsPage() {
     setIsFormOpen(true)
   }
 
+  const mapApiProductToForm = (fullProduct: any): Product => ({
+    id: fullProduct.id,
+    name: fullProduct.name_en || '',
+    nameAr: fullProduct.name_ar || '',
+    nameSo: fullProduct.name_so || '',
+    description: fullProduct.description_en || '',
+    descriptionAr: fullProduct.description_ar || '',
+    descriptionSo: fullProduct.description_so || '',
+    price: parseFloat(fullProduct.price?.toString() || '0'),
+    discountPrice: fullProduct.discount_price
+      ? parseFloat(fullProduct.discount_price.toString())
+      : undefined,
+    categoryId: fullProduct.category_id || '',
+    subcategoryId: fullProduct.subcategory_id || '',
+    images:
+      fullProduct.images?.map((img: any) => resolveImageUrl(img.image_url)).filter(Boolean) ||
+      (fullProduct.primary_image ? [resolveImageUrl(fullProduct.primary_image)!].filter(Boolean) : []),
+    rating: parseFloat(fullProduct.rating?.toString() || '0'),
+    reviewCount: fullProduct.review_count || 0,
+    inStock: fullProduct.in_stock !== false,
+    stockQuantity: fullProduct.stock_quantity || 0,
+    brand: fullProduct.brand_name || fullProduct.brand || '',
+    sku: fullProduct.sku || '',
+    tags: fullProduct.tags || [],
+    variants: fullProduct.variants || [],
+    status: fullProduct.status || 'active',
+    isFeatured: fullProduct.is_featured || false,
+    isHalal: fullProduct.is_halal || false,
+    createdAt: fullProduct.created_at ? new Date(fullProduct.created_at) : undefined,
+  })
+
+  const refreshProducts = async () => {
+    const productsResponse = await productsApi.getProducts({
+      search: searchQuery || undefined,
+      category: categoryFilter !== 'all' ? categoryFilter : undefined,
+      status: statusFilter !== 'all' ? statusFilter : undefined,
+    })
+    if (productsResponse.success && productsResponse.data) {
+      setProducts(productsResponse.data)
+    }
+  }
+
   const handleViewProduct = (product: Product) => {
     setViewProduct(product)
     setIsViewOpen(true)
   }
 
   const handleEditProduct = async (product: any) => {
-    // Fetch full product details from API to get all fields including images
+    setSelectedProduct(mapApiProductToForm(product))
+    setIsFormOpen(true)
+
     try {
       const response = await productsApi.getProduct(product.id)
       if (response.success && response.data) {
-        const fullProduct: any = response.data
-        
-        // Transform snake_case API response to camelCase for the form
-        const transformedProduct: Product = {
-          id: fullProduct.id,
-          name: fullProduct.name_en || '',
-          nameAr: fullProduct.name_ar || '',
-          nameSo: fullProduct.name_so || '',
-          description: fullProduct.description_en || '',
-          descriptionAr: fullProduct.description_ar || '',
-          descriptionSo: fullProduct.description_so || '',
-          price: parseFloat(fullProduct.price?.toString() || '0'),
-          discountPrice: fullProduct.discount_price ? parseFloat(fullProduct.discount_price.toString()) : undefined,
-          categoryId: fullProduct.category_id || '',
-          subcategoryId: fullProduct.subcategory_id || '',
-          images: fullProduct.images?.map((img: any) => resolveImageUrl(img.image_url)).filter(Boolean) || [],
-          rating: parseFloat(fullProduct.rating?.toString() || '0'),
-          reviewCount: fullProduct.review_count || 0,
-          inStock: fullProduct.in_stock !== false,
-          stockQuantity: fullProduct.stock_quantity || 0,
-          brand: fullProduct.brand_name || fullProduct.brand || '',
-          sku: fullProduct.sku || '',
-          tags: fullProduct.tags || [],
-          variants: fullProduct.variants || [],
-          status: fullProduct.status || 'active',
-          isFeatured: fullProduct.is_featured || false,
-          isHalal: fullProduct.is_halal || false,
-          createdAt: fullProduct.created_at ? new Date(fullProduct.created_at) : undefined,
-        }
-        
-        setSelectedProduct(transformedProduct)
-        setIsFormOpen(true)
+        setSelectedProduct(mapApiProductToForm(response.data))
       }
     } catch {
-      toast.error('Failed to load product details')
+      toast.error('Failed to load full product details')
+    }
+  }
+
+  const handleToggleStatus = async (product: any) => {
+    const newStatus = product.status === 'active' ? 'inactive' : 'active'
+    try {
+      const response = await productsApi.updateProduct(product.id, { status: newStatus } as any)
+      if (response.success) {
+        setProducts((prev) =>
+          prev.map((p) => (p.id === product.id ? { ...p, status: newStatus } : p))
+        )
+        toast.success(`Product ${newStatus === 'active' ? 'activated' : 'deactivated'}`)
+      }
+    } catch {
+      toast.error('Failed to update product status')
     }
   }
 
@@ -277,15 +305,7 @@ export default function ProductsPage() {
         const response = await productsApi.deleteProduct(id)
         if (response.success) {
           toast.success("Product deleted successfully")
-          // Refresh products list
-          const productsResponse = await productsApi.getProducts({
-            search: searchQuery || undefined,
-            category: categoryFilter !== 'all' ? categoryFilter : undefined,
-            status: statusFilter !== 'all' ? statusFilter : undefined,
-          })
-          if (productsResponse.success && productsResponse.data) {
-            setProducts(productsResponse.data)
-          }
+          await refreshProducts()
         }
       } catch {
         toast.error('Failed to delete product')
@@ -331,15 +351,7 @@ export default function ProductsPage() {
             toast.success("Product updated successfully")
           }
           
-          // Refresh products list
-          const productsResponse = await productsApi.getProducts({
-            search: searchQuery || undefined,
-            category: categoryFilter !== 'all' ? categoryFilter : undefined,
-            status: statusFilter !== 'all' ? statusFilter : undefined,
-          })
-          if (productsResponse.success && productsResponse.data) {
-            setProducts(productsResponse.data)
-          }
+          await refreshProducts()
           setIsFormOpen(false)
         }
       } else {
@@ -386,15 +398,7 @@ export default function ProductsPage() {
             toast.success("Product created successfully")
           }
           
-          // Refresh products list
-          const productsResponse = await productsApi.getProducts({
-            search: searchQuery || undefined,
-            category: categoryFilter !== 'all' ? categoryFilter : undefined,
-            status: statusFilter !== 'all' ? statusFilter : undefined,
-          })
-          if (productsResponse.success && productsResponse.data) {
-            setProducts(productsResponse.data)
-          }
+          await refreshProducts()
           setIsFormOpen(false)
         }
       }
@@ -426,15 +430,10 @@ export default function ProductsPage() {
     statusFilter !== "all" || categoryFilter !== "all" || subcategoryFilter !== "all" || stockFilter !== "all" || searchQuery
 
   const getStatusBadge = (status: string) => {
-    return status === "active" ? (
-      <Badge variant="success">Active</Badge>
-    ) : status === "inactive" ? (
-      <Badge variant="secondary">Inactive</Badge>
-    ) : status === "draft" ? (
-      <Badge variant="warning">Draft</Badge>
-    ) : (
-      <Badge variant="secondary">Archived</Badge>
-    )
+    if (status === "active") return <Badge variant="success">Active</Badge>
+    if (status === "inactive") return <Badge variant="secondary">Inactive</Badge>
+    if (status === "draft") return <Badge variant="warning">Draft</Badge>
+    return <Badge variant="secondary">Archived</Badge>
   }
 
   const getStockBadge = (stock: number, inStock: boolean) => {
@@ -661,7 +660,16 @@ export default function ProductsPage() {
                     {getStockBadge(product.stock_quantity, product.stock_quantity > 0)}
                   </div>
                 </TableCell>
-                <TableCell>{getStatusBadge(product.status)}</TableCell>
+                <TableCell>
+                  <button
+                    type="button"
+                    onClick={() => handleToggleStatus(product)}
+                    className="cursor-pointer rounded-md transition-opacity hover:opacity-80"
+                    title="Click to toggle Active / Inactive"
+                  >
+                    {getStatusBadge(product.status)}
+                  </button>
+                </TableCell>
                 <TableCell className="text-muted-foreground">
                   {product.created_at && formatDate(product.created_at)}
                 </TableCell>
@@ -700,6 +708,7 @@ export default function ProductsPage() {
 
       {/* Product Form Dialog */}
       <ProductFormDialog
+        key={selectedProduct?.id ?? "new"}
         product={selectedProduct}
         open={isFormOpen}
         onOpenChange={handleDialogClose}

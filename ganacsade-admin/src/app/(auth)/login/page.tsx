@@ -84,7 +84,7 @@ function LoginForm() {
               <Input
                 id="identifier"
                 type="text"
-                placeholder="email@example.com or 0612345678"
+                placeholder="enter your email or phone number"
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
                 autoComplete="username"

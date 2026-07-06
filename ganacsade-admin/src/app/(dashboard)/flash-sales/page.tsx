@@ -1,8 +1,11 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { BACKEND_URL } from "@/lib/api/client"
 import { Button } from "@/components/ui/button"
+import { flashSalesApi } from "@/lib/api/flash-sales"
+import { productsApi } from "@/lib/api/products"
+import { resolveImageUrl } from "@/lib/utils/image-url"
+import { toast } from "sonner"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -24,9 +27,6 @@ import { FlashSale, CreateFlashSaleDto, Product, FlashSaleProduct } from "@/type
 import { FlashSaleFormDialog } from "@/components/dashboard/flash-sale-form-dialog"
 import { AddFlashSaleProductDialog } from "@/components/dashboard/add-flash-sale-product-dialog"
 import { EditFlashSaleProductDialog } from "@/components/dashboard/edit-flash-sale-product-dialog"
-import { flashSalesApi } from "@/lib/api/flash-sales"
-import { productsApi } from "@/lib/api/products"
-import { toast } from "sonner"
 
 // Data will be fetched from API
 
@@ -71,7 +71,7 @@ export default function FlashSalesPage() {
                     id: p.id,
                     productId: p.product_id,
                     productName: p.product_name,
-                    productImage: p.product_image_url ? `${BACKEND_URL}${p.product_image_url}` : undefined,
+                    productImage: resolveImageUrl(p.product_image_url) || undefined,
                     originalPrice: parseFloat(p.original_price),
                     salePrice: parseFloat(p.sale_price),
                     discountPercentage: p.discount_percentage,
@@ -122,7 +122,9 @@ export default function FlashSalesPage() {
       const response = await productsApi.getProducts()
       if (response.success && response.data) {
         // Map API products to Product type
-        const mappedProducts = response.data.map((p: any) => ({
+        const mappedProducts = response.data.map((p: any) => {
+          const imageUrl = resolveImageUrl(p.primary_image)
+          return {
           id: p.id,
           name: p.name_en || p.name,
           nameAr: p.name_ar || "",
@@ -132,7 +134,7 @@ export default function FlashSalesPage() {
           descriptionSo: p.description_so || "",
           price: parseFloat(p.price) || 0,
           categoryId: p.category_id || "",
-          images: p.primary_image ? [`${BACKEND_URL}${p.primary_image}`] : [],
+          images: imageUrl ? [imageUrl] : [],
           rating: p.rating || 0,
           reviewCount: p.review_count || 0,
           inStock: p.stock_quantity > 0,
@@ -145,7 +147,7 @@ export default function FlashSalesPage() {
           isFeatured: p.is_featured || false,
           isHalal: p.is_halal || false,
           createdAt: new Date(p.created_at),
-        }))
+        }})
         setAvailableProducts(mappedProducts)
       }
     } catch (error) {

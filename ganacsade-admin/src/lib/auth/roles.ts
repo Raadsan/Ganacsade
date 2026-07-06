@@ -8,6 +8,12 @@ export const isCustomerUser = (user?: LoggedInUser | null) => {
   return roleName === "customer" || user?.role === "customer"
 }
 
+export const isDeliveryUser = (user?: LoggedInUser | null) => {
+  if (!user) return false
+  const roleName = getRoleName(user)
+  return roleName.includes("delivery") || user.role === "delivery_person"
+}
+
 export const isDashboardUser = (user?: LoggedInUser | null) => {
   if (!user) return false
   if (isCustomerUser(user)) return false

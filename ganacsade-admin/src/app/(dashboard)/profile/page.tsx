@@ -16,6 +16,7 @@ import {
 import { Loader2, Save, Upload } from "lucide-react"
 import { toast } from "sonner"
 import { authApi } from "@/lib/api/auth"
+import { isDeliveryUser as checkIsDeliveryUser } from "@/lib/auth/roles"
 
 const vehicleTypes = [
   { value: "motorcycle", label: "Motorcycle" },
@@ -29,7 +30,7 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false)
   const [uploadingImage, setUploadingImage] = useState(false)
   const [changingPassword, setChangingPassword] = useState(false)
-  const [isDeliveryUser, setIsDeliveryUser] = useState(false)
+  const [isDeliveryProfile, setIsDeliveryProfile] = useState(false)
 
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
@@ -48,51 +49,63 @@ export default function ProfilePage() {
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
 
+  const applyUserToForm = (user: Record<string, any>) => {
+    setFirstName(user.first_name || user.firstName || "")
+    setLastName(user.last_name || user.lastName || "")
+    setDisplayName(user.display_name || user.displayName || "")
+    setEmail(user.email || "")
+    setPhone(user.phone_number || user.phoneNumber || "")
+    setPreferredLanguage(user.preferred_language || "en")
+    setProfilePicture(user.profile_image_url || user.profileImageUrl || "")
+  }
+
   useEffect(() => {
     async function loadProfile() {
       try {
         setLoading(true)
 
-        try {
-          const deliveryResponse = await authApi.getDeliveryProfile()
-          if (deliveryResponse.success && deliveryResponse.data) {
-            setIsDeliveryUser(true)
-            const user = deliveryResponse.data.user
-            const delivery = deliveryResponse.data.delivery
-            setFirstName(user.first_name || "")
-            setLastName(user.last_name || "")
-            setDisplayName(user.display_name || "")
-            setEmail(user.email || "")
-            setPhone(user.phone_number || "")
-            setPreferredLanguage(user.preferred_language || "en")
-            setProfilePicture(user.profile_image_url || "")
-            setVehicleType(delivery?.vehicle_type || "")
-            setVehicleNumber(delivery?.vehicle_number || "")
-            setLicenseNumber(delivery?.license_number || "")
-            setIsAvailable(delivery?.is_available ?? true)
-            setTotalDeliveries(deliveryResponse.data.stats?.totalDeliveries || 0)
-            return
-          }
-        } catch (err: any) {
-          if (err?.response?.status !== 403) {
-            throw err
+        const currentUser = authApi.getCurrentUser()
+
+        if (checkIsDeliveryUser(currentUser)) {
+          try {
+            const deliveryResponse = await authApi.getDeliveryProfile()
+            if (deliveryResponse.success && deliveryResponse.data) {
+              setIsDeliveryProfile(true)
+              const user = deliveryResponse.data.user
+              const delivery = deliveryResponse.data.delivery
+              setFirstName(user.first_name || "")
+              setLastName(user.last_name || "")
+              setDisplayName(user.display_name || "")
+              setEmail(user.email || "")
+              setPhone(user.phone_number || "")
+              setPreferredLanguage(user.preferred_language || "en")
+              setProfilePicture(user.profile_image_url || "")
+              setVehicleType(delivery?.vehicle_type || "")
+              setVehicleNumber(delivery?.vehicle_number || "")
+              setLicenseNumber(delivery?.license_number || "")
+              setIsAvailable(delivery?.is_available ?? true)
+              setTotalDeliveries(deliveryResponse.data.stats?.totalDeliveries || 0)
+              return
+            }
+          } catch (err: any) {
+            if (err?.response?.status !== 403) {
+              throw err
+            }
           }
         }
 
-        setIsDeliveryUser(false)
+        setIsDeliveryProfile(false)
         const response = await authApi.getProfile()
         if (response.success && response.data) {
-          const user = response.data
-          setFirstName(user.first_name || user.firstName || "")
-          setLastName(user.last_name || user.lastName || "")
-          setDisplayName(user.display_name || user.displayName || "")
-          setEmail(user.email || "")
-          setPhone(user.phone_number || user.phoneNumber || "")
-          setPreferredLanguage(user.preferred_language || "en")
-          setProfilePicture(user.profile_image_url || user.profileImageUrl || "")
+          applyUserToForm(response.data)
         }
       } catch {
-        toast.error("Failed to load profile")
+        const fallbackUser = authApi.getCurrentUser()
+        if (fallbackUser) {
+          applyUserToForm(fallbackUser)
+        } else {
+          toast.error("Failed to load profile")
+        }
       } finally {
         setLoading(false)
       }
@@ -130,7 +143,7 @@ export default function ProfilePage() {
         preferredLanguage,
       }
 
-      const response = isDeliveryUser
+      const response = isDeliveryProfile
         ? await authApi.updateDeliveryProfile({
             ...payload,
             vehicleType: vehicleType || null,
@@ -199,9 +212,9 @@ export default function ProfilePage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">{isDeliveryUser ? "My Profile" : "Profile"}</h1>
+          <h1 className="text-3xl font-bold">{isDeliveryProfile ? "My Profile" : "Profile"}</h1>
           <p className="text-muted-foreground">
-            {isDeliveryUser
+            {isDeliveryProfile
               ? "Update your personal and delivery information"
               : "Manage your account information"}
           </p>
@@ -212,7 +225,7 @@ export default function ProfilePage() {
         </Button>
       </div>
 
-      {isDeliveryUser ? (
+      {isDeliveryProfile ? (
         <Card className="p-4">
           <p className="text-sm text-muted-foreground">Total completed deliveries</p>
           <p className="text-2xl font-semibold">{totalDeliveries}</p>
@@ -290,7 +303,7 @@ export default function ProfilePage() {
           </div>
         </Card>
 
-        {isDeliveryUser ? (
+        {isDeliveryProfile ? (
           <Card className="p-6">
             <h2 className="mb-4 text-xl font-semibold">Delivery Details</h2>
             <div className="space-y-4">

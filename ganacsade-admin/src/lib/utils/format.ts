@@ -45,6 +45,24 @@ export function formatNumber(num: number): string {
 }
 
 /**
+ * Coerce API/Prisma values (string, number, Decimal) to a finite number.
+ */
+export function toNumber(value: unknown, fallback: number = 0): number {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value
+  }
+  const parsed = parseFloat(String(value ?? ''))
+  return Number.isFinite(parsed) ? parsed : fallback
+}
+
+/**
+ * Format any numeric-like value for CSV export.
+ */
+export function formatFixedNumber(value: unknown, decimals: number = 2): string {
+  return toNumber(value).toFixed(decimals)
+}
+
+/**
  * Format percentage
  */
 export function formatPercentage(value: number, decimals: number = 1): string {
