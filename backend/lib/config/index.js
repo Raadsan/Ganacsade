@@ -120,6 +120,19 @@ export default {
     serviceAccountPath: process.env.FIREBASE_SERVICE_ACCOUNT_PATH || 'serviceAccountKey.json',
   },
 
+  google: {
+    clientId: process.env.GOOGLE_CLIENT_ID || process.env.GOOGLE_WEB_CLIENT_ID
+      || '672314564532-cdl48323a7ge73js4hhpfutu93lsqqps.apps.googleusercontent.com',
+    webClientId: process.env.GOOGLE_WEB_CLIENT_ID || process.env.GOOGLE_CLIENT_ID
+      || '672314564532-cdl48323a7ge73js4hhpfutu93lsqqps.apps.googleusercontent.com',
+    androidClientId: process.env.GOOGLE_ANDROID_CLIENT_ID
+      || '672314564532-lq5bajov0nsg8k9usp5bpgscmqr9icue.apps.googleusercontent.com',
+    iosClientId: process.env.GOOGLE_IOS_CLIENT_ID || '',
+    get isConfigured() {
+      return Boolean(this.clientId || this.webClientId || this.androidClientId || this.iosClientId);
+    },
+  },
+
   // Misc
   misc: {
     timezone: process.env.TIMEZONE || 'Africa/Mogadishu',

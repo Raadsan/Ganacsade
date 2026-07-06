@@ -2,6 +2,7 @@ import prisma from '../lib/config/prisma.js';
 import { hashPassword, comparePassword } from '../lib/utils/password.js';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../lib/utils/jwt.js';
 import { sendResetOTP } from '../lib/services/emailService.js';
+import { verifyGoogleIdToken } from '../lib/services/googleAuthService.js';
 import { getCustomerRole } from '../lib/utils/roles.js';
 
 const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
@@ -17,6 +18,9 @@ const authUserSelect = {
   first_name: true,
   last_name: true,
   display_name: true,
+  profile_image_url: true,
+  google_id: true,
+  auth_provider: true,
   status: true,
   roleModel: {
     select: {
@@ -227,6 +231,13 @@ export const login = async (req, res, next) => {
       });
     }
 
+    if (!user.password_hash) {
+      return res.status(400).json({
+        success: false,
+        message: 'This account uses Google Sign-In. Please continue with Google.',
+      });
+    }
+
     const isPasswordValid = await comparePassword(password, user.password_hash);
     if (!isPasswordValid) {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
@@ -251,6 +262,145 @@ export const login = async (req, res, next) => {
       },
     });
   } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Google Sign-In / Sign-Up for customer mobile app
+ */
+export const googleLogin = async (req, res, next) => {
+  try {
+    const { idToken } = req.body;
+    console.log('[auth/google] Google sign-in request received');
+
+    if (!idToken) {
+      return res.status(400).json({
+        success: false,
+        message: 'Google ID token is required',
+      });
+    }
+
+    const payload = await verifyGoogleIdToken(idToken);
+    const googleId = String(payload.sub);
+    const email = normalizeEmail(payload.email);
+    const fullName = String(payload.name || '').trim();
+    const nameParts = fullName.split(/\s+/).filter(Boolean);
+    const firstName = nameParts[0] || 'User';
+    const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+    const profileImageUrl = payload.picture || null;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Google account must have a verified email address',
+      });
+    }
+
+    let user = await prisma.users.findFirst({
+      where: {
+        deleted_at: null,
+        OR: [{ google_id: googleId }, { email }],
+      },
+      select: authUserSelect,
+    });
+
+    if (user && !isCustomerAccount(user)) {
+      return res.status(403).json({
+        success: false,
+        message: 'This Google account is linked to a staff account. Use the admin dashboard instead.',
+      });
+    }
+
+    const customerRole = await getCustomerRole();
+    let isNewUser = false;
+
+    if (!user) {
+      isNewUser = true;
+      user = await prisma.users.create({
+        data: {
+          email,
+          google_id: googleId,
+          auth_provider: 'google',
+          password_hash: null,
+          first_name: firstName,
+          last_name: lastName,
+          display_name: fullName || firstName,
+          profile_image_url: profileImageUrl,
+          role: 'customer',
+          role_id: customerRole?.id || null,
+          status: 'active',
+          is_email_verified: true,
+        },
+        select: authUserSelect,
+      });
+    } else {
+      user = await prisma.users.update({
+        where: { id: user.id },
+        data: {
+          google_id: user.google_id || googleId,
+          auth_provider: user.auth_provider === 'local' && !user.password_hash
+            ? 'google'
+            : user.auth_provider || 'google',
+          is_email_verified: true,
+          ...(profileImageUrl && !user.profile_image_url
+            ? { profile_image_url: profileImageUrl }
+            : {}),
+          ...(!user.first_name && firstName ? { first_name: firstName } : {}),
+          ...(!user.last_name && lastName ? { last_name: lastName } : {}),
+          ...(!user.display_name && fullName ? { display_name: fullName } : {}),
+        },
+        select: authUserSelect,
+      });
+    }
+
+    if (user.status !== 'active') {
+      return res.status(403).json({
+        success: false,
+        message: 'Your account is not active. Please contact support.',
+      });
+    }
+
+    await prisma.users.update({
+      where: { id: user.id },
+      data: { last_login_at: new Date(), token_invalidated_at: null },
+    });
+
+    const effectiveRole = await resolveEffectiveRole(user);
+    const token = generateAccessToken(user.id, effectiveRole);
+    const refreshToken = generateRefreshToken(user.id);
+
+    res.json({
+      success: true,
+      message: 'Google sign-in successful',
+      data: {
+        user: serializeAuthUser(user, effectiveRole),
+        token,
+        refreshToken,
+        isNewUser,
+      },
+    });
+  } catch (error) {
+    if (error?.statusCode) {
+      return res.status(error.statusCode).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    const message = String(error?.message || '');
+    if (
+      message.includes('Wrong number of segments')
+      || message.includes('Invalid token')
+      || message.includes('Token used too late')
+    ) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid or expired Google token. Please try again.',
+      });
+    }
+
+    console.error('[auth/google] Error:', message);
     next(error);
   }
 };
@@ -283,6 +433,13 @@ export const adminLogin = async (req, res, next) => {
 
     if (user.status !== 'active') {
       return res.status(403).json({ success: false, message: 'Your account is not active' });
+    }
+
+    if (!user.password_hash) {
+      return res.status(400).json({
+        success: false,
+        message: 'This account uses Google Sign-In. Please use the customer app with Google.',
+      });
     }
 
     const isPasswordValid = await comparePassword(password, user.password_hash);

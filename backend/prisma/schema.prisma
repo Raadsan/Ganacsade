@@ -647,7 +647,9 @@ model users {
   id                       String                 @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   email                    String?                @unique @db.Citext
   phone_number             String?                @unique @db.VarChar(20)
-  password_hash            String                 @db.VarChar(255)
+  password_hash            String?                @db.VarChar(255)
+  google_id                String?                @unique @db.VarChar(255)
+  auth_provider            String?                @default("local") @db.VarChar(20)
   role_id                  Int?
   role                     user_role              @default(customer)
   first_name               String?                @db.VarChar(100)

@@ -122,6 +122,16 @@ router.post(
  */
 router.post('/refresh-token', authController.refreshToken);
 
+/**
+ * @route   POST /api/auth/google
+ * @desc    Customer Google Sign-In / Sign-Up
+ */
+router.post(
+  '/google',
+  [body('idToken').notEmpty().withMessage('Google ID token is required'), validate],
+  authController.googleLogin
+);
+
 // =====================================================
 // PROTECTED ROUTES
 // =====================================================
