@@ -6,6 +6,7 @@ import '../../../../shared/models/user.dart' as app_user;
 import '../../../../core/network/auth_api_service.dart';
 import '../../../../core/network/http_client.dart';
 import '../../../../core/services/push_notification_service.dart';
+import '../../../../core/services/google_sign_in_service.dart';
 import '../../../notifications/presentation/controllers/app_notifications_controller.dart';
 
 class AuthController extends GetxController {
@@ -260,6 +261,63 @@ class AuthController extends GetxController {
       isLoading.value = false;
     }
   }
+
+  Future<bool> signInWithGoogle() async {
+    try {
+      isLoading.value = true;
+      errorMessage.value = '';
+
+      if (!GoogleSignInService.instance.isConfigured) {
+        errorMessage.value =
+            'Google Sign-In is not configured. Add googleWebClientId in app settings.';
+        return false;
+      }
+
+      final idToken = await GoogleSignInService.instance.signInAndGetIdToken();
+      if (idToken == null) {
+        return false;
+      }
+
+      final response = await _authApiService.signInWithGoogle(idToken: idToken);
+      final userData = response['data']['user'];
+      final role = _resolveRoleFromUserData(Map<String, dynamic>.from(userData));
+
+      final user = app_user.User(
+        id: userData['id'],
+        email: userData['email'] ?? '',
+        phoneNumber: userData['phoneNumber'] ?? '',
+        firstName: userData['firstName'] ?? '',
+        lastName: userData['lastName'] ?? '',
+        displayName: userData['displayName']
+            ?? (userData['firstName'] != null
+                ? '${userData['firstName']} ${userData['lastName'] ?? ''}'.trim()
+                : (userData['email'] ?? userData['phoneNumber'] ?? 'User')),
+        profileImageUrl: '',
+        isEmailVerified: true,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        lastLoginAt: DateTime.now(),
+      );
+
+      _user.value = user;
+      await _persistUserRole(role);
+      await _userBox.put('current_user', user.toJson());
+
+      if (!Get.isRegistered<AppNotificationsController>()) {
+        Get.put(AppNotificationsController());
+      } else {
+        await Get.find<AppNotificationsController>().ensureStarted();
+      }
+      await PushNotificationService().syncTokenWithServer();
+
+      return true;
+    } catch (e) {
+      errorMessage.value = e.toString().replaceAll('Exception: ', '');
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
   
   Future<void> signOut() async {
     try {
@@ -268,6 +326,7 @@ class AuthController extends GetxController {
     } catch (e) {
       print('Error signing out: $e');
     } finally {
+      await GoogleSignInService.instance.signOut();
       await clearLocalSession();
     }
   }

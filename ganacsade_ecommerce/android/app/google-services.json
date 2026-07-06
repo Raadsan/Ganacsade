@@ -12,7 +12,20 @@
           "package_name": "com.raadsan.ganacsade_ecommerce"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "672314564532-lq5bajov0nsg8k9usp5bpgscmqr9icue.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.raadsan.ganacsade_ecommerce",
+            "certificate_hash": "f10db0daa28fb8fc243020a55f210f58c78de444"
+          }
+        },
+        {
+          "client_id": "672314564532-cdl48323a7ge73js4hhpfutu93lsqqps.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBRmHTKOYSuneAPqkaqWcq6-7aaamzYFJI"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "672314564532-cdl48323a7ge73js4hhpfutu93lsqqps.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

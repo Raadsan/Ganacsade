@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../controllers/auth_controller.dart';
+import '../widgets/google_sign_in_button.dart';
 import 'sign_up_screen.dart';
 
 class SignInScreenEnhanced extends StatefulWidget {
@@ -369,6 +370,12 @@ class _SignInScreenEnhancedState extends State<SignInScreenEnhanced> {
                     .animate()
                     .fadeIn(delay: 1000.ms, duration: 600.ms)
                     .slideY(begin: 0.2, end: 0),
+                
+                const SizedBox(height: 24),
+
+                const AuthDivider(),
+                const SizedBox(height: 16),
+                const GoogleSignInButton(),
                 
                 const SizedBox(height: 24),
                 

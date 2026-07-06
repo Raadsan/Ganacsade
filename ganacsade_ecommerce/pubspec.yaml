@@ -38,6 +38,7 @@ dependencies:
   # Authentication & Security
   firebase_core: ^3.8.1
   firebase_messaging: ^15.1.6
+  google_sign_in: ^6.2.2
   
   # Localization
   intl: ^0.20.2

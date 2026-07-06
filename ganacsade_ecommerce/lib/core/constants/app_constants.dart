@@ -11,7 +11,7 @@ class AppConstants {
   //   http://178.18.241.5:5002/api';
   //
   // IMPORTANT: after changing server, logout/login so a fresh token is saved.
-  static const String baseUrl = 'http://10.0.2.2:5002/api';
+  static const String baseUrl = 'http://192.168.100.64:5002/api';
   // static const String baseUrl = 'http://178.18.241.5:5002/api';
 
   static const String apiVersion = 'v1';
@@ -19,6 +19,11 @@ class AppConstants {
   // App Configuration
   static const String appName = 'Ganacsade';
   static const String appVersion = '1.0.0';
+
+  /// Web OAuth client ID from Firebase / Google Cloud Console.
+  /// Required for Google Sign-In on Android (serverClientId).
+  /// Example: 672314564532-xxxxxxxx.apps.googleusercontent.com
+  static const String googleWebClientId = '672314564532-cdl48323a7ge73js4hhpfutu93lsqqps.apps.googleusercontent.com';
 
   // Storage Keys
   static const String authTokenKey = 'auth_token';

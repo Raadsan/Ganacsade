@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../controllers/auth_controller.dart';
+import '../widgets/google_sign_in_button.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -309,6 +310,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           ),
                   ),
                 )),
+                
+                const SizedBox(height: 20),
+                const AuthDivider(),
+                const SizedBox(height: 16),
+                const GoogleSignInButton(),
                 
                 const SizedBox(height: 24),
                 

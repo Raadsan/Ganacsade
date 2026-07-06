@@ -31,6 +31,7 @@ class ApiConfig {
   static const String forgotPasswordEndpoint = '$authEndpoint/forgot-password';
   static const String verifyOTPEndpoint = '$authEndpoint/verify-otp';
   static const String resetPasswordEndpoint = '$authEndpoint/reset-password';
+  static const String googleSignInEndpoint = '$authEndpoint/google';
 
   // Timeout durations
   static const Duration connectTimeout = Duration(seconds: 30);

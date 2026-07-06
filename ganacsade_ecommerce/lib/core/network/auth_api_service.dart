@@ -112,6 +112,48 @@ class AuthApiService {
     }
   }
 
+  /// Google Sign-In / Sign-Up (customer)
+  Future<Map<String, dynamic>> signInWithGoogle({required String idToken}) async {
+    try {
+      final response = await _httpClient.post(
+        ApiConfig.googleSignInEndpoint,
+        data: {'idToken': idToken},
+        options: Options(
+          sendTimeout: const Duration(seconds: 45),
+          receiveTimeout: const Duration(seconds: 45),
+        ),
+      );
+
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        final token = response.data['data']['token'];
+        final refreshToken = response.data['data']['refreshToken'];
+        await _httpClient.saveTokens(token, refreshToken);
+        return response.data;
+      }
+
+      throw DioException(
+        requestOptions: response.requestOptions,
+        response: response,
+        type: DioExceptionType.badResponse,
+        error: response.data['message'] ?? 'Google sign-in failed',
+      );
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw Exception(e.response!.data['message'] ?? 'Google sign-in failed');
+      }
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout) {
+        throw Exception(
+          'Server not responding. Start backend (npm run dev) on port 5002, then try again.',
+        );
+      }
+      throw Exception('Network error. Please check your connection and API URL.');
+    } catch (e) {
+      throw Exception('Google sign-in failed: ${e.toString()}');
+    }
+  }
+
   /// Get user profile
   /// 
   /// Returns: Map containing user profile data
