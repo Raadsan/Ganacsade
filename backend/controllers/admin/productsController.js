@@ -32,6 +32,7 @@ export const getProducts = async (req, res, next) => {
           description_en: true,
           sku: true,
           price: true,
+          discount_price: true,
           stock_quantity: true,
           low_stock_threshold: true,
           status: true,
@@ -39,6 +40,8 @@ export const getProducts = async (req, res, next) => {
           rating: true,
           review_count: true,
           created_at: true,
+          category_id: true,
+          subcategory_id: true,
           categories: { select: { name_en: true } },
           brands: { select: { name: true } },
           product_images: {
@@ -72,7 +75,10 @@ export const getProducts = async (req, res, next) => {
         review_count: p.review_count,
         created_at: p.created_at,
         category_name: p.categories?.name_en || null,
+        category_id: p.category_id,
+        subcategory_id: p.subcategory_id,
         brand_name: p.brands?.name || null,
+        discount_price: p.discount_price,
         primary_image: p.product_images[0]?.image_url || null,
       })),
       meta: {

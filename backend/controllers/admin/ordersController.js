@@ -33,6 +33,12 @@ const getStatusStep = (status) => {
 
 const getNextStatus = (currentStatus) => ORDER_STATUS_FLOW[getStatusStep(currentStatus) + 1] || null;
 
+const dispatchOrderNotifications = (payload) => {
+  void sendOrderAdvanceNotifications(payload).catch((error) => {
+    console.error('Order notification dispatch failed:', error?.message || error);
+  });
+};
+
 const getLinkedDeliveryPersonIdsForUser = async (user) => {
   const email = normalizeEmail(user?.email);
   const phone = normalizePhone(user?.phone_number);
@@ -523,6 +529,19 @@ export const advanceOrderStatus = async (req, res, next) => {
         },
       });
 
+      dispatchOrderNotifications({
+        order: {
+          ...updatedOrder,
+          order_items: order.order_items,
+          users: order.users,
+        },
+        deliveryPerson: null,
+        pickupTimeStart: null,
+        pickupTimeEnd: null,
+        description: notes,
+        newStatus: status,
+      });
+
       return res.json({
         success: true,
         message: 'Order status advanced successfully',
@@ -650,7 +669,15 @@ export const advanceOrderStatus = async (req, res, next) => {
       },
     });
 
-    await sendOrderAdvanceNotifications({
+    const responsePayload = toOrderPayload(updatedOrder);
+
+    res.json({
+      success: true,
+      message: 'Order marked as delivered successfully',
+      data: responsePayload,
+    });
+
+    dispatchOrderNotifications({
       order: {
         ...updatedOrder,
         order_items: order.order_items,
@@ -661,12 +688,6 @@ export const advanceOrderStatus = async (req, res, next) => {
       pickupTimeEnd: pickupEnd,
       description: notes,
       newStatus: status,
-    });
-
-    res.json({
-      success: true,
-      message: 'Order marked as delivered successfully',
-      data: toOrderPayload(updatedOrder),
     });
   } catch (error) {
     next(error);
@@ -777,19 +798,21 @@ export const assignOrderDelivery = async (req, res, next) => {
       },
     });
 
-    await sendOrderAdvanceNotifications({
+    const responsePayload = toOrderPayload(updatedOrder);
+
+    res.json({
+      success: true,
+      message: 'Delivery person assigned successfully',
+      data: responsePayload,
+    });
+
+    dispatchOrderNotifications({
       order: updatedOrder,
       deliveryPerson,
       pickupTimeStart: null,
       pickupTimeEnd: null,
       description: `Assigned to ${deliveryPerson.name || 'delivery person'}`,
       newStatus: updatedOrder.status,
-    });
-
-    return res.json({
-      success: true,
-      message: 'Delivery person assigned successfully',
-      data: toOrderPayload(updatedOrder),
     });
   } catch (error) {
     return next(error);

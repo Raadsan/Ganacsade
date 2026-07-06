@@ -36,25 +36,37 @@ const sendPushWithServiceAccount = async (token, { title, body, data = {} }) => 
   initFirebaseAdmin();
   if (!firebaseApp) return false;
 
-  await getMessaging(firebaseApp).send({
-    token,
-    notification: {
-      title,
-      body: String(body || '').slice(0, 500),
-    },
-    data: Object.fromEntries(
-      Object.entries(data || {}).map(([key, value]) => [key, String(value ?? '')]),
-    ),
-    android: {
-      priority: 'high',
+  try {
+    await getMessaging(firebaseApp).send({
+      token,
       notification: {
-        channelId: 'ganacsade_alerts',
-        sound: 'default',
+        title,
+        body: String(body || '').slice(0, 500),
       },
-    },
-  });
-
-  return true;
+      data: Object.fromEntries(
+        Object.entries(data || {}).map(([key, value]) => [key, String(value ?? '')]),
+      ),
+      android: {
+        priority: 'high',
+        notification: {
+          channelId: 'ganacsade_alerts',
+          sound: 'default',
+        },
+      },
+      apns: {
+        payload: {
+          aps: {
+            sound: 'default',
+            contentAvailable: true,
+          },
+        },
+      },
+    });
+    return true;
+  } catch (error) {
+    console.error('FCM service-account push failed:', error?.message || error);
+    return false;
+  }
 };
 
 const sendPushWithLegacyKey = async (token, { title, body, data = {} }) => {

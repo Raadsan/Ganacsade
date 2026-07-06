@@ -31,6 +31,11 @@ const flashSaleProductSelect = {
     select: {
       name_en: true,
       price: true,
+      product_images: {
+        orderBy: [{ is_primary: 'desc' }, { display_order: 'asc' }],
+        select: { image_url: true },
+        take: 1,
+      },
     },
   },
 };
@@ -53,6 +58,10 @@ const toFlashSalePayload = (record) => ({
 
 const toFlashSaleProductPayload = (record) => ({
   ...record,
+  product_image_url:
+    record.product_image_url ??
+    record.products?.product_images?.[0]?.image_url ??
+    null,
   current_product_name: record.products?.name_en ?? null,
   current_product_price: record.products?.price ? Number(record.products.price) : null,
   original_price: Number(record.original_price),
@@ -265,7 +274,7 @@ export const addFlashSaleProduct = async (req, res, next) => {
         name_en: true,
         price: true,
         product_images: {
-          where: { is_primary: true },
+          orderBy: [{ is_primary: 'desc' }, { display_order: 'asc' }],
           select: { image_url: true },
           take: 1,
         },

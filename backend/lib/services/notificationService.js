@@ -46,7 +46,10 @@ export const createNotification = async ({
       },
     });
 
-    await sendPushToUser(userId, { title, body, data: { type, ...data } });
+    // Push in background so order APIs respond immediately (FCM can be slow).
+    void sendPushToUser(userId, { title, body, data: { type, ...data } }).catch((error) => {
+      console.error('FCM push failed:', error?.message || error);
+    });
 
     return notification;
   } catch (error) {

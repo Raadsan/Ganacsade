@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 const devLog = (...args) => {
   if (process.env.NODE_ENV !== 'production') {
-    devLog(...args);
+    console.log(...args);
   }
 };
 

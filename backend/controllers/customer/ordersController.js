@@ -6,6 +6,22 @@ function generateOrderNumber() {
   return `ORD-${timestamp}-${random}`;
 }
 
+function mapPaymentMethodType(paymentMethod) {
+  const provider = String(paymentMethod?.provider || paymentMethod?.method || '').toLowerCase();
+  if (provider.includes('edahab')) return 'edahab';
+  if (provider.includes('premier')) return 'premier_wallet';
+  if (provider.includes('cash')) return 'cash_on_delivery';
+  return 'waafi_pay';
+}
+
+function getUserContact(user) {
+  const name = `${user?.first_name || ''} ${user?.last_name || ''}`.trim();
+  return {
+    user_name: name || user?.phone_number || user?.email || null,
+    user_email: user?.email || null,
+  };
+}
+
 export const createOrder = async (req, res, next) => {
   try {
     const userId = req.user.id;
@@ -68,6 +84,26 @@ export const createOrder = async (req, res, next) => {
       await tx.order_status_history.create({
         data: { order_id: newOrder.id, status: 'pending', notes: 'Order placed', updated_by_name: 'System' },
       });
+
+      if (transactionId) {
+        const contact = getUserContact(req.user);
+        await tx.transactions.create({
+          data: {
+            transaction_id: transactionId,
+            type: 'order_payment',
+            amount: total || 0,
+            currency: 'USD',
+            status: 'completed',
+            payment_method: mapPaymentMethodType(paymentMethod),
+            user_id: userId,
+            user_name: contact.user_name,
+            user_email: contact.user_email,
+            order_id: newOrder.id,
+            description: `Payment for order #${orderNumber}`,
+            completed_at: new Date(),
+          },
+        });
+      }
 
       return newOrder;
     });

@@ -5,6 +5,14 @@ import edahabService from '../../lib/services/edahabService.js';
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
+function getUserContact(user) {
+  const name = `${user?.first_name || ''} ${user?.last_name || ''}`.trim();
+  return {
+    user_name: name || user?.phone_number || user?.email || null,
+    user_email: user?.email || null,
+  };
+}
+
 export const processDirectPayment = async (req, res, next) => {
   try {
     const { phoneNumber, amount, description, provider = 'waafipay' } = req.body;
@@ -124,6 +132,7 @@ export const processOrderPayment = async (req, res, next) => {
           },
         });
 
+        const contact = getUserContact(req.user);
         await tx.transactions.create({
           data: {
             transaction_id: paymentResult.transactionId || `TXN-${uuidv4().substring(0, 8).toUpperCase()}`,
@@ -133,6 +142,8 @@ export const processOrderPayment = async (req, res, next) => {
             status: 'completed',
             payment_method: 'waafi_pay',
             user_id: userId,
+            user_name: contact.user_name,
+            user_email: contact.user_email,
             order_id: orderId,
             description: `Payment for order #${order.order_number}`,
             gateway_response: paymentResult,

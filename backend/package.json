@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "node index.js",
-    "server": "nodemon index.js",
+    "server": "nodemon --delay 1 index.js",
     "client": "npm run dev --prefix ../ganacsade-admin",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "prod": "concurrently \"node index.js\" \"npm start --prefix ../ganacsade-admin\"",

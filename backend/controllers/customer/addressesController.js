@@ -1,5 +1,10 @@
 import prisma from '../../lib/config/prisma.js';
 
+function parseAddressId(rawId) {
+  const id = parseInt(rawId, 10);
+  return Number.isNaN(id) ? null : id;
+}
+
 export const getAddresses = async (req, res, next) => {
   try {
     const addresses = await prisma.user_addresses.findMany({
@@ -14,8 +19,12 @@ export const getAddresses = async (req, res, next) => {
 
 export const getAddressById = async (req, res, next) => {
   try {
+    const id = parseAddressId(req.params.id);
+    if (id === null) {
+      return res.status(400).json({ success: false, message: 'Invalid address id' });
+    }
     const address = await prisma.user_addresses.findFirst({
-      where: { id: req.params.id, user_id: req.user.id },
+      where: { id, user_id: req.user.id },
     });
     if (!address) return res.status(404).json({ success: false, message: 'Address not found' });
     res.json({ success: true, data: address });
@@ -57,8 +66,12 @@ export const createAddress = async (req, res, next) => {
 
 export const updateAddress = async (req, res, next) => {
   try {
+    const id = parseAddressId(req.params.id);
+    if (id === null) {
+      return res.status(400).json({ success: false, message: 'Invalid address id' });
+    }
     const existing = await prisma.user_addresses.findFirst({
-      where: { id: req.params.id, user_id: req.user.id },
+      where: { id, user_id: req.user.id },
     });
     if (!existing) return res.status(404).json({ success: false, message: 'Address not found' });
 
@@ -74,7 +87,7 @@ export const updateAddress = async (req, res, next) => {
     if (postalCode !== undefined) data.postal_code = postalCode;
     if (isDefault !== undefined) data.is_default = isDefault;
 
-    const address = await prisma.user_addresses.update({ where: { id: req.params.id }, data });
+    const address = await prisma.user_addresses.update({ where: { id }, data });
     res.json({ success: true, message: 'Address updated successfully', data: address });
   } catch (error) {
     next(error);
@@ -83,13 +96,17 @@ export const updateAddress = async (req, res, next) => {
 
 export const deleteAddress = async (req, res, next) => {
   try {
+    const id = parseAddressId(req.params.id);
+    if (id === null) {
+      return res.status(400).json({ success: false, message: 'Invalid address id' });
+    }
     const address = await prisma.user_addresses.findFirst({
-      where: { id: req.params.id, user_id: req.user.id },
+      where: { id, user_id: req.user.id },
     });
     if (!address) return res.status(404).json({ success: false, message: 'Address not found' });
 
     const wasDefault = address.is_default;
-    await prisma.user_addresses.delete({ where: { id: req.params.id } });
+    await prisma.user_addresses.delete({ where: { id } });
 
     if (wasDefault) {
       const nextAddress = await prisma.user_addresses.findFirst({
@@ -109,13 +126,17 @@ export const deleteAddress = async (req, res, next) => {
 
 export const setDefaultAddress = async (req, res, next) => {
   try {
+    const id = parseAddressId(req.params.id);
+    if (id === null) {
+      return res.status(400).json({ success: false, message: 'Invalid address id' });
+    }
     const existing = await prisma.user_addresses.findFirst({
-      where: { id: req.params.id, user_id: req.user.id },
+      where: { id, user_id: req.user.id },
     });
     if (!existing) return res.status(404).json({ success: false, message: 'Address not found' });
 
     await prisma.user_addresses.updateMany({ where: { user_id: req.user.id }, data: { is_default: false } });
-    const address = await prisma.user_addresses.update({ where: { id: req.params.id }, data: { is_default: true } });
+    const address = await prisma.user_addresses.update({ where: { id }, data: { is_default: true } });
 
     res.json({ success: true, message: 'Default address updated successfully', data: address });
   } catch (error) {

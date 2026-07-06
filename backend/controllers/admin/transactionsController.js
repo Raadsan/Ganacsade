@@ -22,10 +22,17 @@ const transactionSelect = {
   failed_at: true,
 };
 
-const toPayload = (record) => ({
-  ...record,
-  amount: record.amount ? Number(record.amount) : 0,
-});
+const toPayload = (record) => {
+  const { users, ...transaction } = record;
+  const fallbackName = `${users?.first_name || ''} ${users?.last_name || ''}`.trim();
+
+  return {
+    ...transaction,
+    amount: transaction.amount ? Number(transaction.amount) : 0,
+    user_name: transaction.user_name || fallbackName || users?.phone_number || null,
+    user_email: transaction.user_email || users?.email || null,
+  };
+};
 
 const generateTransactionId = async () => {
   const year = new Date().getFullYear();
@@ -97,7 +104,17 @@ export const getTransactions = async (req, res, next) => {
     const [records, total] = await Promise.all([
       prisma.transactions.findMany({
         where,
-        select: transactionSelect,
+        select: {
+          ...transactionSelect,
+          users: {
+            select: {
+              first_name: true,
+              last_name: true,
+              email: true,
+              phone_number: true,
+            },
+          },
+        },
         orderBy: { created_at: 'desc' },
         skip,
         take: limitNum,

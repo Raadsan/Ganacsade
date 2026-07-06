@@ -315,6 +315,7 @@ model orders {
   total                 Decimal                @default(0) @db.Decimal(10, 2)
   status                order_status?          @default(pending)
   payment_status        payment_status?        @default(pending)
+  payment_transaction_id String?               @db.VarChar(100)
   shipping_address      Json
   payment_method        Json
   delivery_person_id    String?                @db.Uuid
