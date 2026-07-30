@@ -3,7 +3,7 @@ import { parseImageList, resolveImageUrl } from "@/lib/utils/image-url"
 export { resolveImageUrl }
 
 const API_BASE =
-  (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5002/api").replace(/\/+$/, "")
+  (process.env.NEXT_PUBLIC_API_URL || "http://178.18.241.5:5002/api").replace(/\/+$/, "")
 
 export type StoreProduct = {
   id: string

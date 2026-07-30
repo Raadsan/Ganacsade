@@ -1,7 +1,7 @@
 import type { StoreAdvertisement, StoreProduct, ProductsPagination } from "./storefront"
 
 const API_BASE =
-  (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5002/api").replace(/\/+$/, "")
+  (process.env.NEXT_PUBLIC_API_URL || "http://178.18.241.5:5002/api").replace(/\/+$/, "")
 
 async function clientFetch<T>(path: string): Promise<T | null> {
   try {

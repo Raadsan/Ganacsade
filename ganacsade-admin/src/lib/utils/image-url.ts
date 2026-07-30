@@ -1,5 +1,5 @@
 const getBackendBaseUrl = () =>
-  (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5002/api")
+  (process.env.NEXT_PUBLIC_API_URL || "http://178.18.241.5:5002/api")
     .replace(/\/api\/?$/, "")
     .replace(/\/+$/, "")
 

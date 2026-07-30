@@ -1,7 +1,8 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 import { toast } from 'sonner';
 
-const RAW_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5002/api';
+const PRODUCTION_API_URL = 'http://178.18.241.5:5002/api';
+const RAW_API_URL = process.env.NEXT_PUBLIC_API_URL || PRODUCTION_API_URL;
 const API_URL = RAW_API_URL.replace(/\/+$/, '');
 const LOCAL_API_URL = 'http://localhost:5002/api';
 
