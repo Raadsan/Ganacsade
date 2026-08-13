@@ -62,8 +62,10 @@ class MainNavigation extends StatelessWidget {
             if (controller.currentIndex != 0) {
               // Go back to Home tab instead of exiting
               controller.changeIndex(0);
+            } else {
+              // Already on Home — exit the app
+              SystemNavigator.pop();
             }
-            // If already on Home, do nothing (don't exit)
           },
           child: Scaffold(
             body: IndexedStack(

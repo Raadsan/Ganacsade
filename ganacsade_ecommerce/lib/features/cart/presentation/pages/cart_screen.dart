@@ -7,6 +7,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../controllers/cart_controller.dart';
 import '../../../checkout/presentation/pages/checkout_screen.dart';
+import '../../../navigation/navigation_controller.dart';
 import '../../../../shared/widgets/skeleton_loader.dart';
 
 class CartScreen extends StatefulWidget {
@@ -34,17 +35,23 @@ class _CartScreenState extends State<CartScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor:
+          isDark ? AppColors.darkScaffoldBackground : AppColors.white,
       appBar: AppBar(
         title: Text(
           'My cart',
           style: AppTextStyles.headlineSmall.copyWith(
             fontWeight: FontWeight.w500,
-            color: AppColors.textPrimary,
+            color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
           ),
         ),
-        backgroundColor: Colors.transparent,
+        backgroundColor:
+            isDark ? AppColors.darkScaffoldBackground : Colors.transparent,
+        foregroundColor:
+            isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
         elevation: 0,
         centerTitle: true,
         actions: [
@@ -54,9 +61,11 @@ class _CartScreenState extends State<CartScreen> {
                     onPressed: () {
                       _showClearCartDialog(context, controller);
                     },
-                    icon: const Icon(
+                    icon: Icon(
                       IconlyLight.delete,
-                      color: AppColors.textPrimary,
+                      color: isDark
+                          ? AppColors.darkTextPrimary
+                          : AppColors.textPrimary,
                     ),
                     tooltip: 'Clear Cart',
                   )
@@ -133,7 +142,9 @@ class _CartScreenState extends State<CartScreen> {
               const SizedBox(height: 32),
               ElevatedButton(
                     onPressed: () {
-                      Get.back();
+                      if (Get.isRegistered<NavigationController>()) {
+                        Get.find<NavigationController>().changeIndex(0);
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryGreen,
@@ -534,18 +545,42 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   void _showClearCartDialog(BuildContext context, CartController controller) {
-    Get.dialog(
-      AlertDialog(
-        title: const Text('Clear Cart'),
-        content: const Text(
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor:
+            isDark ? AppColors.darkCardBackground : AppColors.white,
+        title: Text(
+          'Clear Cart',
+          style: TextStyle(
+            color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+          ),
+        ),
+        content: Text(
           'Are you sure you want to remove all items from your cart?',
+          style: TextStyle(
+            color: isDark
+                ? AppColors.darkTextSecondary
+                : AppColors.textSecondary,
+          ),
         ),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                color: isDark
+                    ? AppColors.darkTextSecondary
+                    : AppColors.grey600,
+              ),
+            ),
+          ),
           TextButton(
             onPressed: () {
               controller.clearCart();
-              Get.back();
+              Navigator.of(dialogContext).pop();
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('All items have been removed from your cart'),

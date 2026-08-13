@@ -12,18 +12,24 @@ const subcategorySelect = {
   image_url: true,
   is_active: true,
   display_order: true,
-  product_count: true,
   created_at: true,
   updated_at: true,
   categories: {
     select: { name_en: true },
+  },
+  _count: {
+    select: {
+      products: { where: { deleted_at: null } },
+    },
   },
 };
 
 const toPayload = (record) => ({
   ...record,
   category_name: record.categories?.name_en ?? null,
+  product_count: record._count?.products ?? 0,
   categories: undefined,
+  _count: undefined,
 });
 
 export const getSubcategories = async (req, res, next) => {
@@ -171,20 +177,9 @@ export const deleteSubcategory = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const productCount = await prisma.products.count({
-      where: { subcategory_id: id },
-    });
-
-    if (productCount > 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Cannot delete subcategory with existing products',
-      });
-    }
-
     const existing = await prisma.subcategories.findUnique({
       where: { id },
-      select: { id: true },
+      select: { id: true, category_id: true },
     });
 
     if (!existing) {
@@ -193,6 +188,24 @@ export const deleteSubcategory = async (req, res, next) => {
         message: 'Subcategory not found',
       });
     }
+
+    // Only active products block deletion (ignore orders)
+    const activeProductCount = await prisma.products.count({
+      where: { subcategory_id: id, deleted_at: null },
+    });
+
+    if (activeProductCount > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot delete subcategory with ${activeProductCount} existing product(s)`,
+      });
+    }
+
+    // Soft-deleted products: clear subcategory link (keep product + order history)
+    await prisma.products.updateMany({
+      where: { subcategory_id: id, deleted_at: { not: null } },
+      data: { subcategory_id: null },
+    });
 
     await prisma.subcategories.delete({ where: { id } });
 

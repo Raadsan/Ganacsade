@@ -5,7 +5,6 @@ import 'package:get/get.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../controllers/auth_controller.dart';
-import '../widgets/google_sign_in_button.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -50,7 +49,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
             onPressed: () {
               // Dismiss keyboard before going back
               FocusManager.instance.primaryFocus?.unfocus();
-              Get.back();
+              if (Navigator.of(context).canPop()) {
+                Navigator.of(context).pop();
+              }
             },
           ),
         ),
@@ -66,33 +67,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 Center(
                   child: Column(
                     children: [
-                      Container(
-                        width: 100,
-                        height: 100,
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryGreen.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(50),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.shadowLight,
-                              blurRadius: 15,
-                              offset: const Offset(0, 8),
-                            ),
-                          ],
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(50),
-                          child: Image.asset(
-                            'assets/logos/GANACSADE LOGO-06.png',
-                            width: 60,
-                            height: 60,
-                            errorBuilder: (context, error, stackTrace) => Icon(
-                              Icons.person_add,
-                              size: 50,
-                              color: AppColors.primaryGreen,
-                            ),
-                          ),
-                        ),
+                      Image.asset(
+                        'assets/images/logoganacsade.png',
+                        width: 140,
+                        height: 140,
+                        fit: BoxFit.contain,
                       ),
                       const SizedBox(height: 20),
                       Text(
@@ -310,11 +289,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           ),
                   ),
                 )),
-                
-                const SizedBox(height: 20),
-                const AuthDivider(),
-                const SizedBox(height: 16),
-                const GoogleSignInButton(),
                 
                 const SizedBox(height: 24),
                 

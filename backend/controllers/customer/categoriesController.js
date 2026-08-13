@@ -41,7 +41,7 @@ export const getCategoryById = async (req, res, next) => {
     const { id } = req.params;
 
     const category = await prisma.categories.findFirst({
-      where: { id: parseInt(id, 10), is_active: true },
+      where: { id, is_active: true },
       select: {
         id: true,
         name_en: true,

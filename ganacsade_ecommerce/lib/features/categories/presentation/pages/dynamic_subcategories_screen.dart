@@ -38,6 +38,8 @@ class _DynamicSubcategoriesScreenState extends State<DynamicSubcategoriesScreen>
   }
 
   Future<void> _loadSubcategories() async {
+    if (!mounted) return;
+
     setState(() {
       _isLoading = true;
       _error = null;
@@ -45,6 +47,8 @@ class _DynamicSubcategoriesScreenState extends State<DynamicSubcategoriesScreen>
 
     try {
       final response = await _categoriesApi.getCategoryById(widget.category.id);
+      if (!mounted) return;
+
       final categoryData = response['category'];
       
       if (categoryData == null) {
@@ -54,12 +58,14 @@ class _DynamicSubcategoriesScreenState extends State<DynamicSubcategoriesScreen>
       final subcategoriesData = categoryData['subcategories'] as List? ?? [];
       final subcategories = subcategoriesData.map((json) => Subcategory.fromJson(json)).toList();
       
+      if (!mounted) return;
       setState(() {
         _subcategories = subcategories;
         _isLoading = false;
       });
     } catch (e) {
       print('Error loading subcategories: $e');
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
         _error = 'Failed to load subcategories';
@@ -88,7 +94,11 @@ class _DynamicSubcategoriesScreenState extends State<DynamicSubcategoriesScreen>
         foregroundColor: isDark ? AppColors.darkTextPrimary : AppColors.white,
         elevation: 0,
         leading: IconButton(
-          onPressed: () => Get.back(),
+          onPressed: () {
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            }
+          },
           icon: const Icon(Icons.arrow_back),
         ),
       ),

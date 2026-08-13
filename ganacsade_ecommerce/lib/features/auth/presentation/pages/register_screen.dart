@@ -67,6 +67,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget _buildHeader() {
     return Column(
       children: [
+        Image.asset(
+          'assets/images/logoganacsade.png',
+          width: 120,
+          height: 120,
+          fit: BoxFit.contain,
+        )
+            .animate()
+            .scale(duration: 600.ms, curve: Curves.elasticOut),
+
+        const SizedBox(height: 20),
+
         Text(
           'Register',
           style: AppTextStyles.headlineLarge,

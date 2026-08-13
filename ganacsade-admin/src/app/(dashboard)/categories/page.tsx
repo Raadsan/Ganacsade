@@ -19,14 +19,52 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Plus, Search, MoreVertical, Edit, Trash2, FolderTree, Image as ImageIcon } from "lucide-react"
+import { Plus, Search, MoreVertical, Edit, Trash2, FolderTree, Image as ImageIcon, Eye } from "lucide-react"
 import { Category, CreateCategoryDto, Subcategory, CreateSubcategoryDto } from "@/types"
 import { CategoryFormDialog } from "@/components/dashboard/category-form-dialog"
 import { SubcategoryFormDialog } from "@/components/dashboard/subcategory-form-dialog"
+import { CategoryViewDialog } from "@/components/dashboard/category-view-dialog"
 import { categoriesApi } from "@/lib/api/categories"
 import { subcategoriesApi } from "@/lib/api/subcategories"
 import { toast } from "sonner"
 import { resolveImageUrl } from "@/lib/utils/image-url"
+
+function mapSubcategoryFromApi(sub: any): Subcategory {
+  return {
+    id: sub.id,
+    categoryId: sub.category_id || sub.categoryId,
+    name: sub.name_en || sub.name,
+    description: sub.description_en || sub.description || "",
+    image: resolveImageUrl(sub.image_url) || undefined,
+    isActive: sub.is_active ?? sub.isActive ?? true,
+    productCount: sub.product_count || 0,
+  }
+}
+
+function mapCategoryFromApi(cat: any, subcategories: Subcategory[] = []): Category {
+  return {
+    id: cat.id,
+    name: cat.name_en || cat.name,
+    description: cat.description_en || cat.description || "",
+    image: resolveImageUrl(cat.image_url) || undefined,
+    productCount: cat.product_count || 0,
+    isActive: cat.is_active ?? cat.isActive ?? true,
+    subcategories,
+  }
+}
+
+async function fetchCategoryWithSubs(cat: any): Promise<Category> {
+  try {
+    const subsResponse = await subcategoriesApi.getSubcategories(cat.id)
+    const subs =
+      subsResponse.success && subsResponse.data
+        ? subsResponse.data.map(mapSubcategoryFromApi)
+        : []
+    return mapCategoryFromApi(cat, subs)
+  } catch {
+    return mapCategoryFromApi(cat, [])
+  }
+}
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([])
@@ -34,6 +72,8 @@ export default function CategoriesPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
   const [isFormOpen, setIsFormOpen] = useState(false)
+  const [viewCategory, setViewCategory] = useState<Category | null>(null)
+  const [isViewOpen, setIsViewOpen] = useState(false)
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
   
   // Subcategory state
@@ -47,54 +87,29 @@ export default function CategoriesPage() {
     fetchCategories()
   }, [])
 
-  const fetchCategories = async () => {
+  const fetchCategories = async (options?: { silent?: boolean }) => {
+    const silent = options?.silent ?? false
     try {
-      setLoading(true)
+      if (!silent) setLoading(true)
       const response = await categoriesApi.getCategories()
       if (response.success && response.data) {
-        // Fetch subcategories for each category
         const categoriesWithSubs = await Promise.all(
-          response.data.map(async (cat: any) => {
-            try {
-              const subsResponse = await subcategoriesApi.getSubcategories(cat.id)
-              return {
-                id: cat.id,
-                name: cat.name_en || cat.name,
-                description: cat.description_en || cat.description || '',
-                image: resolveImageUrl(cat.image_url) || undefined,
-                productCount: cat.product_count || 0,
-                isActive: cat.is_active,
-                subcategories: subsResponse.success && subsResponse.data ? subsResponse.data.map((sub: any) => ({
-                  id: sub.id,
-                  categoryId: sub.category_id,
-                  name: sub.name_en || sub.name,
-                  description: sub.description_en || sub.description || '',
-                  image: resolveImageUrl(sub.image_url) || undefined,
-                  isActive: sub.is_active,
-                  productCount: sub.product_count || 0,
-                })) : [],
-              }
-            } catch (error) {
-              return {
-                id: cat.id,
-                name: cat.name_en || cat.name,
-                description: cat.description_en || cat.description || '',
-                image: resolveImageUrl(cat.image_url) || undefined,
-                productCount: cat.product_count || 0,
-                isActive: cat.is_active,
-                subcategories: [],
-              }
-            }
-          })
+          response.data.map((cat: any) => fetchCategoryWithSubs(cat))
         )
         setCategories(categoriesWithSubs)
       }
     } catch (error) {
-      console.error('Error fetching categories:', error)
-      toast.error('Failed to load categories')
+      console.error("Error fetching categories:", error)
+      if (!silent) toast.error("Failed to load categories")
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
+  }
+
+  const syncViewCategory = (categoryId: string, updater: (cat: Category) => Category) => {
+    setViewCategory((prev) =>
+      prev && prev.id === categoryId ? updater(prev) : prev
+    )
   }
 
   const filteredCategories = categories.filter((category) =>
@@ -112,16 +127,30 @@ export default function CategoriesPage() {
     setIsFormOpen(true)
   }
 
+  const handleViewCategory = (category: Category) => {
+    setViewCategory(category)
+    setIsViewOpen(true)
+  }
+
   const handleDeleteCategory = async (id: string) => {
     if (confirm("Are you sure you want to delete this category? This will affect all products in this category.")) {
       try {
         const response = await categoriesApi.deleteCategory(id)
         if (response.success) {
+          setCategories((prev) => prev.filter((c) => c.id !== id))
+          setExpandedCategories((prev) => {
+            const next = new Set(prev)
+            next.delete(id)
+            return next
+          })
+          if (viewCategory?.id === id) {
+            setIsViewOpen(false)
+            setViewCategory(null)
+          }
           toast.success("Category deleted successfully")
-          fetchCategories()
         }
       } catch (error: any) {
-        const errorMessage = error?.response?.data?.message || 'Failed to delete category'
+        const errorMessage = error?.response?.data?.message || "Failed to delete category"
         toast.error(errorMessage)
       }
     }
@@ -130,23 +159,41 @@ export default function CategoriesPage() {
   const handleSaveCategory = async (categoryData: CreateCategoryDto) => {
     try {
       if (selectedCategory) {
-        // Update existing category
         const response = await categoriesApi.updateCategory(selectedCategory.id, categoryData)
         if (response.success) {
+          const data = response.data as any
+          const payload = categoryData as any
+          const updated = mapCategoryFromApi(
+            {
+              ...data,
+              id: selectedCategory.id,
+              name_en: data?.name_en ?? payload.nameEn ?? selectedCategory.name,
+              description_en:
+                data?.description_en ?? payload.descriptionEn ?? selectedCategory.description,
+              image_url: data?.image_url ?? payload.imageUrl ?? selectedCategory.image,
+              is_active: data?.is_active ?? payload.isActive ?? selectedCategory.isActive,
+              product_count: selectedCategory.productCount,
+            },
+            selectedCategory.subcategories ?? []
+          )
+          setCategories((prev) =>
+            prev.map((c) => (c.id === selectedCategory.id ? updated : c))
+          )
+          syncViewCategory(selectedCategory.id, () => updated)
           toast.success("Category updated successfully")
-          fetchCategories()
+          setIsFormOpen(false)
         }
       } else {
-        // Add new category
         const response = await categoriesApi.createCategory(categoryData)
-        if (response.success) {
+        if (response.success && response.data) {
+          const created = mapCategoryFromApi(response.data, [])
+          setCategories((prev) => [...prev, created])
           toast.success("Category created successfully")
-          fetchCategories()
+          setIsFormOpen(false)
         }
       }
-      setIsFormOpen(false)
     } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || 'Failed to save category'
+      const errorMessage = error?.response?.data?.message || "Failed to save category"
       toast.error(errorMessage)
     }
   }
@@ -181,11 +228,24 @@ export default function CategoriesPage() {
       try {
         const response = await subcategoriesApi.deleteSubcategory(subcategoryId)
         if (response.success) {
+          setCategories((prev) =>
+            prev.map((cat) =>
+              cat.id === categoryId
+                ? {
+                    ...cat,
+                    subcategories: cat.subcategories?.filter((s) => s.id !== subcategoryId),
+                  }
+                : cat
+            )
+          )
+          syncViewCategory(categoryId, (cat) => ({
+            ...cat,
+            subcategories: cat.subcategories?.filter((s) => s.id !== subcategoryId),
+          }))
           toast.success("Subcategory deleted successfully")
-          fetchCategories()
         }
       } catch (error: any) {
-        const errorMessage = error?.response?.data?.message || 'Failed to delete subcategory'
+        const errorMessage = error?.response?.data?.message || "Failed to delete subcategory"
         toast.error(errorMessage)
       }
     }
@@ -194,21 +254,61 @@ export default function CategoriesPage() {
   const handleSaveSubcategory = async (subcategoryData: CreateSubcategoryDto) => {
     try {
       if (selectedSubcategory) {
-        const response = await subcategoriesApi.updateSubcategory(selectedSubcategory.id, subcategoryData)
+        const response = await subcategoriesApi.updateSubcategory(
+          selectedSubcategory.id,
+          subcategoryData
+        )
         if (response.success) {
+          const updated = mapSubcategoryFromApi({
+            ...response.data,
+            id: selectedSubcategory.id,
+            category_id: subcategoryParentId,
+          })
+          setCategories((prev) =>
+            prev.map((cat) =>
+              cat.id === subcategoryParentId
+                ? {
+                    ...cat,
+                    subcategories: cat.subcategories?.map((s) =>
+                      s.id === selectedSubcategory.id ? updated : s
+                    ),
+                  }
+                : cat
+            )
+          )
+          syncViewCategory(subcategoryParentId, (cat) => ({
+            ...cat,
+            subcategories: cat.subcategories?.map((s) =>
+              s.id === selectedSubcategory.id ? updated : s
+            ),
+          }))
           toast.success("Subcategory updated successfully")
-          fetchCategories()
+          setIsSubcategoryFormOpen(false)
         }
       } else {
         const response = await subcategoriesApi.createSubcategory(subcategoryData)
-        if (response.success) {
+        if (response.success && response.data) {
+          const created = mapSubcategoryFromApi(response.data)
+          setCategories((prev) =>
+            prev.map((cat) =>
+              cat.id === subcategoryParentId
+                ? {
+                    ...cat,
+                    subcategories: [...(cat.subcategories || []), created],
+                  }
+                : cat
+            )
+          )
+          syncViewCategory(subcategoryParentId, (cat) => ({
+            ...cat,
+            subcategories: [...(cat.subcategories || []), created],
+          }))
           toast.success("Subcategory created successfully")
-          fetchCategories()
+          setIsSubcategoryFormOpen(false)
         }
       }
-      setIsSubcategoryFormOpen(false)
     } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || 'Failed to save subcategory'
+      const errorMessage = error?.response?.data?.message || "Failed to save subcategory"
       toast.error(errorMessage)
     }
   }
@@ -326,16 +426,31 @@ export default function CategoriesPage() {
               <Fragment key={category.id}>
                 <TableRow>
                   <TableCell>
-                    {category.subcategories && category.subcategories.length > 0 && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => toggleCategoryExpanded(category.id)}
-                        title={expandedCategories.has(category.id) ? "Collapse subcategories" : "Expand subcategories"}
-                      >
-                        <FolderTree className={`h-4 w-4 transition-transform ${expandedCategories.has(category.id) ? 'rotate-90' : ''}`} />
-                      </Button>
-                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => toggleCategoryExpanded(category.id)}
+                      title={
+                        category.subcategories && category.subcategories.length > 0
+                          ? expandedCategories.has(category.id)
+                            ? "Hide subcategories"
+                            : "Show subcategories"
+                          : "No subcategories"
+                      }
+                      disabled={
+                        !category.subcategories || category.subcategories.length === 0
+                      }
+                    >
+                      <FolderTree
+                        className={`h-4 w-4 transition-transform ${
+                          expandedCategories.has(category.id) ? "rotate-90" : ""
+                        } ${
+                          category.subcategories && category.subcategories.length > 0
+                            ? "text-primary"
+                            : "text-muted-foreground/40"
+                        }`}
+                      />
+                    </Button>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-3">
@@ -389,6 +504,10 @@ export default function CategoriesPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleViewCategory(category)}>
+                          <Eye className="mr-2 h-4 w-4" />
+                          View
+                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleEditCategory(category)}>
                           <Edit className="mr-2 h-4 w-4" />
                           Edit Category
@@ -481,6 +600,28 @@ export default function CategoriesPage() {
           </TableBody>
         </Table>
       </Card>
+
+      <CategoryViewDialog
+        category={viewCategory}
+        open={isViewOpen}
+        onOpenChange={setIsViewOpen}
+        onSubcategoryDeleted={(categoryId, subcategoryId) => {
+          setCategories((prev) =>
+            prev.map((cat) =>
+              cat.id === categoryId
+                ? {
+                    ...cat,
+                    subcategories: cat.subcategories?.filter((s) => s.id !== subcategoryId),
+                  }
+                : cat
+            )
+          )
+          syncViewCategory(categoryId, (cat) => ({
+            ...cat,
+            subcategories: cat.subcategories?.filter((s) => s.id !== subcategoryId),
+          }))
+        }}
+      />
 
       {/* Category Form Dialog */}
       <CategoryFormDialog

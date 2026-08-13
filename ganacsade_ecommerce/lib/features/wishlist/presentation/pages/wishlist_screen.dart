@@ -6,23 +6,33 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../shared/models/product.dart';
 import '../../../cart/presentation/controllers/cart_controller.dart';
+import '../../../navigation/navigation_controller.dart';
 import '../../../products/presentation/pages/product_detail_screen.dart';
 import '../controllers/wishlist_controller.dart';
 
 class WishlistScreen extends StatelessWidget {
   const WishlistScreen({super.key});
 
+  void _goHome() {
+    if (Get.isRegistered<NavigationController>()) {
+      Get.find<NavigationController>().changeIndex(0);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final WishlistController controller = Get.find<WishlistController>();
     final CartController cartController = Get.find<CartController>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: AppColors.grey50,
+      backgroundColor:
+          isDark ? AppColors.darkScaffoldBackground : AppColors.grey50,
       appBar: AppBar(
         title: Text('wishlist_title'.tr),
-        backgroundColor: AppColors.primaryGreen,
-        foregroundColor: AppColors.white,
+        backgroundColor:
+            isDark ? AppColors.darkCardBackground : AppColors.primaryGreen,
+        foregroundColor: isDark ? AppColors.darkTextPrimary : AppColors.white,
         elevation: 0,
         centerTitle: true,
         actions: [
@@ -44,7 +54,7 @@ class WishlistScreen extends StatelessWidget {
         }
 
         if (controller.wishlistItems.isEmpty) {
-          return _buildEmptyWishlist();
+          return _buildEmptyWishlist(isDark);
         }
 
         return RefreshIndicator(
@@ -56,10 +66,12 @@ class WishlistScreen extends StatelessWidget {
             itemBuilder: (context, index) {
               final product = controller.wishlistItems[index];
               return _buildWishlistItem(
+                context,
                 product,
                 controller,
                 cartController,
                 index,
+                isDark,
               );
             },
           ),
@@ -68,7 +80,7 @@ class WishlistScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildEmptyWishlist() {
+  Widget _buildEmptyWishlist(bool isDark) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -77,13 +89,17 @@ class WishlistScreen extends StatelessWidget {
                 width: 120,
                 height: 120,
                 decoration: BoxDecoration(
-                  color: AppColors.primaryGreen.withOpacity(0.1),
+                  color: isDark
+                      ? AppColors.primaryGreen.withOpacity(0.15)
+                      : AppColors.primaryGreen.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.favorite_outline,
                   size: 60,
-                  color: AppColors.primaryGreen,
+                  color: isDark
+                      ? AppColors.primaryGreen.withOpacity(0.9)
+                      : AppColors.primaryGreen,
                 ),
               )
               .animate()
@@ -95,7 +111,9 @@ class WishlistScreen extends StatelessWidget {
                 'wishlist_empty'.tr,
                 style: AppTextStyles.headlineMedium.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: AppColors.grey700,
+                  color: isDark
+                      ? AppColors.darkTextPrimary
+                      : AppColors.grey700,
                 ),
               )
               .animate()
@@ -105,17 +123,18 @@ class WishlistScreen extends StatelessWidget {
           Text(
                 'wishlist_empty_desc'.tr,
                 style: AppTextStyles.bodyLarge.copyWith(
-                  color: AppColors.grey600,
+                  color: isDark
+                      ? AppColors.darkTextSecondary
+                      : AppColors.grey600,
                 ),
+                textAlign: TextAlign.center,
               )
               .animate()
               .fadeIn(delay: 600.ms, duration: 600.ms)
               .slideY(begin: 0.3, end: 0),
           const SizedBox(height: 32),
           ElevatedButton(
-                onPressed: () {
-                  Get.back();
-                },
+                onPressed: _goHome,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryGreen,
                   foregroundColor: AppColors.white,
@@ -138,19 +157,21 @@ class WishlistScreen extends StatelessWidget {
   }
 
   Widget _buildWishlistItem(
+    BuildContext context,
     Product product,
     WishlistController controller,
     CartController cartController,
     int index,
+    bool isDark,
   ) {
     return Container(
           margin: const EdgeInsets.only(bottom: 16),
           decoration: BoxDecoration(
-            color: AppColors.white,
+            color: isDark ? AppColors.darkCardBackground : AppColors.white,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: AppColors.shadowLight,
+                color: isDark ? Colors.black26 : AppColors.shadowLight,
                 blurRadius: 10,
                 offset: const Offset(0, 2),
               ),
@@ -167,7 +188,6 @@ class WishlistScreen extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Product Image
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12),
                     child: Image.network(
@@ -178,17 +198,19 @@ class WishlistScreen extends StatelessWidget {
                       errorBuilder: (context, error, stackTrace) => Container(
                         width: 100,
                         height: 100,
-                        color: AppColors.grey200,
-                        child: const Icon(
+                        color: isDark
+                            ? AppColors.darkElevatedSurface
+                            : AppColors.grey200,
+                        child: Icon(
                           Icons.image_not_supported,
-                          color: AppColors.grey500,
+                          color: isDark
+                              ? AppColors.darkTextSecondary
+                              : AppColors.grey500,
                         ),
                       ),
                     ),
                   ),
                   const SizedBox(width: 12),
-
-                  // Product Details
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -197,6 +219,9 @@ class WishlistScreen extends StatelessWidget {
                           product.name,
                           style: AppTextStyles.titleMedium.copyWith(
                             fontWeight: FontWeight.w600,
+                            color: isDark
+                                ? AppColors.darkTextPrimary
+                                : AppColors.textPrimary,
                           ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -217,7 +242,9 @@ class WishlistScreen extends StatelessWidget {
                               Text(
                                 '\$${product.price.toStringAsFixed(2)}',
                                 style: AppTextStyles.bodyMedium.copyWith(
-                                  color: AppColors.grey500,
+                                  color: isDark
+                                      ? AppColors.darkTextSecondary
+                                      : AppColors.grey500,
                                   decoration: TextDecoration.lineThrough,
                                 ),
                               ),
@@ -232,8 +259,6 @@ class WishlistScreen extends StatelessWidget {
                             ),
                           ),
                         const SizedBox(height: 8),
-
-                        // Action Buttons
                         Row(
                           children: [
                             Expanded(
@@ -295,21 +320,41 @@ class WishlistScreen extends StatelessWidget {
   }
 
   void _showClearDialog(BuildContext context, WishlistController controller) {
-    Get.dialog(
-      AlertDialog(
-        title: Text('wishlist_clear_all'.tr),
-        content: Text('wishlist_cleared_desc'.tr),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor:
+            isDark ? AppColors.darkCardBackground : AppColors.white,
+        title: Text(
+          'wishlist_clear_all'.tr,
+          style: TextStyle(
+            color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+          ),
+        ),
+        content: Text(
+          'wishlist_cleared_desc'.tr,
+          style: TextStyle(
+            color: isDark
+                ? AppColors.darkTextSecondary
+                : AppColors.textSecondary,
+          ),
+        ),
         actions: [
           TextButton(
-            onPressed: () => Get.back(),
+            onPressed: () => Navigator.of(dialogContext).pop(),
             child: Text(
               'cancel'.tr,
-              style: const TextStyle(color: AppColors.grey600),
+              style: TextStyle(
+                color: isDark
+                    ? AppColors.darkTextSecondary
+                    : AppColors.grey600,
+              ),
             ),
           ),
           ElevatedButton(
             onPressed: () {
-              Get.back();
+              Navigator.of(dialogContext).pop();
               controller.clearWishlist();
             },
             style: ElevatedButton.styleFrom(

@@ -5,7 +5,6 @@ import 'package:get/get.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../controllers/auth_controller.dart';
-import '../widgets/google_sign_in_button.dart';
 import 'sign_up_screen.dart';
 
 class SignInScreenEnhanced extends StatefulWidget {
@@ -50,33 +49,11 @@ class _SignInScreenEnhancedState extends State<SignInScreenEnhanced> {
                 Center(
                   child: Column(
                     children: [
-                      Container(
-                        width: 120,
-                        height: 120,
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryGreen.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(60),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.shadowLight,
-                              blurRadius: 20,
-                              offset: const Offset(0, 10),
-                            ),
-                          ],
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(60),
-                          child: Image.asset(
-                            'assets/logos/GANACSADE LOGO-06.png',
-                            width: 80,
-                            height: 80,
-                            errorBuilder: (context, error, stackTrace) => Icon(
-                              Icons.store,
-                              size: 60,
-                              color: AppColors.primaryGreen,
-                            ),
-                          ),
-                        ),
+                      Image.asset(
+                        'assets/images/logoganacsade.png',
+                        width: 140,
+                        height: 140,
+                        fit: BoxFit.contain,
                       )
                           .animate()
                           .scale(duration: 800.ms, curve: Curves.elasticOut)
@@ -253,7 +230,7 @@ class _SignInScreenEnhancedState extends State<SignInScreenEnhanced> {
                 
                 const SizedBox(height: 16),
                 
-                // Remember Me and Forgot Password
+                // Remember Me
                 Row(
                     children: [
                       Obx(() => Checkbox(
@@ -267,24 +244,6 @@ class _SignInScreenEnhancedState extends State<SignInScreenEnhanced> {
                         'auth_remember_me'.tr,
                         style: AppTextStyles.bodyMedium.copyWith(
                           color: AppColors.textSecondary,
-                        ),
-                      ),
-                      const Spacer(),
-                      TextButton(
-                        onPressed: () {
-                          Get.snackbar(
-                            'Coming Soon',
-                            'Forgot password feature will be available soon',
-                            backgroundColor: AppColors.primaryGreen,
-                            colorText: AppColors.white,
-                          );
-                        },
-                        child: Text(
-                          'auth_forgot_password'.tr,
-                          style: AppTextStyles.bodyMedium.copyWith(
-                            color: AppColors.primaryGreen,
-                            fontWeight: FontWeight.w600,
-                          ),
                         ),
                       ),
                     ],
@@ -370,12 +329,6 @@ class _SignInScreenEnhancedState extends State<SignInScreenEnhanced> {
                     .animate()
                     .fadeIn(delay: 1000.ms, duration: 600.ms)
                     .slideY(begin: 0.2, end: 0),
-                
-                const SizedBox(height: 24),
-
-                const AuthDivider(),
-                const SizedBox(height: 16),
-                const GoogleSignInButton(),
                 
                 const SizedBox(height: 24),
                 

@@ -77,6 +77,8 @@ class _DeliveryMainNavigationState extends State<DeliveryMainNavigation> {
                 if (didPop) return;
                 if (navController.currentIndex != 0) {
                   navController.changeIndex(0);
+                } else {
+                  SystemNavigator.pop();
                 }
               },
               child: Scaffold(

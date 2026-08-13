@@ -246,29 +246,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
           ),
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: Container(
-              margin: const EdgeInsets.symmetric(vertical: 8),
-              decoration: BoxDecoration(
-                color: AppColors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: IconButton(
-                icon: const Icon(
-                  IconlyBold.setting,
-                  color: AppColors.white,
-                  size: 22,
-                ),
-                onPressed: () {
-                  HapticFeedback.lightImpact();
-                  _navigateToSettings();
-                },
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -700,37 +677,62 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _navigateToSettings() {
-    Get.snackbar(
-      'Coming Soon',
-      'Settings will be available soon',
-      backgroundColor: AppColors.primaryGreen.withOpacity(0.9),
-      colorText: AppColors.white,
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Settings will be available soon'),
+        backgroundColor: AppColors.primaryGreen.withOpacity(0.95),
+        behavior: SnackBarBehavior.floating,
+      ),
     );
   }
 
   void _showSignOutDialog(ProfileController controller) {
-    Get.dialog(
-      AlertDialog(
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor:
+            isDark ? AppColors.darkCardBackground : AppColors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
             Icon(IconlyBold.logout, color: AppColors.error, size: 24),
             const SizedBox(width: 12),
-            const Text('Logout'),
+            Text(
+              'Logout',
+              style: TextStyle(
+                color: isDark
+                    ? AppColors.darkTextPrimary
+                    : AppColors.textPrimary,
+              ),
+            ),
           ],
         ),
-        content: const Text(
+        content: Text(
           'Are you sure you want to logout of your account?',
-          style: TextStyle(fontSize: 16),
+          style: TextStyle(
+            fontSize: 16,
+            color: isDark
+                ? AppColors.darkTextSecondary
+                : AppColors.textSecondary,
+          ),
         ),
         actions: [
           TextButton(
-            onPressed: () => Get.back(),
-            child: Text('Cancel', style: TextStyle(color: AppColors.grey600)),
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                color: isDark
+                    ? AppColors.darkTextSecondary
+                    : AppColors.grey600,
+              ),
+            ),
           ),
           ElevatedButton(
             onPressed: () async {
-              Get.back();
+              Navigator.of(dialogContext).pop();
               final authController = Get.find<AuthController>();
               await authController.signOut();
 

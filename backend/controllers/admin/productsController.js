@@ -2,7 +2,7 @@ import prisma from '../../lib/config/prisma.js';
 
 export const getProducts = async (req, res, next) => {
   try {
-    const { search, category, status, page = 1, limit = 50 } = req.query;
+    const { search, category, subcategory, status, page = 1, limit = 50 } = req.query;
     const pageNum = parseInt(page, 10);
     const limitNum = parseInt(limit, 10);
     const skip = (pageNum - 1) * limitNum;
@@ -10,6 +10,7 @@ export const getProducts = async (req, res, next) => {
     const where = {
       deleted_at: null,
       ...(category ? { category_id: category } : {}),
+      ...(subcategory ? { subcategory_id: subcategory } : {}),
       ...(status ? { status } : {}),
       ...(search
         ? {

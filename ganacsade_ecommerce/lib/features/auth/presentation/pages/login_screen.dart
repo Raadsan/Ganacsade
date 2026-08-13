@@ -54,11 +54,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 
                 const SizedBox(height: 30),
                 
-                // Social Login Options
-                _buildSocialLogin(),
-                
-                const SizedBox(height: 30),
-                
                 // Register Link
                 _buildRegisterLink(),
               ],
@@ -73,31 +68,11 @@ class _LoginScreenState extends State<LoginScreen> {
     return Column(
       children: [
         // Logo
-        Container(
-          width: 80,
-          height: 80,
-          decoration: BoxDecoration(
-            gradient: AppColors.primaryGradient,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primaryGreen.withOpacity(0.3),
-                blurRadius: 15,
-                offset: const Offset(0, 5),
-              ),
-            ],
-          ),
-          child: const Center(
-            child: Text(
-              'G',
-              style: TextStyle(
-                fontSize: 40,
-                fontWeight: FontWeight.bold,
-                color: AppColors.white,
-                fontFamily: AppTextStyles.primaryFontFamily,
-              ),
-            ),
-          ),
+        Image.asset(
+          'assets/images/logoganacsade.png',
+          width: 120,
+          height: 120,
+          fit: BoxFit.contain,
         )
             .animate()
             .scale(duration: 600.ms, curve: Curves.elasticOut),
@@ -190,7 +165,7 @@ class _LoginScreenState extends State<LoginScreen> {
         
         const SizedBox(height: 16),
         
-        // Remember Me & Forgot Password
+        // Remember Me
         Row(
           children: [
             Checkbox(
@@ -202,13 +177,6 @@ class _LoginScreenState extends State<LoginScreen> {
               },
             ),
             Text('Remember me', style: AppTextStyles.bodyMedium),
-            const Spacer(),
-            TextButton(
-              onPressed: () {
-                // TODO: Navigate to forgot password
-              },
-              child: const Text('Forgot Password?'),
-            ),
           ],
         )
             .animate()
@@ -227,58 +195,6 @@ class _LoginScreenState extends State<LoginScreen> {
             .slideY(begin: 0.3, end: 0),
       ],
     );
-  }
-
-  Widget _buildSocialLogin() {
-    return Column(
-      children: [
-        Row(
-          children: [
-            const Expanded(child: Divider()),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text('Or continue with', style: AppTextStyles.bodyMedium),
-            ),
-            const Expanded(child: Divider()),
-          ],
-        ),
-        
-        const SizedBox(height: 20),
-        
-        // Social Login Buttons
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  // TODO: Google Sign In
-                },
-                icon: const Icon(Icons.g_mobiledata, size: 24),
-                label: const Text('Google'),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  // TODO: Phone Sign In
-                },
-                icon: const Icon(Icons.phone, size: 20),
-                label: const Text('Phone'),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
-    )
-        .animate()
-        .fadeIn(delay: 1000.ms, duration: 500.ms);
   }
 
   Widget _buildRegisterLink() {
