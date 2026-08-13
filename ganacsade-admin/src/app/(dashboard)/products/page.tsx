@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { productsApi } from "@/lib/api/products"
-import { BACKEND_URL, axiosInstance } from "@/lib/api/client"
+import { axiosInstance } from "@/lib/api/client"
 import { resolveImageUrl } from "@/lib/utils/image-url"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"

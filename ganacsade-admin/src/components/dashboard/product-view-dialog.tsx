@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { BACKEND_URL, axiosInstance } from "@/lib/api/client"
+import { axiosInstance } from "@/lib/api/client"
+import { resolveImageUrl } from "@/lib/utils/image-url"
 import { Product } from "@/types"
 import {
   Dialog,
@@ -104,7 +105,7 @@ export function ProductViewDialog({
                       className="relative aspect-square rounded-lg border overflow-hidden bg-muted group"
                     >
                       <img
-                        src={`${BACKEND_URL}${image.image_url}`}
+                        src={resolveImageUrl(image.image_url) || ""}
                         alt={image.alt_text || `${product.name} - ${index + 1}`}
                         className="w-full h-full object-cover"
                         onError={(e: React.SyntheticEvent<HTMLImageElement>) => {

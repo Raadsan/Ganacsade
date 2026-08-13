@@ -1,11 +1,9 @@
 import type { StoreAdvertisement, StoreProduct, ProductsPagination } from "./storefront"
-
-const API_BASE =
-  (process.env.NEXT_PUBLIC_API_URL || "http://178.18.241.5:5002/api").replace(/\/+$/, "")
+import { getApiUrl } from "./url"
 
 async function clientFetch<T>(path: string): Promise<T | null> {
   try {
-    const response = await fetch(`${API_BASE}${path}`)
+    const response = await fetch(`${getApiUrl()}${path}`)
     if (!response.ok) return null
     const json = await response.json()
     return json.success ? (json.data ?? null) : null
@@ -40,7 +38,7 @@ export async function clientFetchProducts(params?: {
 
 export async function recordAdvertisementView(id: string) {
   try {
-    await fetch(`${API_BASE}/customer/advertisements/${id}/view`, { method: "POST" })
+    await fetch(`${getApiUrl()}/customer/advertisements/${id}/view`, { method: "POST" })
   } catch {
     // non-blocking
   }
@@ -48,7 +46,7 @@ export async function recordAdvertisementView(id: string) {
 
 export async function recordAdvertisementClick(id: string) {
   try {
-    await fetch(`${API_BASE}/customer/advertisements/${id}/click`, { method: "POST" })
+    await fetch(`${getApiUrl()}/customer/advertisements/${id}/click`, { method: "POST" })
   } catch {
     // non-blocking
   }

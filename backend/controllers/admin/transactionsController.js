@@ -142,11 +142,11 @@ export const getTransactionStats = async (req, res, next) => {
     const { start_date, end_date } = req.query;
     const where = buildTransactionWhere({ start_date, end_date });
 
-    const [totalTransactions, completedAgg, refundAgg, completedCount, pendingCount, failedCount] =
+    const [totalTransactions, paymentAgg, refundAgg, completedCount, pendingCount, failedCount] =
       await Promise.all([
         prisma.transactions.count({ where }),
         prisma.transactions.aggregate({
-          where: { ...where, status: 'completed' },
+          where: { ...where, type: 'order_payment', status: 'completed' },
           _sum: { amount: true },
         }),
         prisma.transactions.aggregate({
@@ -158,7 +158,8 @@ export const getTransactionStats = async (req, res, next) => {
         prisma.transactions.count({ where: { ...where, status: 'failed' } }),
       ]);
 
-    const totalRevenue = Number(completedAgg._sum.amount || 0);
+    // Revenue is payments only. Refunds are kept separate and deducted once.
+    const totalRevenue = Number(paymentAgg._sum.amount || 0);
     const totalRefunds = Number(refundAgg._sum.amount || 0);
 
     return res.json({
@@ -198,6 +199,17 @@ export const getTransactionById = async (req, res, next) => {
           select: {
             order_number: true,
             total: true,
+            order_items: {
+              select: {
+                id: true,
+                product_name: true,
+                package_name: true,
+                provider_name: true,
+                quantity: true,
+                unit_price: true,
+                total: true,
+              },
+            },
           },
         },
       },
@@ -223,6 +235,11 @@ export const getTransactionById = async (req, res, next) => {
         user_phone: users?.phone_number || null,
         order_number: orders?.order_number || null,
         order_total: orders?.total ? Number(orders.total) : null,
+        order_items: (orders?.order_items || []).map((item) => ({
+          ...item,
+          unit_price: Number(item.unit_price),
+          total: Number(item.total),
+        })),
       },
     });
   } catch (error) {
@@ -277,6 +294,144 @@ export const createTransaction = async (req, res, next) => {
       success: true,
       message: 'Transaction created successfully',
       data: toPayload(record),
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Record a customer refund against a completed order payment.
+ * The payment gateway integration can be added here later; this endpoint keeps
+ * the financial ledger and refund audit trail accurate immediately.
+ */
+export const refundTransaction = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const reason = String(req.body.reason || '').trim();
+    const selectedItems = Array.isArray(req.body.selectedItems) ? req.body.selectedItems : [];
+    if (!reason) {
+      return res.status(400).json({ success: false, message: 'Refund reason is required' });
+    }
+    if (!selectedItems.length) {
+      return res.status(400).json({ success: false, message: 'Select at least one returned product or service' });
+    }
+
+    const payment = await prisma.transactions.findUnique({
+      where: { id },
+      select: {
+        id: true, transaction_id: true, type: true, status: true, amount: true,
+        currency: true, payment_method: true, user_id: true, user_name: true,
+        user_email: true, order_id: true,
+      },
+    });
+
+    if (!payment || payment.type !== 'order_payment' || payment.status !== 'completed') {
+      return res.status(400).json({ success: false, message: 'Only completed order payments can be refunded' });
+    }
+    if (!payment.order_id) {
+      return res.status(400).json({ success: false, message: 'This payment is not linked to an order' });
+    }
+
+    const [order, priorRefundRecords] = await Promise.all([
+      prisma.orders.findUnique({
+        where: { id: payment.order_id },
+        select: { order_items: { select: { id: true, product_name: true, package_name: true, provider_name: true, quantity: true, unit_price: true } } },
+      }),
+      prisma.transactions.findMany({
+        where: { type: 'refund', status: 'completed', order_id: payment.order_id },
+        select: { metadata: true },
+      }),
+    ]);
+    if (!order?.order_items.length) {
+      return res.status(400).json({ success: false, message: 'No order products or services are available for refund' });
+    }
+
+    const refundedQuantities = new Map();
+    for (const record of priorRefundRecords) {
+      const items = record.metadata?.refunded_items;
+      if (Array.isArray(items)) {
+        for (const item of items) refundedQuantities.set(item.id, (refundedQuantities.get(item.id) || 0) + Number(item.quantity || 0));
+      }
+    }
+    const orderItems = new Map(order.order_items.map((item) => [item.id, item]));
+    const refundItems = [];
+    let amount = 0;
+    for (const selected of selectedItems) {
+      const item = orderItems.get(String(selected.id));
+      const quantity = Number(selected.quantity);
+      if (!item || !Number.isInteger(quantity) || quantity < 1) {
+        return res.status(400).json({ success: false, message: 'Invalid selected product or service' });
+      }
+      const available = item.quantity - (refundedQuantities.get(item.id) || 0);
+      if (quantity > available) {
+        return res.status(400).json({ success: false, message: `${item.product_name} has only ${available} refundable unit(s) remaining` });
+      }
+      const lineAmount = Number(item.unit_price) * quantity;
+      amount += lineAmount;
+      refundItems.push({
+        id: item.id,
+        name: item.package_name || item.product_name,
+        provider: item.provider_name || null,
+        quantity,
+        unit_price: Number(item.unit_price),
+        amount: lineAmount,
+      });
+    }
+
+    const priorRefunds = await prisma.transactions.aggregate({
+      where: { type: 'refund', status: 'completed', order_id: payment.order_id },
+      _sum: { amount: true },
+    });
+    const remaining = Number(payment.amount) - Number(priorRefunds._sum.amount || 0);
+    if (amount > remaining + 0.00001) {
+      return res.status(400).json({
+        success: false,
+        message: `Refund amount cannot exceed the remaining refundable amount ($${remaining.toFixed(2)})`,
+      });
+    }
+
+    const adminName = `${req.user.first_name || ''} ${req.user.last_name || ''}`.trim() || req.user.email || 'Admin';
+    const transactionId = await generateTransactionId();
+    const refund = await prisma.$transaction(async (tx) => {
+      const record = await tx.transactions.create({
+        data: {
+          transaction_id: transactionId,
+          type: 'refund',
+          status: 'completed',
+          amount,
+          currency: payment.currency || 'USD',
+          payment_method: payment.payment_method,
+          user_id: payment.user_id,
+          user_name: payment.user_name,
+          user_email: payment.user_email,
+          order_id: payment.order_id,
+          description: reason,
+          metadata: {
+            original_transaction_id: payment.transaction_id,
+            refunded_items: refundItems,
+            refund_reason: reason,
+            refunded_by_user_id: req.user.id,
+            refunded_by_name: adminName,
+          },
+          completed_at: new Date(),
+        },
+        select: transactionSelect,
+      });
+
+      if (amount >= remaining - 0.00001) {
+        await tx.orders.update({
+          where: { id: payment.order_id },
+          data: { payment_status: 'refunded', status: 'refunded', updated_at: new Date() },
+        });
+      }
+      return record;
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: 'Refund recorded successfully and deducted from revenue',
+      data: toPayload(refund),
     });
   } catch (error) {
     return next(error);

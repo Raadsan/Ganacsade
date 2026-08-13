@@ -105,4 +105,9 @@ export const transactionsApi = {
     const response = await axiosInstance.delete(`/admin/transactions/${id}`);
     return response.data;
   },
+
+  refundTransaction: async (id: string, data: { reason: string; selectedItems: Array<{ id: string; quantity: number }> }) => {
+    const response = await axiosInstance.post(`/admin/transactions/${id}/refund`, data);
+    return response.data;
+  },
 };

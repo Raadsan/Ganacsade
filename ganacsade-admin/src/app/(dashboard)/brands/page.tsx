@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { BACKEND_URL } from "@/lib/api/client"
+import { resolveImageUrl } from "@/lib/utils/image-url"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -180,7 +180,7 @@ export default function BrandsPage() {
       isActive: brand.is_active,
     })
     if (brand.logo_url) {
-      setPreviewUrl(`${BACKEND_URL}${brand.logo_url}`)
+      setPreviewUrl(resolveImageUrl(brand.logo_url) || "")
     }
     setIsEditDialogOpen(true)
   }

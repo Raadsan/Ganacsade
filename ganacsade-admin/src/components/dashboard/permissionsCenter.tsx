@@ -229,6 +229,10 @@ export function PermissionsCenter({ section }: { section: PermissionsSection }) 
   const [userSearch, setUserSearch] = useState("")
   const [userRoleFilter, setUserRoleFilter] = useState("all")
   const [userStatusFilter, setUserStatusFilter] = useState("all")
+  const [userPageSize, setUserPageSize] = useState("10")
+  const [userPage, setUserPage] = useState(1)
+  const [userTotal, setUserTotal] = useState(0)
+  const [userTotalPages, setUserTotalPages] = useState(1)
 
   const selectedRole = useMemo(
     () => roles.find((role) => role.id === selectedRoleId) || null,
@@ -325,6 +329,8 @@ export function PermissionsCenter({ section }: { section: PermissionsSection }) 
     roleName?: string
     excludeRole?: string
     excludeRoleNames?: string
+    page?: number
+    limit?: number | 'all'
   }) => {
     const response = await usersApi.getUsers({
       search: filters?.search || undefined,
@@ -334,9 +340,13 @@ export function PermissionsCenter({ section }: { section: PermissionsSection }) 
       roleName: filters?.roleName || undefined,
       excludeRole: filters?.excludeRole || undefined,
       excludeRoleNames: filters?.excludeRoleNames || undefined,
+      page: filters?.page || 1,
+      limit: filters?.limit || 10,
     })
     const usersData: User[] = response?.data || []
     setUsers(usersData)
+    setUserTotal(response?.pagination?.total || 0)
+    setUserTotalPages(Math.max(response?.pagination?.pages || 1, 1))
   }
 
   const fetchRolePermissions = async (roleId: number, menusData: Menu[]) => {
@@ -357,14 +367,14 @@ export function PermissionsCenter({ section }: { section: PermissionsSection }) 
 
   const loadUsersBySection = async () => {
     if (section === "customers") {
-      await fetchUsers({ roleName: "customer" })
+      await fetchUsers({ roleName: "customer", page: userPage, limit: userPageSize === "all" ? "all" : Number(userPageSize) })
       return
     }
     if (section === "users") {
-      await fetchUsers({ excludeRoleNames: "customer,delivery" })
+      await fetchUsers({ excludeRoleNames: "customer,delivery", page: userPage, limit: userPageSize === "all" ? "all" : Number(userPageSize) })
       return
     }
-    await fetchUsers({})
+    await fetchUsers({ page: userPage, limit: userPageSize === "all" ? "all" : Number(userPageSize) })
   }
 
   useEffect(() => {
@@ -393,7 +403,7 @@ export function PermissionsCenter({ section }: { section: PermissionsSection }) 
     }
     init()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [section])
+  }, [section, userPage, userPageSize])
 
   useEffect(() => {
     if (section !== "role-permissions") return
@@ -820,7 +830,10 @@ export function PermissionsCenter({ section }: { section: PermissionsSection }) 
         status: userStatusFilter === "all" ? undefined : userStatusFilter,
         ...(section === "customers" ? { roleName: "customer" } : {}),
         ...(section === "users" ? { excludeRoleNames: "customer,delivery" } : {}),
+        page: 1,
+        limit: userPageSize === "all" ? "all" : Number(userPageSize),
       })
+      setUserPage(1)
     } catch (error) {
       toast.error(getApiErrorMessage(error, "Failed to apply user filters"))
     } finally {
@@ -832,6 +845,7 @@ export function PermissionsCenter({ section }: { section: PermissionsSection }) 
     setUserSearch("")
     setUserRoleFilter("all")
     setUserStatusFilter("all")
+    setUserPage(1)
     try {
       setLoading(true)
       await loadUsersBySection()
@@ -1259,6 +1273,36 @@ export function PermissionsCenter({ section }: { section: PermissionsSection }) 
               <Button variant="outline" onClick={handleResetUserFilters}>
                 Reset
               </Button>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
+            <p className="text-muted-foreground">
+              Showing {users.length} of {userTotal} {section === "customers" ? "customers" : "users"}
+            </p>
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground">Per page</span>
+              <Select
+                value={userPageSize}
+                onValueChange={(value) => {
+                  setUserPageSize(value)
+                  setUserPage(1)
+                }}
+              >
+                <SelectTrigger className="w-[90px]"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                  <SelectItem value="all">All</SelectItem>
+                </SelectContent>
+              </Select>
+              {userPageSize !== "all" && (
+                <>
+                  <Button variant="outline" size="sm" disabled={userPage <= 1 || loading} onClick={() => setUserPage((page) => page - 1)}>Previous</Button>
+                  <span className="text-muted-foreground">Page {userPage} of {userTotalPages}</span>
+                  <Button variant="outline" size="sm" disabled={userPage >= userTotalPages || loading} onClick={() => setUserPage((page) => page + 1)}>Next</Button>
+                </>
+              )}
             </div>
           </div>
           <div className="rounded border">

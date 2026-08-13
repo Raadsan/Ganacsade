@@ -33,7 +33,7 @@ export interface UserFilters {
   is_verified?: string;
   search?: string;
   page?: number;
-  limit?: number;
+  limit?: number | 'all';
 }
 
 export interface CreateUserDto {

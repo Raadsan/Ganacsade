@@ -1,9 +1,7 @@
 import { parseImageList, resolveImageUrl } from "@/lib/utils/image-url"
+import { getApiUrl } from "@/lib/api/url"
 
 export { resolveImageUrl }
-
-const API_BASE =
-  (process.env.NEXT_PUBLIC_API_URL || "http://178.18.241.5:5002/api").replace(/\/+$/, "")
 
 export type StoreProduct = {
   id: string
@@ -71,7 +69,7 @@ type ApiResponse<T> = {
 
 async function storefrontFetch<T>(path: string): Promise<T | null> {
   try {
-    const response = await fetch(`${API_BASE}${path}`, {
+    const response = await fetch(`${getApiUrl()}${path}`, {
       next: { revalidate: 60 },
     })
     if (!response.ok) return null

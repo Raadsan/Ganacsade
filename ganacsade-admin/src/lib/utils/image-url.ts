@@ -1,7 +1,4 @@
-const getBackendBaseUrl = () =>
-  (process.env.NEXT_PUBLIC_API_URL || "http://178.18.241.5:5002/api")
-    .replace(/\/api\/?$/, "")
-    .replace(/\/+$/, "")
+import { getBackendUrl } from "@/lib/api/url"
 
 export function isValidImageUrl(url?: string | null): url is string {
   if (!url || typeof url !== "string") return false
@@ -28,7 +25,7 @@ export function resolveImageUrl(url?: string | null): string | null {
     if (!trimmed.includes("/") && !trimmed.includes(".")) {
       return null
     }
-    const base = getBackendBaseUrl()
+    const base = getBackendUrl()
     resolved = `${base}${trimmed.startsWith("/") ? trimmed : `/${trimmed}`}`
   }
 

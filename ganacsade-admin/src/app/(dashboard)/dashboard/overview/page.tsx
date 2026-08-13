@@ -7,7 +7,7 @@ import { DollarSign, ShoppingCart, Users, Package, TrendingUp, TrendingDown } fr
 import { formatCurrency, formatNumber } from "@/lib/utils"
 import { dashboardApi, OrdersByStatus } from "@/lib/api/dashboard"
 import { DashboardStats, RecentOrder, SalesData, TopProduct } from "@/types"
-import { BACKEND_URL } from "@/lib/api/client"
+import { resolveImageUrl } from "@/lib/utils/image-url"
 import {
   AreaChart,
   Area,
@@ -299,7 +299,7 @@ export default function OverviewPage() {
                     <div className="h-9 w-9 flex-shrink-0 overflow-hidden rounded-md bg-muted">
                       {p.image ? (
                         <img
-                          src={p.image.startsWith("http") ? p.image : `${BACKEND_URL}${p.image}`}
+                          src={resolveImageUrl(p.image) || ""}
                           alt={p.name}
                           className="h-full w-full object-cover"
                         />

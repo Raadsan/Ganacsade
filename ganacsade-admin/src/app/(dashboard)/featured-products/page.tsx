@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { BACKEND_URL } from "@/lib/api/client"
+import { resolveImageUrl } from "@/lib/utils/image-url"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -73,19 +73,13 @@ export default function FeaturedProductsPage() {
     let images: string[] = []
     
     if (apiProduct.primary_image) {
-      // If image starts with /uploads, prepend backend URL
-      const imageUrl = apiProduct.primary_image.startsWith('/uploads') 
-        ? `${BACKEND_URL}${apiProduct.primary_image}`
-        : apiProduct.primary_image
-      images = [imageUrl]
+      const imageUrl = resolveImageUrl(apiProduct.primary_image)
+      images = imageUrl ? [imageUrl] : []
     } else if (apiProduct.images && Array.isArray(apiProduct.images)) {
       // Fallback for images array if it exists
-      images = apiProduct.images.map((img: string) => {
-        if (img.startsWith('/uploads')) {
-          return `${BACKEND_URL}${img}`
-        }
-        return img
-      })
+      images = apiProduct.images
+        .map((img: string) => resolveImageUrl(img))
+        .filter((img: string | null): img is string => Boolean(img))
     }
 
     return {

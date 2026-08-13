@@ -1,30 +1,16 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 import { toast } from 'sonner';
-
-const PRODUCTION_API_URL = 'http://178.18.241.5:5002/api';
-const RAW_API_URL = process.env.NEXT_PUBLIC_API_URL || PRODUCTION_API_URL;
-const API_URL = RAW_API_URL.replace(/\/+$/, '');
-const LOCAL_API_URL = 'http://localhost:5002/api';
-
-const resolveApiUrl = () => {
-  if (typeof window !== 'undefined') {
-    const host = window.location.hostname;
-    if (host === 'localhost' || host === '127.0.0.1') {
-      return LOCAL_API_URL;
-    }
-  }
-  return API_URL;
-};
+import { getApiUrl, getBackendUrl } from './url';
 
 // Base URL without /api path - used for image URLs
-export const BACKEND_URL = API_URL.replace(/\/api$/, '');
+export const BACKEND_URL = getBackendUrl();
 
 class ApiClient {
   private client: AxiosInstance;
 
   constructor() {
     this.client = axios.create({
-      baseURL: resolveApiUrl(),
+      baseURL: getApiUrl(),
       timeout: 30000,
       withCredentials: true,
       headers: {

@@ -18,9 +18,11 @@ export const getUsers = async (req, res) => {
       limit = 50,
     } = req.query;
 
-    const pageNum = parseInt(page, 10);
-    const limitNum = parseInt(limit, 10);
-    const skip = (pageNum - 1) * limitNum;
+    const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+    // Admin lists may explicitly request every matching customer.
+    const showAll = String(limit).toLowerCase() === 'all';
+    const limitNum = showAll ? null : Math.max(parseInt(limit, 10) || 50, 1);
+    const skip = showAll ? undefined : (pageNum - 1) * limitNum;
 
     const andConditions = [];
 
@@ -82,7 +84,7 @@ export const getUsers = async (req, res) => {
         },
         orderBy: { created_at: 'desc' },
         skip,
-        take: limitNum,
+        ...(limitNum ? { take: limitNum } : {}),
       }),
       prisma.users.count({ where }),
     ]);
@@ -92,9 +94,9 @@ export const getUsers = async (req, res) => {
       data: result.map((u) => ({ ...u, is_verified: u.is_email_verified, is_email_verified: undefined })),
       pagination: {
         page: pageNum,
-        limit: limitNum,
+        limit: showAll ? 'all' : limitNum,
         total,
-        pages: Math.ceil(total / limitNum),
+        pages: showAll ? 1 : Math.ceil(total / limitNum),
       },
     });
   } catch (error) {

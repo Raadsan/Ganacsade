@@ -38,8 +38,17 @@ export const getCustomerRole = () => findRoleByName('customer');
 
 export const buildRoleIdIncludeFilter = async (roleName) => {
   const role = await findRoleByName(roleName);
-  if (!role) return null;
-  return { role_id: role.id };
+  const normalizedRoleName = String(roleName || '').trim();
+  if (!normalizedRoleName) return null;
+
+  // Older customer accounts only have the legacy `users.role` value, while
+  // newer accounts also have `role_id`. Include both during the transition.
+  return {
+    OR: [
+      ...(role ? [{ role_id: role.id }] : []),
+      { role: normalizedRoleName },
+    ],
+  };
 };
 
 export const buildRoleIdsExcludeFilter = async (excludeRoleNames) => {

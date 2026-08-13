@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import {
   Select,
@@ -30,6 +31,7 @@ import {
 import { Search, MoreVertical, Eye, Download, DollarSign } from "lucide-react"
 import { Transaction } from "@/types"
 import { TransactionDetailsDialog } from "@/components/dashboard/transaction-details-dialog"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { exportTransactionsToCSV } from "@/lib/export-transactions"
 import { transactionsApi } from "@/lib/api/transactions"
 import { toast } from "sonner"
@@ -44,6 +46,13 @@ export default function TransactionsPage() {
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
   const [isDetailsOpen, setIsDetailsOpen] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [refundTransaction, setRefundTransaction] = useState<Transaction | null>(null)
+  const [refundReason, setRefundReason] = useState("")
+  const [returnedItems, setReturnedItems] = useState("")
+  const [refundItems, setRefundItems] = useState<Array<{ id: string; name: string; provider?: string | null; quantity: number; unit_price: number }>>([])
+  const [selectedRefundItems, setSelectedRefundItems] = useState<Record<string, number>>({})
+  const [loadingRefundItems, setLoadingRefundItems] = useState(false)
+  const [refunding, setRefunding] = useState(false)
   const [stats, setStats] = useState({
     totalRevenue: 0,
     totalRefunds: 0,
@@ -77,6 +86,7 @@ export default function TransactionsPage() {
           orderNumber: txn.order_number,
           description: txn.description,
           failureReason: txn.failure_reason,
+          metadata: txn.metadata,
           createdAt: new Date(txn.created_at),
           completedAt: txn.completed_at ? new Date(txn.completed_at) : undefined,
           failedAt: txn.failed_at ? new Date(txn.failed_at) : undefined,
@@ -122,6 +132,58 @@ export default function TransactionsPage() {
   const handleViewDetails = (txn: Transaction) => {
     setSelectedTransaction(txn)
     setIsDetailsOpen(true)
+  }
+
+  const openRefund = async (txn: Transaction) => {
+    setRefundTransaction(txn)
+    setRefundReason("")
+    setRefundItems([])
+    setSelectedRefundItems({})
+    try {
+      setLoadingRefundItems(true)
+      const response: any = await transactionsApi.getTransaction(txn.id)
+      setRefundItems((response?.data?.order_items || []).map((item: any) => ({
+        id: item.id, name: item.package_name || item.product_name, provider: item.provider_name,
+        quantity: Number(item.quantity), unit_price: Number(item.unit_price),
+      })))
+    } catch {
+      setRefundTransaction(null)
+      toast.error("Unable to load this order's products and services")
+    } finally {
+      setLoadingRefundItems(false)
+    }
+  }
+
+  const refundTotal = refundItems.reduce((sum, item) => sum + item.unit_price * (selectedRefundItems[item.id] || 0), 0)
+  const setRefundItemQuantity = (id: string, quantity: number, maximum: number) =>
+    setSelectedRefundItems((current) => ({ ...current, [id]: Math.max(0, Math.min(maximum, quantity || 0)) }))
+
+  const handleRefund = async () => {
+    if (!refundTransaction) return
+    if (!refundReason.trim()) {
+      toast.error("Refund reason is required")
+      return
+    }
+    const selectedItems = Object.entries(selectedRefundItems).filter(([, quantity]) => quantity > 0).map(([id, quantity]) => ({ id, quantity }))
+    if (!selectedItems.length) {
+      toast.error("Select at least one product or service")
+      return
+    }
+    try {
+      setRefunding(true)
+      const response: any = await transactionsApi.refundTransaction(refundTransaction.id, {
+        reason: refundReason.trim(),
+        selectedItems,
+      })
+      if (!response.success) throw new Error(response.message || "Refund failed")
+      toast.success("Refund recorded and deducted from revenue")
+      setRefundTransaction(null)
+      await Promise.all([fetchTransactions(), fetchStats()])
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || error?.message || "Refund failed")
+    } finally {
+      setRefunding(false)
+    }
   }
 
   const handleExportTransactions = () => {
@@ -368,6 +430,12 @@ export default function TransactionsPage() {
                         <Eye className="mr-2 h-4 w-4" />
                         View Details
                       </DropdownMenuItem>
+                      {txn.type === "order_payment" && txn.status === "completed" && txn.orderId && (
+                        <DropdownMenuItem onClick={() => openRefund(txn)} className="text-destructive focus:text-destructive">
+                          <DollarSign className="mr-2 h-4 w-4" />
+                          Refund customer
+                        </DropdownMenuItem>
+                      )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
@@ -384,6 +452,46 @@ export default function TransactionsPage() {
         open={isDetailsOpen}
         onOpenChange={setIsDetailsOpen}
       />
+
+      <Dialog open={Boolean(refundTransaction)} onOpenChange={(open) => !open && setRefundTransaction(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Refund customer</DialogTitle>
+            <DialogDescription>
+              {refundTransaction ? `Refund for ${refundTransaction.transactionId}. This amount is deducted from revenue.` : ""}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Select returned products or services</Label>
+              {loadingRefundItems ? <p className="text-sm text-muted-foreground">Loading order items...</p> : refundItems.length === 0 ? <p className="text-sm text-destructive">No refundable products or services were found on this order.</p> : (
+                <div className="space-y-2 rounded-md border p-3">
+                  {refundItems.map((item) => {
+                    const quantity = selectedRefundItems[item.id] || 0
+                    return <label key={item.id} className="flex items-center justify-between gap-3 rounded p-2 hover:bg-muted/60">
+                      <div className="flex items-center gap-3"><input type="checkbox" checked={quantity > 0} onChange={(e) => setRefundItemQuantity(item.id, e.target.checked ? 1 : 0, item.quantity)} /><div><p className="font-medium text-sm">{item.name}</p>{item.provider && <p className="text-xs text-muted-foreground">{item.provider}</p>}<p className="text-xs text-muted-foreground">${item.unit_price.toFixed(2)} each, ordered: {item.quantity}</p></div></div>
+                      {quantity > 0 && <Input aria-label={`Refund quantity for ${item.name}`} className="w-16" type="number" min="1" max={item.quantity} value={quantity} onChange={(e) => setRefundItemQuantity(item.id, Number(e.target.value), item.quantity)} />}
+                    </label>
+                  })}
+                </div>
+              )}
+              <p className="text-right font-semibold">Refund total: ${refundTotal.toFixed(2)}</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="returned-items">Returned products are selected above</Label>
+              <Input id="returned-items" placeholder="Example: Card Reader — 1 item" value={returnedItems} onChange={(e) => setReturnedItems(e.target.value)} required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="refund-reason">Refund reason</Label>
+              <Textarea id="refund-reason" placeholder="Reason is required and saved with this refund" value={refundReason} onChange={(e) => setRefundReason(e.target.value)} required />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRefundTransaction(null)} disabled={refunding}>Cancel</Button>
+            <Button variant="destructive" onClick={handleRefund} disabled={refunding || loadingRefundItems || refundTotal <= 0}>{refunding ? "Processing..." : `Confirm refund ($${refundTotal.toFixed(2)})`}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

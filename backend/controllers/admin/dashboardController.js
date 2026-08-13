@@ -2,30 +2,36 @@ import prisma from '../../lib/config/prisma.js';
 
 export const getDashboardAnalytics = async (_req, res, next) => {
   try {
-    const [totalUsers, totalProducts, ordersStats, lastMonthUsers, lastMonthProducts, lastMonthOrders] = await Promise.all([
+    const [totalUsers, totalProducts, paymentStats, refundStats, lastMonthUsers, lastMonthProducts, lastMonthPayments, lastMonthRefunds] = await Promise.all([
       prisma.users.count({ where: { role: 'customer', deleted_at: null } }),
       prisma.products.count({ where: { deleted_at: null } }),
-      prisma.orders.aggregate({
-        where: { OR: [{ order_type: null }, { order_type: { not: 'data_package' } }], payment_status: 'completed' },
+      prisma.transactions.aggregate({
+        where: { type: 'order_payment', status: 'completed' },
         _count: { id: true },
-        _sum: { total: true },
+        _sum: { amount: true },
+      }),
+      prisma.transactions.aggregate({
+        where: { type: 'refund', status: 'completed' },
+        _sum: { amount: true },
       }),
       prisma.users.count({ where: { role: 'customer', deleted_at: null, created_at: { lt: new Date(new Date().setDate(1)) } } }),
       prisma.products.count({ where: { deleted_at: null, created_at: { lt: new Date(new Date().setDate(1)) } } }),
-      prisma.orders.aggregate({
-        where: {
-          OR: [{ order_type: null }, { order_type: { not: 'data_package' } }],
-          created_at: { lt: new Date(new Date().setDate(1)) },
-        },
+      prisma.transactions.aggregate({
+        where: { type: 'order_payment', status: 'completed', created_at: { lt: new Date(new Date().setDate(1)) } },
         _count: { id: true },
-        _sum: { total: true },
+        _sum: { amount: true },
+      }),
+      prisma.transactions.aggregate({
+        where: { type: 'refund', status: 'completed', created_at: { lt: new Date(new Date().setDate(1)) } },
+        _sum: { amount: true },
       }),
     ]);
 
-    const totalRevenue = Number(ordersStats._sum.total || 0);
-    const totalOrders = ordersStats._count.id || 0;
-    const lastMonthRevenue = Number(lastMonthOrders._sum.total || 0);
-    const lastMonthOrderCount = lastMonthOrders._count.id || 0;
+    // One financial source: paid order transactions minus completed refunds.
+    const totalRevenue = Number(paymentStats._sum.amount || 0) - Number(refundStats._sum.amount || 0);
+    const totalOrders = paymentStats._count.id || 0;
+    const lastMonthRevenue = Number(lastMonthPayments._sum.amount || 0) - Number(lastMonthRefunds._sum.amount || 0);
+    const lastMonthOrderCount = lastMonthPayments._count.id || 0;
 
     const calcChange = (curr, prev) => {
       if (prev === 0) return curr > 0 ? 100 : 0;
