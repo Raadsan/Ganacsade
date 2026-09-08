@@ -313,7 +313,12 @@ export default function OverviewPage() {
                       <p className="truncate text-sm font-medium">{p.name}</p>
                       <p className="text-xs text-muted-foreground">{p.totalSold} sold</p>
                     </div>
-                    <span className="text-right text-sm font-semibold">{formatCurrency(p.revenue)}</span>
+                    <div className="text-right flex-shrink-0">
+                      <p className="text-sm font-semibold">{formatCurrency(p.price ?? p.revenue)}</p>
+                      {p.totalSold > 0 ? (
+                        <p className="text-[10px] text-muted-foreground">{formatCurrency(p.revenue)}</p>
+                      ) : null}
+                    </div>
                   </div>
                 ))}
               </div>

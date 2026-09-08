@@ -28,25 +28,20 @@ export default function FeaturedProductsPage() {
   const fetchProducts = async () => {
     try {
       setLoading(true)
-      const response = await productsApi.getProducts()
+      const response = await productsApi.getProducts({ limit: 100 })
       if (response.success && response.data) {
-        // Separate featured and non-featured products
-        const featured = response.data.filter((p: any) => p.is_featured === true)
-        const available = response.data.filter((p: any) => p.is_featured !== true)
-        
-        // Map to Product type
-        let featuredMapped = featured.map(mapApiProductToProduct)
+        const allMapped = response.data.map(mapApiProductToProduct)
+        const featured = allMapped.filter((p: Product) => p.isFeatured === true)
         
         // Apply saved order from localStorage
         const savedOrder = localStorage.getItem('featuredProductsOrder')
+        let featuredMapped = [...featured]
         if (savedOrder) {
           try {
             const orderIds = JSON.parse(savedOrder)
-            // Sort featured products according to saved order
             featuredMapped = featuredMapped.sort((a, b) => {
               const indexA = orderIds.indexOf(a.id)
               const indexB = orderIds.indexOf(b.id)
-              // If not in saved order, put at end
               if (indexA === -1) return 1
               if (indexB === -1) return -1
               return indexA - indexB
@@ -57,7 +52,7 @@ export default function FeaturedProductsPage() {
         }
         
         setFeaturedProducts(featuredMapped)
-        setAvailableProducts(available.map(mapApiProductToProduct))
+        setAvailableProducts(allMapped)
       }
     } catch (error) {
       console.error('Error fetching products:', error)
@@ -102,7 +97,7 @@ export default function FeaturedProductsPage() {
       tags: apiProduct.tags || [],
       variants: [],
       status: apiProduct.status || "active",
-      isFeatured: apiProduct.is_featured || false,
+      isFeatured: apiProduct.is_featured === true,
       isHalal: apiProduct.is_halal || false,
       rating: apiProduct.rating || 0,
       reviewCount: apiProduct.review_count || 0,
@@ -117,20 +112,21 @@ export default function FeaturedProductsPage() {
 
   const handleAddProduct = async (product: Product) => {
     try {
-      console.log('Adding product to featured:', product.id, product.name)
-      // Update product to set is_featured = true
-      const response = await productsApi.updateProduct(product.id, { id: product.id, isFeatured: true })
-      console.log('Update response:', response)
+      const nextFeaturedState = !product.isFeatured
+      const response = await productsApi.updateProduct(product.id, { id: product.id, isFeatured: nextFeaturedState })
       if (response.success) {
-        toast.success(`${product.name} added to featured products`)
-        await fetchProducts() // Refresh the list
-        setIsAddDialogOpen(false) // Close the dialog
+        toast.success(
+          nextFeaturedState
+            ? `${product.name} added to featured products`
+            : `${product.name} removed from featured products`
+        )
+        await fetchProducts()
       } else {
-        toast.error('Failed to add product to featured')
+        toast.error('Failed to update product featured status')
       }
     } catch (error: any) {
-      console.error('Error adding product to featured:', error)
-      const errorMessage = error?.response?.data?.message || error?.message || 'Failed to add product to featured'
+      console.error('Error updating product featured status:', error)
+      const errorMessage = error?.response?.data?.message || error?.message || 'Failed to update featured status'
       toast.error(errorMessage)
     }
   }

@@ -48,6 +48,30 @@ interface Brand {
   created_at: string
 }
 
+function BrandLogoAvatar({ brand }: { brand: Brand }) {
+  const [imgError, setImgError] = useState(false)
+  const resolvedUrl = brand.logo_url ? resolveImageUrl(brand.logo_url) : null
+
+  if (resolvedUrl && !imgError) {
+    return (
+      <div className="flex h-10 w-10 items-center justify-center rounded-lg border bg-muted overflow-hidden flex-shrink-0">
+        <img
+          src={resolvedUrl}
+          alt={brand.name}
+          className="h-full w-full object-contain p-0.5"
+          onError={() => setImgError(true)}
+        />
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex h-10 w-10 items-center justify-center rounded-lg border bg-primary/10 text-primary font-bold text-sm flex-shrink-0">
+      {brand.name.substring(0, 2).toUpperCase()}
+    </div>
+  )
+}
+
 export default function BrandsPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [brands, setBrands] = useState<Brand[]>([])
@@ -200,6 +224,24 @@ export default function BrandsPage() {
     }
   }
 
+  const handleToggleStatus = async (brand: Brand) => {
+    const newStatus = !brand.is_active
+    setBrands((prev) =>
+      prev.map((b) => (b.id === brand.id ? { ...b, is_active: newStatus } : b))
+    )
+    try {
+      const response = await brandsApi.updateBrand(brand.id, { isActive: newStatus })
+      if (response.success) {
+        toast.success(`Brand "${brand.name}" set to ${newStatus ? "Active" : "Inactive"}`)
+      } else {
+        fetchBrands()
+      }
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Failed to update brand status")
+      fetchBrands()
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -267,11 +309,7 @@ export default function BrandsPage() {
                 <TableRow key={brand.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg border bg-muted">
-                        <span className="text-sm font-semibold">
-                          {brand.name.substring(0, 2).toUpperCase()}
-                        </span>
-                      </div>
+                      <BrandLogoAvatar brand={brand} />
                       <span className="font-medium">{brand.name}</span>
                     </div>
                   </TableCell>
@@ -282,11 +320,18 @@ export default function BrandsPage() {
                     <Badge variant="secondary">{brand.product_count} products</Badge>
                   </TableCell>
                   <TableCell>
-                    {brand.is_active ? (
-                      <Badge variant="success">Active</Badge>
-                    ) : (
-                      <Badge variant="secondary">Inactive</Badge>
-                    )}
+                    <Button
+                      size="sm"
+                      variant={brand.is_active ? "default" : "outline"}
+                      className={`h-7 px-3 text-xs font-semibold rounded-full transition-all ${
+                        brand.is_active
+                          ? "bg-green-600 hover:bg-green-700 text-white shadow-xs"
+                          : "bg-muted text-muted-foreground hover:bg-muted/80 border-dashed"
+                      }`}
+                      onClick={() => handleToggleStatus(brand)}
+                    >
+                      {brand.is_active ? "Active" : "Inactive"}
+                    </Button>
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {formatDate(new Date(brand.created_at))}

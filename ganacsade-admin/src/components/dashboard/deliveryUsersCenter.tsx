@@ -38,7 +38,7 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { toast } from "sonner"
 import { Eye, Loader2, Pencil, Plus, Search, Trash2 } from "lucide-react"
-import { formatDate } from "@/lib/utils"
+import { cn, formatDate } from "@/lib/utils"
 
 const emptyForm: DeliveryUserFormState = {
   name: "",
@@ -227,14 +227,16 @@ export function DeliveryUsersCenter() {
     }
   }
 
-  const handleDeactivate = async (id: string) => {
-    if (!confirm("Deactivate this delivery user?")) return
+  const handleToggleStatus = async (record: DeliveryPerson) => {
+    const nextStatus = record.is_active ? "inactive" : "active"
     try {
-      await deliveryPersonsApi.remove(id)
-      toast.success("Delivery user deactivated")
+      await deliveryPersonsApi.update(record.id, {
+        status: nextStatus,
+      })
+      toast.success(`Delivery user status changed to ${nextStatus}`)
       await loadRecords({ search, status: statusFilter, availability: availabilityFilter })
     } catch (error) {
-      toast.error(getApiErrorMessage(error, "Failed to deactivate"))
+      toast.error(getApiErrorMessage(error, "Failed to update status"))
     }
   }
 
@@ -357,10 +359,26 @@ export function DeliveryUsersCenter() {
                   <TableCell className="text-sm">{record.location || "—"}</TableCell>
                   <TableCell className="text-sm">{getCarName(record)}</TableCell>
                   <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      <Badge variant={record.is_active ? "default" : "secondary"}>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => handleToggleStatus(record)}
+                        title="Click to toggle active/inactive status"
+                        className={cn(
+                          "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium cursor-pointer transition-all hover:scale-105 active:scale-95 shadow-sm border",
+                          record.is_active
+                            ? "bg-emerald-500/15 text-emerald-700 hover:bg-emerald-500/25 dark:text-emerald-400 border-emerald-500/30"
+                            : "bg-rose-500/15 text-rose-700 hover:bg-rose-500/25 dark:text-rose-400 border-rose-500/30"
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "h-1.5 w-1.5 rounded-full",
+                            record.is_active ? "bg-emerald-500" : "bg-rose-500"
+                          )}
+                        />
                         {record.is_active ? "active" : "inactive"}
-                      </Badge>
+                      </button>
                       <Badge variant={record.is_available ? "default" : "outline"}>
                         {record.is_available ? "available" : "unavailable"}
                       </Badge>
@@ -383,15 +401,6 @@ export function DeliveryUsersCenter() {
                         onClick={() => openEditForm(record)}
                       >
                         <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-destructive hover:text-destructive"
-                        title="Deactivate"
-                        onClick={() => handleDeactivate(record.id)}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>
                   </TableCell>

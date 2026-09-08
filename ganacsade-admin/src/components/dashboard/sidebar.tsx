@@ -24,6 +24,9 @@ import {
   Wifi,
   UserCog,
   ShieldCheck,
+  BarChart3,
+  FileText,
+  Truck,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
@@ -44,6 +47,9 @@ const iconMap = {
   Wifi,
   UserCog,
   ShieldCheck,
+  BarChart3,
+  FileText,
+  Truck,
 } as const
 
 export function Sidebar() {

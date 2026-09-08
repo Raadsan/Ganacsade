@@ -281,22 +281,30 @@ export default function ProductsPage() {
   }
 
   const uploadProductImages = async (productId: string, images: string[]) => {
-    // Convert base64 images to File objects
+    // Only upload newly added images (base64 data urls or blobs)
+    const newImages = images.filter(
+      (img) => typeof img === "string" && (img.startsWith("data:") || img.startsWith("blob:"))
+    )
+    if (newImages.length === 0) return
+
     const formData = new FormData()
-    
-    for (let i = 0; i < images.length; i++) {
-      const base64 = images[i]
-      // Convert base64 to blob
-      const response = await fetch(base64)
-      const blob = await response.blob()
-      const file = new File([blob], `image-${i}.jpg`, { type: 'image/jpeg' })
-      formData.append('images', file)
+    for (let i = 0; i < newImages.length; i++) {
+      try {
+        const base64 = newImages[i]
+        const response = await fetch(base64)
+        const blob = await response.blob()
+        const file = new File([blob], `image-${Date.now()}-${i}.jpg`, { type: blob.type || "image/jpeg" })
+        formData.append("images", file)
+      } catch (e) {
+        console.warn("Failed to parse image for upload:", e)
+      }
     }
-    
-    // Upload to server
-    await axiosInstance.post(`/admin/products/${productId}/images`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    })
+
+    if (formData.has("images")) {
+      await axiosInstance.post(`/admin/products/${productId}/images`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      })
+    }
   }
 
   const handleDeleteProduct = async (id: string) => {
@@ -315,16 +323,19 @@ export default function ProductsPage() {
 
   const handleSaveProduct = async (productData: CreateProductDto) => {
     try {
+      const unifiedName = productData.name || ''
+      const unifiedDesc = productData.description || ''
+
       if (selectedProduct) {
         // Update existing product
         const updateData = {
           id: selectedProduct.id,
-          nameEn: productData.name || '',
-          nameSo: productData.nameSo || '',
-          nameAr: productData.nameAr || '',
-          descriptionEn: productData.description || '',
-          descriptionSo: productData.descriptionSo || '',
-          descriptionAr: productData.descriptionAr || '',
+          nameEn: unifiedName,
+          nameSo: unifiedName,
+          nameAr: unifiedName,
+          descriptionEn: unifiedDesc,
+          descriptionSo: unifiedDesc,
+          descriptionAr: unifiedDesc,
           categoryId: productData.categoryId,
           subcategoryId: productData.subcategoryId || null,
           sku: productData.sku,
@@ -339,12 +350,15 @@ export default function ProductsPage() {
         const response = await productsApi.updateProduct(selectedProduct.id, updateData as any)
         
         if (response.success) {
-          // Upload new images if any
-          if (productData.images && productData.images.length > 0) {
+          const newImages = (productData.images || []).filter(
+            (img) => typeof img === "string" && (img.startsWith("data:") || img.startsWith("blob:"))
+          )
+          if (newImages.length > 0) {
             try {
-              await uploadProductImages(selectedProduct.id, productData.images)
+              await uploadProductImages(selectedProduct.id, newImages)
               toast.success("Product and images updated successfully")
-            } catch {
+            } catch (err) {
+              console.error("Image upload error:", err)
               toast.warning("Product updated but some images failed to upload")
             }
           } else {
@@ -355,26 +369,25 @@ export default function ProductsPage() {
           setIsFormOpen(false)
         }
       } else {
-        // Add new product - backend expects specific field names
-        // Validate that we have a categoryId
+        // Add new product
         if (!productData.categoryId) {
           toast.error('Please select a category')
           return
         }
         
         const createData = {
-          nameEn: productData.name,
-          nameAr: productData.nameAr || productData.name,
-          nameSo: productData.nameSo || productData.name,
-          descriptionEn: productData.description || '',
-          descriptionAr: productData.descriptionAr || productData.description || '',
-          descriptionSo: productData.descriptionSo || productData.description || '',
-          categoryId: productData.categoryId, // Required field
+          nameEn: unifiedName,
+          nameAr: unifiedName,
+          nameSo: unifiedName,
+          descriptionEn: unifiedDesc,
+          descriptionAr: unifiedDesc,
+          descriptionSo: unifiedDesc,
+          categoryId: productData.categoryId,
           subcategoryId: productData.subcategoryId || null,
-          brandId: null, // Brand ID - will be null for now
+          brandId: null,
           sku: productData.sku,
           price: productData.price,
-          compareAtPrice: productData.discountPrice || null, // Maps to discount_price in DB
+          compareAtPrice: productData.discountPrice || null,
           stockQuantity: productData.stockQuantity,
           lowStockThreshold: 10,
           status: productData.status || 'active',
@@ -385,13 +398,16 @@ export default function ProductsPage() {
         
         if (response.success && response.data) {
           const productId = response.data.id
+          const newImages = (productData.images || []).filter(
+            (img) => typeof img === "string" && (img.startsWith("data:") || img.startsWith("blob:"))
+          )
           
-          // Upload images if any
-          if (productData.images && productData.images.length > 0) {
+          if (newImages.length > 0) {
             try {
-              await uploadProductImages(productId, productData.images)
+              await uploadProductImages(productId, newImages)
               toast.success("Product and images created successfully")
-            } catch {
+            } catch (err) {
+              console.error("Image upload error:", err)
               toast.warning("Product created but some images failed to upload")
             }
           } else {
@@ -429,20 +445,22 @@ export default function ProductsPage() {
   const hasActiveFilters =
     statusFilter !== "all" || categoryFilter !== "all" || subcategoryFilter !== "all" || stockFilter !== "all" || searchQuery
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string, stock?: number) => {
+    if (stock === 0 || status === "inactive") return <Badge variant="secondary">Inactive</Badge>
     if (status === "active") return <Badge variant="success">Active</Badge>
-    if (status === "inactive") return <Badge variant="secondary">Inactive</Badge>
     if (status === "draft") return <Badge variant="warning">Draft</Badge>
     return <Badge variant="secondary">Archived</Badge>
   }
 
   const getStockBadge = (stock: number, inStock: boolean) => {
     if (!inStock || stock === 0) {
-      return <Badge variant="destructive">Out of Stock</Badge>
-    } else if (stock < 20) {
-      return <Badge variant="warning">Low Stock</Badge>
+      return <Badge variant="destructive" className="bg-red-600 text-white hover:bg-red-700">Out of Stock</Badge>
+    } else if (stock <= 5) {
+      return <Badge variant="destructive" className="bg-red-600 text-white hover:bg-red-700 font-semibold">Low Stock</Badge>
+    } else if (stock <= 10) {
+      return <Badge className="bg-amber-500 text-white hover:bg-amber-600 font-semibold border-none">Low Stock</Badge>
     }
-    return <Badge variant="success">In Stock</Badge>
+    return <Badge variant="success" className="bg-green-600 text-white hover:bg-green-700">In Stock</Badge>
   }
 
   return (
@@ -667,7 +685,7 @@ export default function ProductsPage() {
                     className="cursor-pointer rounded-md transition-opacity hover:opacity-80"
                     title="Click to toggle Active / Inactive"
                   >
-                    {getStatusBadge(product.status)}
+                    {getStatusBadge(product.status, product.stock_quantity)}
                   </button>
                 </TableCell>
                 <TableCell className="text-muted-foreground">

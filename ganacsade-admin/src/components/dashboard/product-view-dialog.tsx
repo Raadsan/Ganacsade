@@ -142,23 +142,11 @@ export function ProductViewDialog({
             
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-muted-foreground">Product Name (English)</p>
-                <p className="font-medium">{(product as any).name_en || product.name}</p>
+                <p className="text-sm text-muted-foreground">Product Name</p>
+                <p className="font-medium">
+                  {(product as any).name_en || product.name || (product as any).name_so || (product as any).name_ar}
+                </p>
               </div>
-              
-              {((product as any).name_ar || product.nameAr) && (
-                <div>
-                  <p className="text-sm text-muted-foreground">Product Name (Arabic)</p>
-                  <p className="font-medium">{(product as any).name_ar || product.nameAr}</p>
-                </div>
-              )}
-              
-              {((product as any).name_so || product.nameSo) && (
-                <div>
-                  <p className="text-sm text-muted-foreground">Product Name (Somali)</p>
-                  <p className="font-medium">{(product as any).name_so || product.nameSo}</p>
-                </div>
-              )}
 
               <div>
                 <p className="text-sm text-muted-foreground">SKU</p>
@@ -189,24 +177,12 @@ export function ProductViewDialog({
               )}
             </div>
 
-            {((product as any).description_en || product.description) && (
+            {((product as any).description_en || product.description || (product as any).description_so || (product as any).description_ar) && (
               <div>
-                <p className="text-sm text-muted-foreground">Description (English)</p>
-                <p className="mt-1 text-sm">{(product as any).description_en || product.description}</p>
-              </div>
-            )}
-
-            {((product as any).description_ar || product.descriptionAr) && (
-              <div>
-                <p className="text-sm text-muted-foreground">Description (Arabic)</p>
-                <p className="mt-1 text-sm" dir="rtl">{(product as any).description_ar || product.descriptionAr}</p>
-              </div>
-            )}
-
-            {((product as any).description_so || product.descriptionSo) && (
-              <div>
-                <p className="text-sm text-muted-foreground">Description (Somali)</p>
-                <p className="mt-1 text-sm">{(product as any).description_so || product.descriptionSo}</p>
+                <p className="text-sm text-muted-foreground">Description</p>
+                <p className="mt-1 text-sm whitespace-pre-line">
+                  {(product as any).description_en || product.description || (product as any).description_so || (product as any).description_ar}
+                </p>
               </div>
             )}
           </div>

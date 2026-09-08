@@ -74,6 +74,46 @@ export default function OrdersPage() {
   const [advanceSaving, setAdvanceSaving] = useState(false)
   const highlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  const [statusCounts, setStatusCounts] = useState({
+    all: 0,
+    pending: 0,
+    processing: 0,
+    delivered: 0,
+  })
+
+  const fetchStatusCounts = useCallback(async () => {
+    try {
+      const response = await (assignedOnlyView || deliveryHistoryView
+        ? ordersApi.getMyAssignedOrders({
+            search: searchQuery || undefined,
+            dateFrom: dateFrom || undefined,
+            dateTo: dateTo || undefined,
+            assignmentFilter,
+          })
+        : ordersApi.getOrders({
+            search: searchQuery || undefined,
+            dateFrom: dateFrom || undefined,
+            dateTo: dateTo || undefined,
+            assignmentFilter,
+          }))
+      if (response.success && response.data) {
+        const list = response.data
+        const all = list.length
+        const pending = list.filter((o: any) => o.status === "pending").length
+        const processing = list.filter((o: any) =>
+          o.status === "processing" ||
+          o.status === "confirmed" ||
+          o.status === "out_for_delivery" ||
+          o.status === "ready_for_pickup"
+        ).length
+        const delivered = list.filter((o: any) => o.status === "delivered").length
+        setStatusCounts({ all, pending, processing, delivered })
+      }
+    } catch {
+      // ignore
+    }
+  }, [assignedOnlyView, deliveryHistoryView, searchQuery, dateFrom, dateTo, assignmentFilter])
+
   const scrollToOrderRow = useCallback((orderId: string) => {
     requestAnimationFrame(() => {
       const row = document.getElementById(`order-row-${orderId}`)
@@ -259,7 +299,8 @@ export default function OrdersPage() {
 
   useEffect(() => {
     fetchOrders()
-  }, [fetchOrders])
+    fetchStatusCounts()
+  }, [fetchOrders, fetchStatusCounts])
 
   // API already handles filtering, so just use orders directly
   const filteredOrders = orders
@@ -598,6 +639,93 @@ export default function OrdersPage() {
         </div>
       </div>
 
+      {/* Status Tabs */}
+      <div className="flex flex-wrap items-center gap-2 p-1.5 bg-muted/60 rounded-xl border">
+        <button
+          type="button"
+          onClick={() => setStatusFilter("all")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+            statusFilter === "all"
+              ? "bg-background text-foreground shadow-sm ring-1 ring-border"
+              : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+          }`}
+        >
+          <span>All Orders</span>
+          <Badge
+            variant={statusFilter === "all" ? "default" : "secondary"}
+            className="ml-1 text-xs px-2 py-0.5"
+          >
+            {statusCounts.all}
+          </Badge>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setStatusFilter("pending")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+            statusFilter === "pending"
+              ? "bg-amber-500 text-white shadow-sm"
+              : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+          }`}
+        >
+          <Clock className="h-4 w-4" />
+          <span>Pending</span>
+          <Badge
+            className={`ml-1 text-xs px-2 py-0.5 ${
+              statusFilter === "pending"
+                ? "bg-white/20 text-white"
+                : "bg-amber-100 text-amber-900 dark:bg-amber-950/80 dark:text-amber-300"
+            }`}
+          >
+            {statusCounts.pending}
+          </Badge>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setStatusFilter("processing")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+            statusFilter === "processing"
+              ? "bg-blue-600 text-white shadow-sm"
+              : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+          }`}
+        >
+          <Package className="h-4 w-4" />
+          <span>Processing</span>
+          <Badge
+            className={`ml-1 text-xs px-2 py-0.5 ${
+              statusFilter === "processing"
+                ? "bg-white/20 text-white"
+                : "bg-blue-100 text-blue-900 dark:bg-blue-950/80 dark:text-blue-300"
+            }`}
+          >
+            {statusCounts.processing}
+          </Badge>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setStatusFilter("delivered")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+            statusFilter === "delivered"
+              ? "bg-green-600 text-white shadow-sm"
+              : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+          }`}
+        >
+          <CheckCircle className="h-4 w-4" />
+          <span>Delivered</span>
+          <Badge
+            className={`ml-1 text-xs px-2 py-0.5 ${
+              statusFilter === "delivered"
+                ? "bg-white/20 text-white"
+                : "bg-green-100 text-green-900 dark:bg-green-950/80 dark:text-green-300"
+            }`}
+          >
+            {statusCounts.delivered}
+          </Badge>
+        </button>
+      </div>
+
       {/* Filters */}
       <Card className="p-4">
         <div className="space-y-4">
@@ -629,14 +757,8 @@ export default function OrdersPage() {
                 <SelectContent>
                   <SelectItem value="all">All Statuses</SelectItem>
                   <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="confirmed">Confirmed</SelectItem>
                   <SelectItem value="processing">Processing</SelectItem>
-                  <SelectItem value="ready_for_pickup">Ready for Pickup</SelectItem>
-                  <SelectItem value="out_for_delivery">Out for Delivery</SelectItem>
                   <SelectItem value="delivered">Delivered</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
-                  <SelectItem value="returned">Returned</SelectItem>
-                  <SelectItem value="refunded">Refunded</SelectItem>
                 </SelectContent>
               </Select>
             </div>

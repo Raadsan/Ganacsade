@@ -235,17 +235,21 @@ export function ProductFormDialog({
 
     // Settings Validation - Optional but can add if needed
     // All validations passed
-    onSave(formData)
+    onSave({
+      ...formData,
+      nameAr: formData.name,
+      nameSo: formData.name,
+      descriptionAr: formData.description,
+      descriptionSo: formData.description,
+    })
   }
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
-    if (files) {
-      const fileArray = Array.from(files)
-      setSelectedFiles([...selectedFiles, ...fileArray])
+    const files = Array.from(e.target.files || [])
+    if (files.length > 0) {
+      setSelectedFiles(prev => [...prev, ...files])
       
-      // Create preview URLs
-      fileArray.forEach(file => {
+      files.forEach(file => {
         const reader = new FileReader()
         reader.onloadend = () => {
           setPreviewUrls(prev => [...prev, reader.result as string])
@@ -312,7 +316,7 @@ export function ProductFormDialog({
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">
-                    Product Name (English) <span className="text-red-500">*</span>
+                    Product Name <span className="text-red-500">*</span>
                   </Label>
                   <Input
                     id="name"
@@ -342,7 +346,7 @@ export function ProductFormDialog({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description">Description (English)</Label>
+                <Label htmlFor="description">Description</Label>
                 <Textarea
                   id="description"
                   value={formData.description}

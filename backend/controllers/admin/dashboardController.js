@@ -2,40 +2,88 @@ import prisma from '../../lib/config/prisma.js';
 
 export const getDashboardAnalytics = async (_req, res, next) => {
   try {
-    const [totalUsers, totalProducts, paymentStats, refundStats, lastMonthUsers, lastMonthProducts, lastMonthPayments, lastMonthRefunds] = await Promise.all([
+    const now = new Date();
+    const startOfCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const endOfLastMonth = startOfCurrentMonth;
+
+    const [
+      totalUsers,
+      totalProducts,
+      totalOrders,
+      paymentStats,
+      refundStats,
+      currentMonthOrders,
+      lastMonthOrders,
+      currentMonthUsers,
+      lastMonthUsers,
+      currentMonthProducts,
+      lastMonthProducts,
+      currentMonthPayments,
+      lastMonthPayments,
+      currentMonthRefunds,
+      lastMonthRefunds,
+    ] = await Promise.all([
       prisma.users.count({ where: { role: 'customer', deleted_at: null } }),
       prisma.products.count({ where: { deleted_at: null } }),
+      prisma.orders.count({ where: { OR: [{ order_type: null }, { order_type: { not: 'data_package' } }] } }),
       prisma.transactions.aggregate({
         where: { type: 'order_payment', status: 'completed' },
-        _count: { id: true },
         _sum: { amount: true },
       }),
       prisma.transactions.aggregate({
         where: { type: 'refund', status: 'completed' },
         _sum: { amount: true },
       }),
-      prisma.users.count({ where: { role: 'customer', deleted_at: null, created_at: { lt: new Date(new Date().setDate(1)) } } }),
-      prisma.products.count({ where: { deleted_at: null, created_at: { lt: new Date(new Date().setDate(1)) } } }),
+      prisma.orders.count({
+        where: {
+          created_at: { gte: startOfCurrentMonth },
+          OR: [{ order_type: null }, { order_type: { not: 'data_package' } }],
+        },
+      }),
+      prisma.orders.count({
+        where: {
+          created_at: { gte: startOfLastMonth, lt: endOfLastMonth },
+          OR: [{ order_type: null }, { order_type: { not: 'data_package' } }],
+        },
+      }),
+      prisma.users.count({
+        where: { role: 'customer', deleted_at: null, created_at: { gte: startOfCurrentMonth } },
+      }),
+      prisma.users.count({
+        where: { role: 'customer', deleted_at: null, created_at: { gte: startOfLastMonth, lt: endOfLastMonth } },
+      }),
+      prisma.products.count({
+        where: { deleted_at: null, created_at: { gte: startOfCurrentMonth } },
+      }),
+      prisma.products.count({
+        where: { deleted_at: null, created_at: { gte: startOfLastMonth, lt: endOfLastMonth } },
+      }),
       prisma.transactions.aggregate({
-        where: { type: 'order_payment', status: 'completed', created_at: { lt: new Date(new Date().setDate(1)) } },
-        _count: { id: true },
+        where: { type: 'order_payment', status: 'completed', created_at: { gte: startOfCurrentMonth } },
         _sum: { amount: true },
       }),
       prisma.transactions.aggregate({
-        where: { type: 'refund', status: 'completed', created_at: { lt: new Date(new Date().setDate(1)) } },
+        where: { type: 'order_payment', status: 'completed', created_at: { gte: startOfLastMonth, lt: endOfLastMonth } },
+        _sum: { amount: true },
+      }),
+      prisma.transactions.aggregate({
+        where: { type: 'refund', status: 'completed', created_at: { gte: startOfCurrentMonth } },
+        _sum: { amount: true },
+      }),
+      prisma.transactions.aggregate({
+        where: { type: 'refund', status: 'completed', created_at: { gte: startOfLastMonth, lt: endOfLastMonth } },
         _sum: { amount: true },
       }),
     ]);
 
-    // One financial source: paid order transactions minus completed refunds.
     const totalRevenue = Number(paymentStats._sum.amount || 0) - Number(refundStats._sum.amount || 0);
-    const totalOrders = paymentStats._count.id || 0;
+    const currentMonthRevenue = Number(currentMonthPayments._sum.amount || 0) - Number(currentMonthRefunds._sum.amount || 0);
     const lastMonthRevenue = Number(lastMonthPayments._sum.amount || 0) - Number(lastMonthRefunds._sum.amount || 0);
-    const lastMonthOrderCount = lastMonthPayments._count.id || 0;
 
     const calcChange = (curr, prev) => {
       if (prev === 0) return curr > 0 ? 100 : 0;
-      return parseFloat(((curr - prev) / prev * 100).toFixed(1));
+      return parseFloat((((curr - prev) / prev) * 100).toFixed(1));
     };
 
     res.json({
@@ -45,10 +93,10 @@ export const getDashboardAnalytics = async (_req, res, next) => {
         totalOrders,
         totalUsers,
         totalProducts,
-        revenueChange: calcChange(totalRevenue, lastMonthRevenue),
-        ordersChange: calcChange(totalOrders, lastMonthOrderCount),
-        usersChange: calcChange(totalUsers, lastMonthUsers),
-        productsChange: calcChange(totalProducts, lastMonthProducts),
+        revenueChange: calcChange(currentMonthRevenue, lastMonthRevenue),
+        ordersChange: calcChange(currentMonthOrders, lastMonthOrders),
+        usersChange: calcChange(currentMonthUsers, lastMonthUsers),
+        productsChange: calcChange(currentMonthProducts, lastMonthProducts),
       },
     });
   } catch (error) {
@@ -58,7 +106,7 @@ export const getDashboardAnalytics = async (_req, res, next) => {
 
 export const getRecentOrders = async (req, res, next) => {
   try {
-    const limit = parseInt(req.query.limit) || 10;
+    const limit = parseInt(req.query.limit, 10) || 10;
 
     const orders = await prisma.orders.findMany({
       where: { OR: [{ order_type: null }, { order_type: { not: 'data_package' } }] },
@@ -79,7 +127,7 @@ export const getRecentOrders = async (req, res, next) => {
       data: orders.map((o) => ({
         id: o.id,
         orderNumber: o.order_number,
-        customerName: `${o.users.first_name} ${o.users.last_name}`,
+        customerName: `${o.users?.first_name || ''} ${o.users?.last_name || ''}`.trim() || 'Customer',
         total: Number(o.total),
         status: o.status,
         createdAt: o.created_at,
@@ -95,16 +143,21 @@ export const getQuickStats = async (_req, res, next) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const [pendingOrders, lowStockProducts, outOfStock, newUsersToday] = await Promise.all([
+    const [pendingOrders, outOfStock, lowStockProducts, newUsersToday] = await Promise.all([
       prisma.orders.count({ where: { status: 'pending', OR: [{ order_type: null }, { order_type: { not: 'data_package' } }] } }),
-      prisma.products.count({ where: { deleted_at: null, stock_quantity: { lte: prisma.products.fields?.low_stock_threshold } } }),
       prisma.products.count({ where: { deleted_at: null, stock_quantity: 0 } }),
+      prisma.products.count({ where: { deleted_at: null, stock_quantity: { gt: 0, lte: 10 } } }),
       prisma.users.count({ where: { created_at: { gte: today } } }),
     ]);
 
     res.json({
       success: true,
-      data: { pending_orders: pendingOrders, out_of_stock: outOfStock, new_users_today: newUsersToday },
+      data: {
+        pending_orders: pendingOrders,
+        low_stock_products: lowStockProducts,
+        out_of_stock: outOfStock,
+        new_users_today: newUsersToday,
+      },
     });
   } catch (error) {
     next(error);
@@ -113,28 +166,35 @@ export const getQuickStats = async (_req, res, next) => {
 
 export const getTopProducts = async (req, res, next) => {
   try {
-    const limit = parseInt(req.query.limit) || 5;
+    const limit = parseInt(req.query.limit, 10) || 5;
 
     const products = await prisma.products.findMany({
       where: { deleted_at: null },
       select: {
         id: true,
         name_en: true,
+        price: true,
+        discount_price: true,
+        created_at: true,
         order_items: { select: { quantity: true, total: true } },
         product_images: { where: { is_primary: true }, select: { image_url: true }, take: 1 },
       },
-      take: limit * 3,
+      take: 50,
     });
 
-    const sorted = products
-      .map((p) => ({
-        id: p.id,
-        name: p.name_en,
-        totalSold: p.order_items.reduce((acc, oi) => acc + (oi.quantity || 0), 0),
-        revenue: p.order_items.reduce((acc, oi) => acc + Number(oi.total || 0), 0),
-        image: p.product_images[0]?.image_url || null,
-      }))
-      .sort((a, b) => b.totalSold - a.totalSold || b.revenue - a.revenue)
+    const mapped = products.map((p) => ({
+      id: p.id,
+      name: p.name_en,
+      price: Number(p.price || 0),
+      discountPrice: p.discount_price ? Number(p.discount_price) : null,
+      totalSold: p.order_items.reduce((acc, oi) => acc + (oi.quantity || 0), 0),
+      revenue: p.order_items.reduce((acc, oi) => acc + Number(oi.total || 0), 0),
+      image: p.product_images[0]?.image_url || null,
+      createdAt: p.created_at,
+    }));
+
+    const sorted = mapped
+      .sort((a, b) => b.totalSold - a.totalSold || b.revenue - a.revenue || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, limit);
 
     res.json({ success: true, data: sorted });

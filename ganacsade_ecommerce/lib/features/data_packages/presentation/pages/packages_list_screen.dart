@@ -7,7 +7,7 @@ import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/utils/responsive.dart';
 import '../../../../core/services/audio_service.dart';
 import '../../models/telecom_provider.dart';
-import 'phone_entry_screen.dart';
+import '../widgets/payment_method_sheet.dart';
 
 /// Screen displaying available packages for a selected provider
 class PackagesListScreen extends StatefulWidget {
@@ -399,12 +399,10 @@ class _PackagesListScreenState extends State<PackagesListScreen> {
   }
 
   void _onPackageTap(DataPackageApi package) {
-    Get.to(
-      () => PhoneEntryScreen(
-        package: package,
-        provider: widget.provider,
-      ),
-      transition: Transition.rightToLeft,
+    PaymentMethodSheet.show(
+      context: context,
+      package: package,
+      provider: widget.provider,
     );
   }
 }

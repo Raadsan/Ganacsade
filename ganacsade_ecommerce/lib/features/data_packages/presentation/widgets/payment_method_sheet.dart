@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_text_styles.dart';
 import '../../models/telecom_provider.dart';
 import '../pages/phone_entry_screen.dart';
 
@@ -10,44 +9,17 @@ import '../pages/phone_entry_screen.dart';
 class DataPaymentMethod {
   final String id;
   final String name;
-  final String logo;
-  final Color color;
-  final String provider;
+  final Widget logoWidget;
 
   const DataPaymentMethod({
     required this.id,
     required this.name,
-    required this.logo,
-    required this.color,
-    required this.provider,
+    required this.logoWidget,
   });
-
-  static List<DataPaymentMethod> get availableMethods => [
-    const DataPaymentMethod(
-      id: 'evcplus',
-      name: 'EVC Plus',
-      logo: 'assets/images/Hormuud.png',
-      color: Color(0xFF133191),
-      provider: 'waafipay',
-    ),
-    const DataPaymentMethod(
-      id: 'edahab',
-      name: 'eDahab',
-      logo: 'assets/images/edahab.png',
-      color: Color(0xFF7EB725),
-      provider: 'edahab',
-    ),
-    const DataPaymentMethod(
-      id: 'zaad',
-      name: 'ZAAD',
-      logo: 'assets/images/Telesom.png',
-      color: Color(0xFF133191),
-      provider: 'waafipay',
-    ),
-  ];
 }
 
 /// Professional payment method selection bottom sheet
+/// Matches the exact UI requested: EVC+, eDahab, Jeeb with selection checkmark
 class PaymentMethodSheet extends StatefulWidget {
   final DataPackageApi package;
   final TelecomProvider provider;
@@ -81,84 +53,214 @@ class PaymentMethodSheet extends StatefulWidget {
 class _PaymentMethodSheetState extends State<PaymentMethodSheet> {
   String? _selectedMethodId;
 
+  List<DataPaymentMethod> _getAvailableMethods() {
+    return [
+      DataPaymentMethod(
+        id: 'evc',
+        name: 'EVC Plus',
+        logoWidget: Container(
+          width: 76,
+          height: 44,
+          decoration: BoxDecoration(
+            color: const Color(0xFF007BC2),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: const Center(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'EVC',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                Text(
+                  '+',
+                  style: TextStyle(
+                    color: Color(0xFF4CAF50),
+                    fontWeight: FontWeight.w900,
+                    fontSize: 18,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      DataPaymentMethod(
+        id: 'edahab',
+        name: 'eDahab',
+        logoWidget: Container(
+          width: 76,
+          height: 44,
+          decoration: BoxDecoration(
+            color: const Color(0xFF388E3C),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Center(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'e',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                  ),
+                ),
+                Stack(
+                  clipBehavior: Clip.none,
+                  alignment: Alignment.center,
+                  children: [
+                    const Text(
+                      'D',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                      ),
+                    ),
+                    Positioned(
+                      top: 1,
+                      left: -2,
+                      child: const Icon(
+                        Icons.check,
+                        size: 12,
+                        color: Color(0xFFFFD54F),
+                      ),
+                    ),
+                  ],
+                ),
+                const Text(
+                  'ahab',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      DataPaymentMethod(
+        id: 'jeeb',
+        name: 'Jeeb',
+        logoWidget: Container(
+          width: 76,
+          height: 44,
+          decoration: BoxDecoration(
+            color: const Color(0xFF007BC2),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: const Center(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.account_balance_wallet_rounded,
+                  color: Colors.white,
+                  size: 16,
+                ),
+                SizedBox(width: 4),
+                Text(
+                  'Jeeb',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 15,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ];
+  }
+
+  void _handleSelectMethod(DataPaymentMethod method) {
+    HapticFeedback.lightImpact();
+    setState(() {
+      _selectedMethodId = method.id;
+    });
+
+    // Brief delay to display the selection checkmark before navigating
+    Future.delayed(const Duration(milliseconds: 200), () {
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      Get.to(
+        () => PhoneEntryScreen(
+          package: widget.package,
+          provider: widget.provider,
+          initialPaymentMethod: method.id,
+        ),
+        transition: Transition.rightToLeft,
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final methods = _getAvailableMethods();
 
     return Container(
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkCardBackground : Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Handle bar
-          Container(
-            margin: const EdgeInsets.only(top: 12),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Colors.grey.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-
-          // Title
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
-            child: Text(
-              'select_payment_method'.tr,
-              style: AppTextStyles.titleLarge.copyWith(
-                color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-
-          // Payment methods list
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Column(
-              children: DataPaymentMethod.availableMethods.map((method) {
-                return _buildPaymentMethodTile(method, isDark);
-              }).toList(),
-            ),
-          ),
-
-          const SizedBox(height: 24),
-
-          // Next button
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-            child: SafeArea(
-              top: false,
-              child: SizedBox(
-                width: double.infinity,
-                height: 54,
-                child: ElevatedButton(
-                  onPressed: _selectedMethodId != null ? _onNext : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryGreen,
-                    foregroundColor: Colors.white,
-                    disabledBackgroundColor: Colors.grey.withValues(alpha: 0.3),
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  child: Text(
-                    'next'.tr,
-                    style: AppTextStyles.titleMedium.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Top Drag Handle
+            Center(
+              child: Container(
+                margin: const EdgeInsets.only(top: 10, bottom: 4),
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
             ),
-          ),
-        ],
+
+            // Header Title
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 16),
+              child: Text(
+                'Dooro habka lacag bixinta',
+                style: TextStyle(
+                  color: isDark ? AppColors.darkTextPrimary : const Color(0xFF0F172A),
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+
+            // Payment Methods List
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                children: methods.map((method) {
+                  return _buildPaymentMethodTile(method, isDark);
+                }).toList(),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+          ],
+        ),
       ),
     );
   }
@@ -167,105 +269,60 @@ class _PaymentMethodSheetState extends State<PaymentMethodSheet> {
     final isSelected = _selectedMethodId == method.id;
 
     return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        setState(() {
-          _selectedMethodId = method.id;
-        });
-      },
+      onTap: () => _handleSelectMethod(method),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        duration: const Duration(milliseconds: 180),
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.primaryGreen.withValues(alpha: 0.08)
-              : (isDark ? Colors.white.withValues(alpha: 0.03) : Colors.grey.withValues(alpha: 0.05)),
-          borderRadius: BorderRadius.circular(14),
+              ? (isDark ? const Color(0xFF1E293B) : const Color(0xFFF0F9FF))
+              : (isDark ? const Color(0xFF18181B) : Colors.white),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? AppColors.primaryGreen : Colors.grey.withValues(alpha: 0.15),
-            width: isSelected ? 2 : 1,
+            color: isSelected
+                ? const Color(0xFF0284C7)
+                : (isDark ? Colors.grey.shade800 : const Color(0xFFE2E8F0)),
+            width: isSelected ? 1.8 : 1.2,
           ),
         ),
         child: Row(
           children: [
-            // Logo
-            Container(
-              width: 56,
-              height: 40,
-              decoration: BoxDecoration(
-                color: method.color.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.asset(
-                  method.logo,
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Center(
-                      child: Text(
-                        method.name.substring(0, 3).toUpperCase(),
-                        style: TextStyle(
-                          color: method.color,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
+            // Payment method badge/logo
+            method.logoWidget,
 
             const SizedBox(width: 14),
 
-            // Name
+            // Payment method name
             Expanded(
               child: Text(
                 method.name,
-                style: AppTextStyles.bodyLarge.copyWith(
-                  color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                style: TextStyle(
+                  color: isDark ? AppColors.darkTextPrimary : const Color(0xFF1E293B),
+                  fontSize: 16,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
                 ),
               ),
             ),
 
-            // Checkmark
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                color: isSelected ? AppColors.primaryGreen : Colors.transparent,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isSelected ? AppColors.primaryGreen : Colors.grey.withValues(alpha: 0.3),
-                  width: 2,
+            // Checkmark badge when selected
+            if (isSelected)
+              Container(
+                width: 24,
+                height: 24,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF0284C7),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.check,
+                  color: Colors.white,
+                  size: 15,
                 ),
               ),
-              child: isSelected
-                  ? const Icon(
-                      Icons.check,
-                      color: Colors.white,
-                      size: 16,
-                    )
-                  : null,
-            ),
           ],
         ),
       ),
-    );
-  }
-
-  void _onNext() {
-    Navigator.pop(context);
-    Get.to(
-      () => PhoneEntryScreen(
-        package: widget.package,
-        provider: widget.provider,
-      ),
-      transition: Transition.rightToLeft,
     );
   }
 }

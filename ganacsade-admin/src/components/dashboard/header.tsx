@@ -76,12 +76,12 @@ export function Header() {
           <DropdownMenuLabel>
             <div className="flex flex-col">
               <span className="font-medium">{userInfo?.name || "My Account"}</span>
-              {userInfo?.email && (
-                <span className="truncate text-xs font-normal text-muted-foreground">
-                  {userInfo.email}
-                </span>
-              )}
-            </div>
+                {userInfo?.email && (
+                  <span className="truncate text-xs font-normal text-muted-foreground">
+                    {userInfo.email}
+                  </span>
+                )}
+              </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => router.push(accountPath)}>

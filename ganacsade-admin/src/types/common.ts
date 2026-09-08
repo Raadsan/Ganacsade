@@ -52,6 +52,8 @@ export interface SalesData {
 export interface TopProduct {
   id: string;
   name: string;
+  price?: number;
+  discountPrice?: number | null;
   image: string | null;
   totalSold: number;
   revenue: number;

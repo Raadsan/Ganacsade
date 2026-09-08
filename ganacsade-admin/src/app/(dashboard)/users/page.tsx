@@ -41,8 +41,20 @@ export default function UsersPage() {
   const [appliedStatusFilter, setAppliedStatusFilter] = useState<string>("all")
   const [appliedRoleFilter, setAppliedRoleFilter] = useState<string>("all")
   const [loading, setLoading] = useState(true)
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
 
   useEffect(() => {
+    // Read logged-in user id to prevent self-modification
+    try {
+      const raw = localStorage.getItem("user")
+      if (raw) {
+        const u = JSON.parse(raw)
+        setCurrentUserId(u.id || null)
+      }
+    } catch {
+      // ignore
+    }
+
     const init = async () => {
       try {
         const rolesResponse = await rbacApi.getRoles()
@@ -340,33 +352,37 @@ export default function UsersPage() {
                       {user.created_at ? new Date(user.created_at).toLocaleDateString() : "—"}
                     </TableCell>
                     <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
-                            <Eye className="mr-2 h-4 w-4" />
-                            View Details
-                          </DropdownMenuItem>
-                          {user.status === "active" ? (
-                            <DropdownMenuItem
-                              onClick={() => handleStatusChange(user.id, "suspended")}
-                              className="text-destructive"
-                            >
-                              <Ban className="mr-2 h-4 w-4" />
-                              Suspend User
+                      {currentUserId && String(user.id) === String(currentUserId) ? (
+                        <span className="text-xs text-muted-foreground italic px-2">You</span>
+                      ) : (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem>
+                              <Eye className="mr-2 h-4 w-4" />
+                              View Details
                             </DropdownMenuItem>
-                          ) : (
-                            <DropdownMenuItem onClick={() => handleStatusChange(user.id, "active")}>
-                              <CheckCircle className="mr-2 h-4 w-4" />
-                              Activate User
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                            {user.status === "active" ? (
+                              <DropdownMenuItem
+                                onClick={() => handleStatusChange(user.id, "suspended")}
+                                className="text-destructive"
+                              >
+                                <Ban className="mr-2 h-4 w-4" />
+                                Suspend User
+                              </DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem onClick={() => handleStatusChange(user.id, "active")}>
+                                <CheckCircle className="mr-2 h-4 w-4" />
+                                Activate User
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
                     </TableCell>
                   </TableRow>
                 )

@@ -252,7 +252,6 @@ class _ProviderSelectionScreenState extends State<ProviderSelectionScreen> {
     return Obx(() {
       final isSelected = controller.isProviderSelected(provider);
 
-
       final hasPackages = provider.packages.isNotEmpty;
 
       return GestureDetector(
@@ -260,6 +259,8 @@ class _ProviderSelectionScreenState extends State<ProviderSelectionScreen> {
           HapticFeedback.lightImpact();
           if (hasPackages) {
             controller.selectProvider(provider);
+            // Immediately proceed — no need to tap Next button separately
+            controller.proceedToPackages();
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -403,39 +404,6 @@ class _ProviderSelectionScreenState extends State<ProviderSelectionScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 20),
-            // Next button
-            Obx(() {
-              final hasSelection = controller.selectedProvider.value != null;
-              return SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: hasSelection ? controller.proceedToPackages : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: hasSelection
-                        ? AppColors.primaryGreen
-                        : (isDark
-                              ? AppColors.darkCardBackground
-                              : AppColors.grey300),
-                    foregroundColor: Colors.black,
-                    elevation: hasSelection ? 2 : 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  child: Text(
-                    'NEXT',
-                    style: const TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 18,
-                      letterSpacing: 2.0,
-                    ),
-                  ),
-                ),
-              );
-            }),
           ],
         ),
       ),

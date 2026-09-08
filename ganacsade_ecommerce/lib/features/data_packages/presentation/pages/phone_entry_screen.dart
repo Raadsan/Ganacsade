@@ -14,11 +14,13 @@ import '../controllers/data_packages_controller.dart';
 class PhoneEntryScreen extends StatefulWidget {
   final DataPackageApi package;
   final TelecomProvider provider;
+  final String? initialPaymentMethod;
 
   const PhoneEntryScreen({
     super.key,
     required this.package,
     required this.provider,
+    this.initialPaymentMethod,
   });
 
   @override
@@ -38,11 +40,14 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> {
   bool _hasPlayedFromAudio = false;
   bool _hasPlayedRecipientAudio = false;
   bool _hasPlayedVerifyAudio = false;
-  String _selectedPaymentMethod = ''; // 'evc' or 'edahab'
+  String _selectedPaymentMethod = ''; // 'evc', 'edahab', or 'jeeb'
 
   @override
   void initState() {
     super.initState();
+    _selectedPaymentMethod = (widget.initialPaymentMethod != null && widget.initialPaymentMethod!.isNotEmpty)
+        ? widget.initialPaymentMethod!
+        : 'evc';
     _fromPhoneFocusNode.addListener(_onFromPhoneFocusChange);
     _recipientPhoneFocusNode.addListener(_onRecipientPhoneFocusChange);
     _fromPhoneController.addListener(_checkBothFieldsFilled);
@@ -112,7 +117,8 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> {
   // From phone prefixes based on selected payment method
   List<String> get _fromValidPrefixes {
     if (_selectedPaymentMethod == 'evc') return ['61', '77'];
-    if (_selectedPaymentMethod == 'edahab') return ['62', '63', '65', '66', '68', '90'];
+    if (_selectedPaymentMethod == 'edahab') return ['62', '63', '65', '66'];
+    if (_selectedPaymentMethod == 'jeeb') return ['68'];
     return ['61', '62', '63', '65', '66', '68', '77', '90'];
   }
 
@@ -204,6 +210,7 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> {
                     const SizedBox(height: 12),
                     Row(
                       children: [
+                        // EVC Plus
                         Expanded(
                           child: GestureDetector(
                             onTap: () {
@@ -217,10 +224,10 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> {
                             },
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 200),
-                              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+                              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                               decoration: BoxDecoration(
                                 color: _selectedPaymentMethod == 'evc'
-                                    ? const Color(0xFF133191).withOpacity(0.1)
+                                    ? const Color(0xFF133191).withValues(alpha: 0.1)
                                     : (isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF5F5F5)),
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
@@ -234,38 +241,43 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   if (_selectedPaymentMethod == 'evc')
-                                    const Icon(Icons.check_circle, color: Color(0xFF133191), size: 18)
+                                    const Icon(Icons.check_circle, color: Color(0xFF133191), size: 16)
                                   else
-                                    const Icon(Icons.radio_button_unchecked, color: Colors.grey, size: 18),
-                                  const SizedBox(width: 8),
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'EVC Plus',
-                                        style: TextStyle(
-                                          color: _selectedPaymentMethod == 'evc'
-                                              ? const Color(0xFF133191)
-                                              : textColor,
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 14,
+                                    const Icon(Icons.radio_button_unchecked, color: Colors.grey, size: 16),
+                                  const SizedBox(width: 6),
+                                  Flexible(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'EVC Plus',
+                                          style: TextStyle(
+                                            color: _selectedPaymentMethod == 'evc'
+                                                ? const Color(0xFF133191)
+                                                : textColor,
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 13,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
                                         ),
-                                      ),
-                                      Text(
-                                        '61, 77',
-                                        style: TextStyle(
-                                          color: Colors.grey.shade500,
-                                          fontSize: 11,
+                                        Text(
+                                          '61, 77',
+                                          style: TextStyle(
+                                            color: Colors.grey.shade500,
+                                            fontSize: 10,
+                                          ),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ],
                               ),
                             ),
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 8),
+                        // eDahab
                         Expanded(
                           child: GestureDetector(
                             onTap: () {
@@ -279,10 +291,10 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> {
                             },
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 200),
-                              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+                              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                               decoration: BoxDecoration(
                                 color: _selectedPaymentMethod == 'edahab'
-                                    ? const Color(0xFF7EB725).withOpacity(0.1)
+                                    ? const Color(0xFF7EB725).withValues(alpha: 0.1)
                                     : (isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF5F5F5)),
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
@@ -296,31 +308,102 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   if (_selectedPaymentMethod == 'edahab')
-                                    const Icon(Icons.check_circle, color: Color(0xFF7EB725), size: 18)
+                                    const Icon(Icons.check_circle, color: Color(0xFF7EB725), size: 16)
                                   else
-                                    const Icon(Icons.radio_button_unchecked, color: Colors.grey, size: 18),
-                                  const SizedBox(width: 8),
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'eDahab',
-                                        style: TextStyle(
-                                          color: _selectedPaymentMethod == 'edahab'
-                                              ? const Color(0xFF7EB725)
-                                              : textColor,
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 14,
+                                    const Icon(Icons.radio_button_unchecked, color: Colors.grey, size: 16),
+                                  const SizedBox(width: 6),
+                                  Flexible(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'eDahab',
+                                          style: TextStyle(
+                                            color: _selectedPaymentMethod == 'edahab'
+                                                ? const Color(0xFF7EB725)
+                                                : textColor,
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 13,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
                                         ),
-                                      ),
-                                      Text(
-                                        '62, 63, 65...',
-                                        style: TextStyle(
-                                          color: Colors.grey.shade500,
-                                          fontSize: 11,
+                                        Text(
+                                          '62, 63..',
+                                          style: TextStyle(
+                                            color: Colors.grey.shade500,
+                                            fontSize: 10,
+                                          ),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        // Jeeb
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _selectedPaymentMethod = 'jeeb';
+                                _fromPhoneController.clear();
+                                _hasPlayedFromAudio = false;
+                                _hasPlayedVerifyAudio = false;
+                              });
+                              HapticFeedback.lightImpact();
+                            },
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                              decoration: BoxDecoration(
+                                color: _selectedPaymentMethod == 'jeeb'
+                                    ? const Color(0xFF007BC2).withValues(alpha: 0.1)
+                                    : (isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF5F5F5)),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: _selectedPaymentMethod == 'jeeb'
+                                      ? const Color(0xFF007BC2)
+                                      : Colors.transparent,
+                                  width: 2,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  if (_selectedPaymentMethod == 'jeeb')
+                                    const Icon(Icons.check_circle, color: Color(0xFF007BC2), size: 16)
+                                  else
+                                    const Icon(Icons.radio_button_unchecked, color: Colors.grey, size: 16),
+                                  const SizedBox(width: 6),
+                                  Flexible(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Jeeb',
+                                          style: TextStyle(
+                                            color: _selectedPaymentMethod == 'jeeb'
+                                                ? const Color(0xFF007BC2)
+                                                : textColor,
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 13,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        Text(
+                                          '68',
+                                          style: TextStyle(
+                                            color: Colors.grey.shade500,
+                                            fontSize: 10,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ],
                               ),
@@ -834,7 +917,9 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> {
       // If delivery succeeded, launch USSD payment dialer
       if (!deliveryFailed) {
         final amountStr = widget.package.amount.toString().replaceAll('.', '*');
-        final ussdNumber = _selectedPaymentMethod == 'edahab' ? '623223050' : '613223050';
+        final ussdNumber = _selectedPaymentMethod == 'edahab'
+            ? '623223050'
+            : (_selectedPaymentMethod == 'jeeb' ? '683223050' : '613223050');
         final ussdCode = '*712*$ussdNumber*$amountStr#';
         final ussdUri = Uri(scheme: 'tel', path: ussdCode);
         try {

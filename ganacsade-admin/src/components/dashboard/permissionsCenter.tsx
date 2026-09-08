@@ -21,8 +21,8 @@ import {
 import { rbacApi, type Menu, type Role, type RoleMenuPermission } from "@/lib/api/rbac"
 import { usersApi, type User } from "@/lib/api/users"
 import { toast } from "sonner"
-import { ArrowDown, ArrowUp, Eye, Loader2, Pencil, Trash2 } from "lucide-react"
-import { formatCurrency, formatDate } from "@/lib/utils"
+import { ArrowDown, ArrowUp, Check, Eye, Loader2, Pencil, Plus, RotateCcw, Save, Trash2 } from "lucide-react"
+import { cn, formatCurrency, formatDate } from "@/lib/utils"
 import { Separator } from "@/components/ui/separator"
 
 type PermissionKey = "canView" | "canAdd" | "canEdit" | "canDelete" | "canAssign"
@@ -192,6 +192,9 @@ export function PermissionsCenter({ section }: { section: PermissionsSection }) 
 
   const [newRoleName, setNewRoleName] = useState("")
   const [newRoleDescription, setNewRoleDescription] = useState("")
+  const [isRoleFormOpen, setIsRoleFormOpen] = useState(false)
+  const [roleFormMode, setRoleFormMode] = useState<"create" | "edit">("create")
+  const [savingRole, setSavingRole] = useState(false)
   const [newMenuTitle, setNewMenuTitle] = useState("")
   const [newMenuUrl, setNewMenuUrl] = useState("")
   const [newMenuOrder, setNewMenuOrder] = useState("0")
@@ -310,8 +313,13 @@ export function PermissionsCenter({ section }: { section: PermissionsSection }) 
     const response = await rbacApi.getRoles()
     const rolesData: Role[] = response?.data || []
     setRoles(rolesData)
-    if (!selectedRoleId && rolesData.length > 0) {
-      setSelectedRoleId(rolesData[0].id)
+    const validStaffRoles = rolesData.filter(
+      (role) => role.name.toLowerCase() !== "customer" && !role.name.toLowerCase().includes("delivery")
+    )
+    if (!selectedRoleId && validStaffRoles.length > 0) {
+      setSelectedRoleId(validStaffRoles[0].id)
+    } else if (selectedRoleId && !validStaffRoles.some((r) => r.id === selectedRoleId) && validStaffRoles.length > 0) {
+      setSelectedRoleId(validStaffRoles[0].id)
     }
   }
 
@@ -446,22 +454,75 @@ export function PermissionsCenter({ section }: { section: PermissionsSection }) 
     )
   }
 
-  const handleCreateRole = async () => {
+  const openCreateRoleForm = () => {
+    setRoleFormMode("create")
+    setEditingRoleId(null)
+    setNewRoleName("")
+    setNewRoleDescription("")
+    setIsRoleFormOpen(true)
+  }
+
+  const closeRoleForm = () => {
+    setIsRoleFormOpen(false)
+    setEditingRoleId(null)
+    setNewRoleName("")
+    setNewRoleDescription("")
+    setRoleFormMode("create")
+  }
+
+  const startEditRole = (role: Role) => {
+    setRoleFormMode("edit")
+    setEditingRoleId(role.id)
+    setNewRoleName(role.name || "")
+    setNewRoleDescription(role.description || "")
+    setIsRoleFormOpen(true)
+  }
+
+  const handleSaveRole = async () => {
     if (!newRoleName.trim()) {
       toast.error("Role name is required")
       return
     }
     try {
-      await rbacApi.createRole({
-        name: newRoleName.trim(),
-        description: newRoleDescription.trim(),
-      })
-      toast.success("Role created")
-      setNewRoleName("")
-      setNewRoleDescription("")
+      setSavingRole(true)
+      if (roleFormMode === "create") {
+        await rbacApi.createRole({
+          name: newRoleName.trim(),
+          description: newRoleDescription.trim(),
+        })
+        toast.success("Role created successfully")
+      } else if (editingRoleId) {
+        await rbacApi.updateRole(editingRoleId, {
+          name: newRoleName.trim(),
+          description: newRoleDescription.trim(),
+        })
+        toast.success("Role updated successfully")
+      }
+      closeRoleForm()
       await fetchRoles()
     } catch (error) {
-      toast.error(getApiErrorMessage(error, "Failed to create role"))
+      toast.error(
+        getApiErrorMessage(
+          error,
+          roleFormMode === "create" ? "Failed to create role" : "Failed to update role"
+        )
+      )
+    } finally {
+      setSavingRole(false)
+    }
+  }
+
+  const handleDeleteRole = async (roleId: number) => {
+    if (!window.confirm("Delete this role?")) return
+    try {
+      await rbacApi.deleteRole(roleId)
+      toast.success("Role deleted")
+      if (selectedRoleId === roleId) {
+        setSelectedRoleId(null)
+      }
+      await fetchRoles()
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Failed to delete role"))
     }
   }
 
@@ -512,51 +573,6 @@ export function PermissionsCenter({ section }: { section: PermissionsSection }) 
       await fetchMenus()
     } catch (error) {
       toast.error(getApiErrorMessage(error, "Failed to create submenu"))
-    }
-  }
-
-  const startEditRole = (role: Role) => {
-    setEditingRoleId(role.id)
-    setEditingRoleName(role.name || "")
-    setEditingRoleDescription(role.description || "")
-  }
-
-  const cancelEditRole = () => {
-    setEditingRoleId(null)
-    setEditingRoleName("")
-    setEditingRoleDescription("")
-  }
-
-  const handleUpdateRole = async () => {
-    if (!editingRoleId) return
-    if (!editingRoleName.trim()) {
-      toast.error("Role name is required")
-      return
-    }
-    try {
-      await rbacApi.updateRole(editingRoleId, {
-        name: editingRoleName.trim(),
-        description: editingRoleDescription.trim(),
-      })
-      toast.success("Role updated")
-      cancelEditRole()
-      await fetchRoles()
-    } catch (error) {
-      toast.error(getApiErrorMessage(error, "Failed to update role"))
-    }
-  }
-
-  const handleDeleteRole = async (roleId: number) => {
-    if (!window.confirm("Delete this role?")) return
-    try {
-      await rbacApi.deleteRole(roleId)
-      toast.success("Role deleted")
-      if (selectedRoleId === roleId) {
-        setSelectedRoleId(null)
-      }
-      await fetchRoles()
-    } catch (error) {
-      toast.error(getApiErrorMessage(error, "Failed to delete role"))
     }
   }
 
@@ -717,7 +733,7 @@ export function PermissionsCenter({ section }: { section: PermissionsSection }) 
     setEditingUserName("")
     setEditingUserEmail("")
     setEditingUserPhone("")
-    setEditingUserRoleId(staffRoles[0]?.id || null)
+    setEditingUserRoleId(null)
     setEditingUserStatus("active")
     setNewUserPassword("")
     setIsUserFormOpen(true)
@@ -800,6 +816,19 @@ export function PermissionsCenter({ section }: { section: PermissionsSection }) 
       await loadUsersBySection()
     } catch (error) {
       toast.error(getApiErrorMessage(error, "Failed to update user"))
+    }
+  }
+
+  const handleToggleUserStatus = async (user: User) => {
+    const nextStatus = user.status === "active" ? "inactive" : "active"
+    try {
+      await usersApi.updateUser(user.id, {
+        status: nextStatus,
+      })
+      toast.success(`User status changed to ${nextStatus}`)
+      await loadUsersBySection()
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Failed to update status"))
     }
   }
 
@@ -950,92 +979,70 @@ export function PermissionsCenter({ section }: { section: PermissionsSection }) 
       ) : null}
 
       {section === "roles" && (
-        <>
-          <Card className="p-4 space-y-4">
-            <h2 className="font-semibold">Create New Role</h2>
-            <div className="grid gap-3 md:grid-cols-3">
-              <Input
-                placeholder="Role name (e.g. manager)"
-                value={newRoleName}
-                onChange={(e) => setNewRoleName(e.target.value)}
-              />
-              <Input
-                placeholder="Description (optional)"
-                value={newRoleDescription}
-                onChange={(e) => setNewRoleDescription(e.target.value)}
-              />
-              <Button onClick={handleCreateRole}>Create Role</Button>
+        <Card className="p-4 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="font-semibold text-lg">Existing Roles</h2>
+              <p className="text-xs text-muted-foreground">
+                Manage roles and their permissions in the system ({roles.length})
+              </p>
             </div>
-          </Card>
-          <Card className="p-4 space-y-2">
-            <h2 className="font-semibold">Existing Roles</h2>
-            <div className="rounded border">
-              <div className="grid grid-cols-12 border-b bg-muted/30 px-3 py-2 text-xs font-medium">
-                <div className="col-span-4">Role</div>
-                <div className="col-span-4">Description</div>
-                <div className="col-span-2">Users</div>
-                <div className="col-span-2 text-right">Actions</div>
-              </div>
-              {roles.map((role) => (
-                <div key={role.id} className="border-b last:border-b-0">
-                  <div className="grid grid-cols-12 items-center gap-2 px-3 py-2">
-                    <div className="col-span-4 text-sm font-medium">{role.name}</div>
-                    <div className="col-span-4 text-xs text-muted-foreground">
-                      {role.description || "No description"}
-                    </div>
-                    <div className="col-span-2">
-                      <Badge variant="secondary">users: {role.usersCount || 0}</Badge>
-                    </div>
-                    <div className="col-span-2 flex justify-end gap-1">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 px-2 text-xs"
-                        onClick={() => setViewRoleId(viewRoleId === role.id ? null : role.id)}
-                      >
-                        <Eye className="mr-1 h-3.5 w-3.5" />
-                        View
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 px-2 text-xs"
-                        onClick={() => startEditRole(role)}
-                      >
-                        <Pencil className="mr-1 h-3.5 w-3.5" />
-                        Edit
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 px-2 text-xs text-destructive hover:text-destructive"
-                        onClick={() => handleDeleteRole(role.id)}
-                      >
-                        <Trash2 className="mr-1 h-3.5 w-3.5" />
-                        Delete
-                      </Button>
-                    </div>
+            <Button onClick={openCreateRoleForm} className="gap-2">
+              <Plus className="h-4 w-4" />
+              Create Role
+            </Button>
+          </div>
+          <div className="rounded border">
+            <div className="grid grid-cols-12 border-b bg-muted/30 px-3 py-2 text-xs font-medium">
+              <div className="col-span-4">Role</div>
+              <div className="col-span-4">Description</div>
+              <div className="col-span-2">Users</div>
+              <div className="col-span-2 text-right">Actions</div>
+            </div>
+            {roles.map((role) => (
+              <div key={role.id} className="border-b last:border-b-0">
+                <div className="grid grid-cols-12 items-center gap-2 px-3 py-2">
+                  <div className="col-span-4 text-sm font-medium">{role.name}</div>
+                  <div className="col-span-4 text-xs text-muted-foreground">
+                    {role.description || "No description"}
                   </div>
-
-                  {editingRoleId === role.id && (
-                    <div className="grid gap-2 border-t bg-muted/20 px-3 py-2 md:grid-cols-4">
-                      <Input value={editingRoleName} onChange={(e) => setEditingRoleName(e.target.value)} />
-                      <Input
-                        value={editingRoleDescription}
-                        onChange={(e) => setEditingRoleDescription(e.target.value)}
-                        placeholder="Description"
-                      />
-                      <Button onClick={handleUpdateRole}>Update</Button>
-                      <Button variant="outline" onClick={cancelEditRole}>
-                        Cancel
-                      </Button>
-                    </div>
-                  )}
+                  <div className="col-span-2">
+                    <Badge variant="secondary">users: {role.usersCount || 0}</Badge>
+                  </div>
+                  <div className="col-span-2 flex justify-end gap-1">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 px-2 text-xs"
+                      onClick={() => setViewRoleId(viewRoleId === role.id ? null : role.id)}
+                    >
+                      <Eye className="mr-1 h-3.5 w-3.5" />
+                      View
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 px-2 text-xs"
+                      onClick={() => startEditRole(role)}
+                    >
+                      <Pencil className="mr-1 h-3.5 w-3.5" />
+                      Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 px-2 text-xs text-destructive hover:text-destructive"
+                      onClick={() => handleDeleteRole(role.id)}
+                    >
+                      <Trash2 className="mr-1 h-3.5 w-3.5" />
+                      Delete
+                    </Button>
+                  </div>
                 </div>
-              ))}
-            </div>
-          </Card>
-        </>
+              </div>
+            ))}
+          </div>
+        </Card>
       )}
 
       {section === "menus" && (
@@ -1043,12 +1050,12 @@ export function PermissionsCenter({ section }: { section: PermissionsSection }) 
           <Card className="p-4 space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h2 className="font-semibold">Create Menu</h2>
-              <Button
-                variant={showCreateMenuForm ? "outline" : "default"}
-                onClick={() => setShowCreateMenuForm((prev) => !prev)}
-              >
-                {showCreateMenuForm ? "Close Form" : "Create Menu"}
-              </Button>
+                <Button
+                  variant={showCreateMenuForm ? "outline" : "default"}
+                  onClick={() => setShowCreateMenuForm((prev) => !prev)}
+                >
+                  {showCreateMenuForm ? "Close Form" : "Create Menu"}
+                </Button>
             </div>
             {showCreateMenuForm && (
               <div className="grid gap-3 md:grid-cols-4">
@@ -1322,7 +1329,25 @@ export function PermissionsCenter({ section }: { section: PermissionsSection }) 
                   <div className="col-span-3 text-xs text-muted-foreground">{getUserContact(user)}</div>
                   <div className="col-span-2 text-xs">{user.roleModel?.name || user.role}</div>
                   <div className="col-span-2">
-                    <Badge variant="secondary">{user.status}</Badge>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleUserStatus(user)}
+                      title="Click to toggle active/inactive status"
+                      className={cn(
+                        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium cursor-pointer transition-all hover:scale-105 active:scale-95 shadow-sm border",
+                        user.status === "active"
+                          ? "bg-emerald-500/15 text-emerald-700 hover:bg-emerald-500/25 dark:text-emerald-400 border-emerald-500/30"
+                          : "bg-rose-500/15 text-rose-700 hover:bg-rose-500/25 dark:text-rose-400 border-rose-500/30"
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "h-1.5 w-1.5 rounded-full",
+                          user.status === "active" ? "bg-emerald-500" : "bg-rose-500"
+                        )}
+                      />
+                      {user.status || "inactive"}
+                    </button>
                   </div>
                   <div className="col-span-2 flex justify-end gap-1">
                     <Button
@@ -1343,15 +1368,6 @@ export function PermissionsCenter({ section }: { section: PermissionsSection }) 
                       <Pencil className="mr-1 h-3.5 w-3.5" />
                       Edit
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 px-2 text-xs text-destructive hover:text-destructive"
-                      onClick={() => handleDeleteUser(user.id)}
-                    >
-                      <Trash2 className="mr-1 h-3.5 w-3.5" />
-                      Delete
-                    </Button>
                   </div>
                 </div>
               </div>
@@ -1361,103 +1377,268 @@ export function PermissionsCenter({ section }: { section: PermissionsSection }) 
       )}
 
       {section === "role-permissions" && (
-        <Card className="p-4 space-y-4">
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="w-[260px]">
+        <Card className="p-5 space-y-4 shadow-sm">
+          {/* Top Bar Header */}
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b pb-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-2">
+                <span className="h-3 w-3 rounded-full border-2 border-secondary flex items-center justify-center">
+                  <span className="h-1.5 w-1.5 rounded-full bg-secondary" />
+                </span>
+                <span className="text-sm text-muted-foreground">
+                  Managing permissions for{" "}
+                  <span className="font-bold text-foreground">{selectedRole?.name || "..."}</span>
+                </span>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1.5 text-xs rounded-md shadow-xs border-muted-foreground/30"
+                onClick={() => selectedRoleId && fetchRolePermissions(selectedRoleId, menus)}
+                disabled={loading || !selectedRoleId}
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                Refresh
+              </Button>
+            </div>
+
+            <div className="flex items-center gap-3">
               <Select
                 value={selectedRoleId ? String(selectedRoleId) : ""}
                 onValueChange={(v) => setSelectedRoleId(Number(v))}
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-[180px] h-9 text-sm">
                   <SelectValue placeholder="Select role" />
                 </SelectTrigger>
                 <SelectContent>
-                  {roles.map((role) => (
+                  {staffRoles.map((role) => (
                     <SelectItem key={role.id} value={String(role.id)}>
                       {role.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              <Button
+                onClick={handleSavePermissions}
+                disabled={saving || !selectedRoleId}
+                className="bg-primary hover:bg-primary/80 text-white gap-2 h-9 px-4 font-semibold shadow-sm transition-all"
+              >
+                <Save className="h-4 w-4" />
+                {saving ? "Saving..." : "Save Permissions"}
+              </Button>
             </div>
-            {selectedRole && <Badge variant="secondary">Role: {selectedRole.name}</Badge>}
-            <Button onClick={handleSavePermissions} disabled={saving || !selectedRoleId}>
-              {saving ? "Saving..." : "Save Permissions"}
-            </Button>
           </div>
 
-          <div className="space-y-4">
-            {menus.map((menu) => {
-              const row = rows.find((r) => r.menuId === menu.id)
-              if (!row) return null
-              return (
-                <Card key={menu.id} className="p-4">
-                  <div className="flex flex-col gap-3">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div>
-                        <p className="font-semibold">{menu.title}</p>
-                        {menu.url && <p className="text-xs text-muted-foreground">{menu.url}</p>}
+          {/* Permissions Table (Image 1 Style) */}
+          <div className="rounded-lg border overflow-hidden shadow-xs bg-card">
+            {/* Table Header */}
+            <div className="grid grid-cols-[1fr_100px_100px_100px_100px] bg-secondary text-white text-xs font-bold uppercase tracking-wider px-6 py-3.5 items-center">
+              <div>MENU</div>
+              <div className="text-center">VIEW</div>
+              <div className="text-center">ADD</div>
+              <div className="text-center">EDIT</div>
+              <div className="text-center">DELETE</div>
+            </div>
+
+            {/* Table Rows */}
+            <div className="divide-y divide-border">
+              {menus.map((menu) => {
+                const row = rows.find((r) => r.menuId === menu.id)
+                if (!row) return null
+                const hasSubMenus = (menu.subMenus || []).length > 0
+
+                return (
+                  <div key={menu.id} className="divide-y divide-border/60">
+                    {/* Parent Menu Row */}
+                    <div className="grid grid-cols-[1fr_100px_100px_100px_100px] items-center px-6 py-3.5 hover:bg-muted/30 transition-colors">
+                      <div className="flex flex-col">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-sm text-foreground">{menu.title}</span>
+                          {menu.url && <span className="text-xs text-muted-foreground font-mono">{menu.url}</span>}
+                        </div>
+                        {menu.url === "/orders" && (
+                          <div className="flex items-center gap-2 mt-1.5">
+                            <button
+                              type="button"
+                              onClick={() => toggleMenuFlag(menu.id, "canViewAllOrders")}
+                              className={cn(
+                                "text-[11px] px-2 py-0.5 rounded border transition-colors cursor-pointer",
+                                row.canViewAllOrders
+                                  ? "bg-secondary/10 text-secondary border-secondary/30 font-medium dark:bg-secondary/30 dark:text-secondary"
+                                  : "text-muted-foreground border-transparent hover:border-muted"
+                              )}
+                            >
+                              Scope: All Orders
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => toggleMenuFlag(menu.id, "canViewByRole")}
+                              className={cn(
+                                "text-[11px] px-2 py-0.5 rounded border transition-colors cursor-pointer",
+                                row.canViewByRole
+                                  ? "bg-secondary/10 text-secondary border-secondary/30 font-medium dark:bg-secondary/30 dark:text-secondary"
+                                  : "text-muted-foreground border-transparent hover:border-muted"
+                              )}
+                            >
+                              Scope: Order By Role
+                            </button>
+                          </div>
+                        )}
                       </div>
-                      <div className="flex flex-wrap gap-2">
-                        {(menu.url === "/orders" ? FLAG_COLUMNS : FLAG_COLUMNS.filter((flag) => flag !== "canAssign")).map((flag) => (
-                          <Button
-                            key={`${menu.id}-${flag}`}
-                            variant={row[flag] ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => toggleMenuFlag(menu.id, flag)}
-                          >
-                            {FLAG_LABELS[flag]}
-                          </Button>
-                        ))}
-                        {menu.url === "/orders"
-                          ? ORDER_SCOPE_COLUMNS.map((flag) => (
-                              <Button
-                                key={`${menu.id}-${flag}`}
-                                variant={row[flag] ? "default" : "outline"}
-                                size="sm"
-                                onClick={() => toggleMenuFlag(menu.id, flag)}
-                              >
-                                {FLAG_LABELS[flag]}
-                              </Button>
-                            ))
-                          : null}
+
+                      <div className="flex justify-center">
+                        <button
+                          type="button"
+                          onClick={() => toggleMenuFlag(menu.id, "canView")}
+                          title={row.canView ? "Can View: Yes" : "Can View: No"}
+                          className={cn(
+                            "inline-flex items-center justify-center h-5 w-5 rounded transition-all shadow-xs cursor-pointer",
+                            row.canView
+                              ? "bg-secondary text-white hover:bg-secondary/80"
+                              : "border-2 border-muted-foreground/30 bg-background hover:border-secondary"
+                          )}
+                        >
+                          {row.canView && <Check className="h-3.5 w-3.5 stroke-[3]" />}
+                        </button>
+                      </div>
+
+                      <div className="flex justify-center">
+                        <button
+                          type="button"
+                          onClick={() => toggleMenuFlag(menu.id, "canAdd")}
+                          title={row.canAdd ? "Can Add: Yes" : "Can Add: No"}
+                          className={cn(
+                            "inline-flex items-center justify-center h-5 w-5 rounded transition-all shadow-xs cursor-pointer",
+                            row.canAdd
+                              ? "bg-secondary text-white hover:bg-secondary/80"
+                              : "border-2 border-muted-foreground/30 bg-background hover:border-secondary"
+                          )}
+                        >
+                          {row.canAdd && <Check className="h-3.5 w-3.5 stroke-[3]" />}
+                        </button>
+                      </div>
+
+                      <div className="flex justify-center">
+                        <button
+                          type="button"
+                          onClick={() => toggleMenuFlag(menu.id, "canEdit")}
+                          title={row.canEdit ? "Can Edit: Yes" : "Can Edit: No"}
+                          className={cn(
+                            "inline-flex items-center justify-center h-5 w-5 rounded transition-all shadow-xs cursor-pointer",
+                            row.canEdit
+                              ? "bg-secondary text-white hover:bg-secondary/80"
+                              : "border-2 border-muted-foreground/30 bg-background hover:border-secondary"
+                          )}
+                        >
+                          {row.canEdit && <Check className="h-3.5 w-3.5 stroke-[3]" />}
+                        </button>
+                      </div>
+
+                      <div className="flex justify-center">
+                        <button
+                          type="button"
+                          onClick={() => toggleMenuFlag(menu.id, "canDelete")}
+                          title={row.canDelete ? "Can Delete: Yes" : "Can Delete: No"}
+                          className={cn(
+                            "inline-flex items-center justify-center h-5 w-5 rounded transition-all shadow-xs cursor-pointer",
+                            row.canDelete
+                              ? "bg-secondary text-white hover:bg-secondary/80"
+                              : "border-2 border-muted-foreground/30 bg-background hover:border-secondary"
+                          )}
+                        >
+                          {row.canDelete && <Check className="h-3.5 w-3.5 stroke-[3]" />}
+                        </button>
                       </div>
                     </div>
-                    {(menu.subMenus || []).length > 0 && (
-                      <div className="space-y-2 border-t pt-3">
-                        {menu.subMenus?.map((sub) => {
-                          const subRow = row.subMenus.find((s) => s.subMenuId === sub.id)
-                          if (!subRow) return null
-                          return (
-                            <div
-                              key={sub.id}
-                              className="flex flex-wrap items-center justify-between gap-3 rounded-md border p-2"
-                            >
-                              <div>
-                                <p className="text-sm font-medium">{sub.title}</p>
-                                <p className="text-xs text-muted-foreground">{sub.url}</p>
-                              </div>
-                              <div className="flex flex-wrap gap-2">
-                                {FLAG_COLUMNS.filter((flag) => flag !== "canAssign").map((flag) => (
-                                  <Button
-                                    key={`${menu.id}-${sub.id}-${flag}`}
-                                    variant={subRow[flag] ? "default" : "outline"}
-                                    size="sm"
-                                    onClick={() => toggleSubMenuFlag(menu.id, sub.id, flag)}
-                                  >
-                                    {FLAG_LABELS[flag]}
-                                  </Button>
-                                ))}
-                              </div>
+
+                    {/* Sub-menu Rows */}
+                    {hasSubMenus &&
+                      menu.subMenus?.map((sub) => {
+                        const subRow = row.subMenus.find((s) => s.subMenuId === sub.id)
+                        if (!subRow) return null
+                        return (
+                          <div
+                            key={sub.id}
+                            className="grid grid-cols-[1fr_100px_100px_100px_100px] items-center px-6 py-2.5 bg-muted/10 hover:bg-muted/30 transition-colors"
+                          >
+                            <div className="flex items-center gap-2 pl-6">
+                              <span className="text-muted-foreground/40 font-mono">└</span>
+                              <span className="text-sm font-medium text-foreground/90">{sub.title}</span>
+                              {sub.url && (
+                                <span className="text-xs text-muted-foreground/70 font-mono">{sub.url}</span>
+                              )}
                             </div>
-                          )
-                        })}
-                      </div>
-                    )}
+
+                            <div className="flex justify-center">
+                              <button
+                                type="button"
+                                onClick={() => toggleSubMenuFlag(menu.id, sub.id, "canView")}
+                                title={subRow.canView ? "Can View: Yes" : "Can View: No"}
+                                className={cn(
+                                  "inline-flex items-center justify-center h-5 w-5 rounded transition-all shadow-xs cursor-pointer",
+                                  subRow.canView
+                                    ? "bg-secondary text-white hover:bg-secondary/80"
+                                    : "border-2 border-muted-foreground/30 bg-background hover:border-secondary"
+                                )}
+                              >
+                                {subRow.canView && <Check className="h-3.5 w-3.5 stroke-[3]" />}
+                              </button>
+                            </div>
+
+                            <div className="flex justify-center">
+                              <button
+                                type="button"
+                                onClick={() => toggleSubMenuFlag(menu.id, sub.id, "canAdd")}
+                                title={subRow.canAdd ? "Can Add: Yes" : "Can Add: No"}
+                                className={cn(
+                                  "inline-flex items-center justify-center h-5 w-5 rounded transition-all shadow-xs cursor-pointer",
+                                  subRow.canAdd
+                                    ? "bg-secondary text-white hover:bg-secondary/80"
+                                    : "border-2 border-muted-foreground/30 bg-background hover:border-secondary"
+                                )}
+                              >
+                                {subRow.canAdd && <Check className="h-3.5 w-3.5 stroke-[3]" />}
+                              </button>
+                            </div>
+
+                            <div className="flex justify-center">
+                              <button
+                                type="button"
+                                onClick={() => toggleSubMenuFlag(menu.id, sub.id, "canEdit")}
+                                title={subRow.canEdit ? "Can Edit: Yes" : "Can Edit: No"}
+                                className={cn(
+                                  "inline-flex items-center justify-center h-5 w-5 rounded transition-all shadow-xs cursor-pointer",
+                                  subRow.canEdit
+                                    ? "bg-secondary text-white hover:bg-secondary/80"
+                                    : "border-2 border-muted-foreground/30 bg-background hover:border-secondary"
+                                )}
+                              >
+                                {subRow.canEdit && <Check className="h-3.5 w-3.5 stroke-[3]" />}
+                              </button>
+                            </div>
+
+                            <div className="flex justify-center">
+                              <button
+                                type="button"
+                                onClick={() => toggleSubMenuFlag(menu.id, sub.id, "canDelete")}
+                                title={subRow.canDelete ? "Can Delete: Yes" : "Can Delete: No"}
+                                className={cn(
+                                  "inline-flex items-center justify-center h-5 w-5 rounded transition-all shadow-xs cursor-pointer",
+                                  subRow.canDelete
+                                    ? "bg-secondary text-white hover:bg-secondary/80"
+                                    : "border-2 border-muted-foreground/30 bg-background hover:border-secondary"
+                                )}
+                              >
+                                {subRow.canDelete && <Check className="h-3.5 w-3.5 stroke-[3]" />}
+                              </button>
+                            </div>
+                          </div>
+                        )
+                      })}
                   </div>
-                </Card>
-              )
-            })}
+                )
+              })}
+            </div>
           </div>
         </Card>
       )}
@@ -1818,6 +1999,54 @@ export function PermissionsCenter({ section }: { section: PermissionsSection }) 
             </Button>
             <Button onClick={userFormMode === "create" ? handleCreateUser : handleUpdateUser}>
               {userFormMode === "create" ? "Create User" : "Update User"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isRoleFormOpen} onOpenChange={(open) => !open && closeRoleForm()}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {roleFormMode === "create" ? "Create Role" : "Edit Role"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">
+                Role Name <span className="text-destructive">*</span>
+              </label>
+              <Input
+                placeholder="Role name (e.g. manager, cashier)"
+                value={newRoleName}
+                onChange={(e) => setNewRoleName(e.target.value)}
+                autoFocus
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Description (optional)</label>
+              <Input
+                placeholder="Description (optional)"
+                value={newRoleDescription}
+                onChange={(e) => setNewRoleDescription(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={closeRoleForm} disabled={savingRole}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveRole} disabled={savingRole}>
+              {savingRole ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : roleFormMode === "create" ? (
+                "Create Role"
+              ) : (
+                "Update Role"
+              )}
             </Button>
           </div>
         </DialogContent>
