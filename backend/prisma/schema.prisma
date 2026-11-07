@@ -645,8 +645,8 @@ model user_addresses {
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model users {
   id                       String                 @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  email                    String?                @unique @db.Citext
-  phone_number             String?                @unique @db.VarChar(20)
+  email                    String?                @db.Citext
+  phone_number             String?                @db.VarChar(20)
   password_hash            String?                @db.VarChar(255)
   google_id                String?                @unique @db.VarChar(255)
   auth_provider            String?                @default("local") @db.VarChar(20)
@@ -697,6 +697,8 @@ model users {
   @@index([role], map: "idx_users_role")
   @@index([status], map: "idx_users_status")
   @@index([id, token_invalidated_at], map: "idx_users_token_invalidated_at", where: raw("(token_invalidated_at IS NOT NULL)"))
+  @@unique([email], map: "users_email_key", where: raw("(deleted_at IS NULL)"))
+  @@unique([phone_number], map: "users_phone_number_key", where: raw("(deleted_at IS NULL)"))
 }
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments

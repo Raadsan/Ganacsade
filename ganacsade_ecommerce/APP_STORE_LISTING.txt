@@ -1,0 +1,45 @@
+Ganacsade — App Store Connect listing copy
+==========================================
+
+App Name:
+Ganacsade
+
+Subtitle (30 characters max):
+Shop Somalia Anytime
+
+Version:
+1.0.0
+(Build / CFBundleVersion: 6 — matches pubspec version 1.0.0+6)
+
+Copyright:
+© 2026 Ganacsade / Raadsan Tech. All rights reserved.
+
+Promotional Text (170 characters max):
+Shop products, order delivery, and manage your account with Ganacsade — Somalia’s marketplace for everyday shopping, secure checkout, and local support.
+
+Description:
+Ganacsade is your Somali e-commerce app for shopping products and services anytime. Browse categories, add items to your cart or wishlist, checkout with local payment options, and track your orders from your phone.
+
+Features:
+• Browse products, categories, and featured deals
+• Cart, wishlist, and order history
+• Local payment options including mobile money and cash on delivery
+• Delivery address management
+• Push notifications for order updates
+• Profile settings, language options, and in-app account deletion
+• Help & support with email and phone contact
+
+Privacy Policy URL:
+https://doc-hosting.flycricket.io/ganacsade/bf6dc4b9-f4e2-49c3-bc17-62b09581b207/privacy
+
+Support URL / Email:
+ganacsadesakariye@gmail.com
+
+Keywords (100 characters max, comma-separated, no spaces after commas preferred):
+ganacsade,somalia,ecommerce,shopping,marketplace,delivery,mogadishu,mobile money,online shop,orders
+
+Suggested category:
+Shopping
+
+Age Rating notes:
+Infrequent/Mild — User-generated content (reviews); no unrestricted web; commerce for physical goods/services.

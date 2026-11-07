@@ -6,7 +6,6 @@ import '../../../../shared/models/user.dart' as app_user;
 import '../../../../core/network/auth_api_service.dart';
 import '../../../../core/network/http_client.dart';
 import '../../../../core/services/push_notification_service.dart';
-import '../../../../core/services/google_sign_in_service.dart';
 import '../../../notifications/presentation/controllers/app_notifications_controller.dart';
 
 class AuthController extends GetxController {
@@ -16,19 +15,19 @@ class AuthController extends GetxController {
   final RxString errorMessage = ''.obs;
   final RxBool rememberMe = false.obs;
   final RxString _userRole = 'customer'.obs;
-  
+
   // API Service
   final AuthApiService _authApiService = AuthApiService();
   final HttpClient _httpClient = HttpClient();
-  
+
   // Local storage
   late Box _userBox;
-  
+
   // Completer to signal when storage init is done
   final Completer<void> _storageReady = Completer<void>();
   Future<void> get storageReady => _storageReady.future;
   bool _pendingLoginRedirect = false;
-  
+
   // Getters
   app_user.User? get user => _user.value;
   bool get isLoggedIn => _user.value != null;
@@ -64,7 +63,9 @@ class AuthController extends GetxController {
       final userData = response['data'];
       if (userData is! Map) return;
 
-      final role = userData['role']?.toString() ?? _resolveRoleFromUserData(Map<String, dynamic>.from(userData));
+      final role =
+          userData['role']?.toString() ??
+          _resolveRoleFromUserData(Map<String, dynamic>.from(userData));
       if (role != _userRole.value) {
         await _persistUserRole(role);
       }
@@ -72,19 +73,19 @@ class AuthController extends GetxController {
       print('Could not refresh session role: $e');
     }
   }
-  
+
   @override
   void onInit() {
     super.onInit();
     HttpClient.onSessionExpired = handleSessionExpired;
     _initializeStorage();
   }
-  
+
   Future<void> _initializeStorage() async {
     try {
       _userBox = await Hive.openBox('user_data');
       await _httpClient.initStorage();
-      
+
       // Check if user is already logged in
       await _checkSavedUser();
     } catch (e) {
@@ -93,35 +94,44 @@ class AuthController extends GetxController {
       if (!_storageReady.isCompleted) _storageReady.complete();
     }
   }
-  
+
   Future<void> _checkSavedUser() async {
     try {
       final savedUserData = _userBox.get('current_user');
       if (savedUserData == null) return;
 
-      final hasSession = _httpClient.hasStoredSession
-          || await _httpClient.tryRestoreSession();
+      final hasSession =
+          _httpClient.hasStoredSession || await _httpClient.tryRestoreSession();
       if (!hasSession) {
         await _userBox.delete('current_user');
         await _userBox.delete('user_role');
         return;
       }
 
-      _user.value = app_user.User.fromJson(Map<String, dynamic>.from(savedUserData));
-      _userRole.value = _userBox.get('user_role', defaultValue: 'customer')?.toString() ?? 'customer';
+      _user.value = app_user.User.fromJson(
+        Map<String, dynamic>.from(savedUserData),
+      );
+      _userRole.value =
+          _userBox.get('user_role', defaultValue: 'customer')?.toString() ??
+          'customer';
     } catch (e) {
       print('Error loading saved user: $e');
     }
   }
-  
-  Future<bool> signIn({String? email, String? phoneNumber, String? identifier, required String password}) async {
+
+  Future<bool> signIn({
+    String? email,
+    String? phoneNumber,
+    String? identifier,
+    required String password,
+  }) async {
     try {
       isLoading.value = true;
       errorMessage.value = '';
-      
+
       // Validate inputs
-      if ((email == null || email.isEmpty) && 
-          (phoneNumber == null || phoneNumber.isEmpty) && 
+      if ((email == null || email.isEmpty) &&
+          (phoneNumber == null || phoneNumber.isEmpty) &&
           (identifier == null || identifier.isEmpty)) {
         errorMessage.value = 'Please enter your phone number or email';
         return false;
@@ -131,7 +141,7 @@ class AuthController extends GetxController {
         errorMessage.value = 'Please enter your password';
         return false;
       }
-      
+
       // Call API to login
       final response = await _authApiService.login(
         email: email,
@@ -139,11 +149,13 @@ class AuthController extends GetxController {
         identifier: identifier,
         password: password,
       );
-      
+
       // Extract user data from response
       final userData = response['data']['user'];
-      final role = _resolveRoleFromUserData(Map<String, dynamic>.from(userData));
-      
+      final role = _resolveRoleFromUserData(
+        Map<String, dynamic>.from(userData),
+      );
+
       // Create user object
       final user = app_user.User(
         id: userData['id'],
@@ -151,7 +163,7 @@ class AuthController extends GetxController {
         phoneNumber: userData['phoneNumber'] ?? '',
         firstName: userData['firstName'] ?? '',
         lastName: userData['lastName'] ?? '',
-        displayName: userData['firstName'] != null 
+        displayName: userData['firstName'] != null
             ? '${userData['firstName']} ${userData['lastName'] ?? ''}'
             : (userData['phoneNumber'] ?? 'User'),
         profileImageUrl: '',
@@ -160,10 +172,10 @@ class AuthController extends GetxController {
         updatedAt: DateTime.now(),
         lastLoginAt: DateTime.now(),
       );
-      
+
       _user.value = user;
       await _persistUserRole(role);
-      
+
       // Always save user data locally after sign in
       await _userBox.put('current_user', user.toJson());
 
@@ -173,11 +185,11 @@ class AuthController extends GetxController {
         await Get.find<AppNotificationsController>().ensureStarted();
       }
       await PushNotificationService().syncTokenWithServer();
-      
+
       print('✅ User signed in and saved:');
       print('   - Email: ${user.email}');
       print('   - Phone: ${user.phoneNumber}');
-      
+
       return true;
     } catch (e) {
       errorMessage.value = e.toString().replaceAll('Exception: ', '');
@@ -186,7 +198,7 @@ class AuthController extends GetxController {
       isLoading.value = false;
     }
   }
-  
+
   Future<bool> signUp({
     String? email,
     String? phoneNumber,
@@ -197,9 +209,10 @@ class AuthController extends GetxController {
     try {
       isLoading.value = true;
       errorMessage.value = '';
-      
+
       // Validate inputs
-      if ((phoneNumber == null || phoneNumber.isEmpty) && (email == null || email.isEmpty)) {
+      if ((phoneNumber == null || phoneNumber.isEmpty) &&
+          (email == null || email.isEmpty)) {
         errorMessage.value = 'Please enter phone number or email';
         return false;
       }
@@ -208,12 +221,12 @@ class AuthController extends GetxController {
         errorMessage.value = 'Please enter a password';
         return false;
       }
-      
+
       if (password.length < 6) {
         errorMessage.value = 'Password must be at least 6 characters';
         return false;
       }
-      
+
       // Call API to register
       final response = await _authApiService.register(
         email: email,
@@ -222,10 +235,10 @@ class AuthController extends GetxController {
         lastName: lastName,
         phoneNumber: phoneNumber,
       );
-      
+
       // Extract user data from response
       final userData = response['data']['user'];
-      
+
       // Create user object
       final user = app_user.User(
         id: userData['id'],
@@ -233,7 +246,7 @@ class AuthController extends GetxController {
         phoneNumber: userData['phoneNumber'] ?? '',
         firstName: userData['firstName'] ?? '',
         lastName: userData['lastName'] ?? '',
-        displayName: userData['firstName'] != null 
+        displayName: userData['firstName'] != null
             ? '${userData['firstName']} ${userData['lastName'] ?? ''}'
             : (userData['phoneNumber'] ?? 'User'),
         profileImageUrl: '',
@@ -242,73 +255,16 @@ class AuthController extends GetxController {
         updatedAt: DateTime.now(),
         lastLoginAt: DateTime.now(),
       );
-      
+
       _user.value = user;
       _userRole.value = 'customer';
-      
+
       // Always save user data locally after sign up
       await _userBox.put('current_user', user.toJson());
       await _userBox.put('user_role', 'customer');
-      
+
       print('✅ User signed up and saved:');
       print('   - Phone: ${user.phoneNumber}');
-      
-      return true;
-    } catch (e) {
-      errorMessage.value = e.toString().replaceAll('Exception: ', '');
-      return false;
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  Future<bool> signInWithGoogle() async {
-    try {
-      isLoading.value = true;
-      errorMessage.value = '';
-
-      if (!GoogleSignInService.instance.isConfigured) {
-        errorMessage.value =
-            'Google Sign-In is not configured. Add googleWebClientId in app settings.';
-        return false;
-      }
-
-      final idToken = await GoogleSignInService.instance.signInAndGetIdToken();
-      if (idToken == null) {
-        return false;
-      }
-
-      final response = await _authApiService.signInWithGoogle(idToken: idToken);
-      final userData = response['data']['user'];
-      final role = _resolveRoleFromUserData(Map<String, dynamic>.from(userData));
-
-      final user = app_user.User(
-        id: userData['id'],
-        email: userData['email'] ?? '',
-        phoneNumber: userData['phoneNumber'] ?? '',
-        firstName: userData['firstName'] ?? '',
-        lastName: userData['lastName'] ?? '',
-        displayName: userData['displayName']
-            ?? (userData['firstName'] != null
-                ? '${userData['firstName']} ${userData['lastName'] ?? ''}'.trim()
-                : (userData['email'] ?? userData['phoneNumber'] ?? 'User')),
-        profileImageUrl: '',
-        isEmailVerified: true,
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-        lastLoginAt: DateTime.now(),
-      );
-
-      _user.value = user;
-      await _persistUserRole(role);
-      await _userBox.put('current_user', user.toJson());
-
-      if (!Get.isRegistered<AppNotificationsController>()) {
-        Get.put(AppNotificationsController());
-      } else {
-        await Get.find<AppNotificationsController>().ensureStarted();
-      }
-      await PushNotificationService().syncTokenWithServer();
 
       return true;
     } catch (e) {
@@ -318,7 +274,7 @@ class AuthController extends GetxController {
       isLoading.value = false;
     }
   }
-  
+
   Future<void> signOut() async {
     try {
       // Call API to logout
@@ -326,9 +282,13 @@ class AuthController extends GetxController {
     } catch (e) {
       print('Error signing out: $e');
     } finally {
-      await GoogleSignInService.instance.signOut();
       await clearLocalSession();
     }
+  }
+
+  Future<void> deleteAccount() async {
+    await _authApiService.deleteAccount();
+    await clearLocalSession();
   }
 
   Future<void> clearLocalSession() async {
@@ -381,17 +341,17 @@ class AuthController extends GetxController {
       );
     });
   }
-  
+
   // Toggle remember me
   void toggleRememberMe() {
     rememberMe.value = !rememberMe.value;
   }
-  
+
   // Clear error message
   void clearError() {
     errorMessage.value = '';
   }
-  
+
   // Update user data locally
   void updateUserData({
     String? firstName,
@@ -412,12 +372,12 @@ class AuthController extends GetxController {
         profileImageUrl: profileImageUrl ?? _user.value!.profileImageUrl,
         updatedAt: DateTime.now(),
       );
-      
+
       _user.value = updatedUser;
-      
+
       // Save to local storage
       _userBox.put('current_user', updatedUser.toJson());
-      
+
       print('✅ AuthController user data updated and saved');
     }
   }

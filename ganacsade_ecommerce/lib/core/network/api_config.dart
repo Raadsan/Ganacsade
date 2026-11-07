@@ -26,13 +26,12 @@ class ApiConfig {
   static const String loginEndpoint = '$authEndpoint/login';
   static const String registerEndpoint = '$authEndpoint/register';
   static const String logoutEndpoint = '$authEndpoint/logout';
+  static const String deleteAccountEndpoint = '$authEndpoint/account';
   static const String profileEndpoint = '$authEndpoint/profile';
   static const String refreshTokenEndpoint = '$authEndpoint/refresh-token';
   static const String forgotPasswordEndpoint = '$authEndpoint/forgot-password';
   static const String verifyOTPEndpoint = '$authEndpoint/verify-otp';
   static const String resetPasswordEndpoint = '$authEndpoint/reset-password';
-  static const String googleSignInEndpoint = '$authEndpoint/google';
-
   // Timeout durations
   static const Duration connectTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(

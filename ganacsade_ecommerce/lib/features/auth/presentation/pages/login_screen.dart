@@ -92,7 +92,7 @@ class _LoginScreenState extends State<LoginScreen> {
         const SizedBox(height: 8),
         
         Text(
-          'Login to continue to G-Store',
+          'Login to continue to Ganacsade',
           style: AppTextStyles.bodyLarge,
           textAlign: TextAlign.center,
         )

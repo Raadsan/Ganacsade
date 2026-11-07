@@ -11,7 +11,7 @@ class AppTranslations extends Translations {
   // English translations
   static const Map<String, String> enUS = {
     // Common
-    'app_name': 'GANACSADE',
+    'app_name': 'Ganacsade',
     'loading': 'Loading...',
     'error': 'Error',
     'success': 'Success',
@@ -150,6 +150,12 @@ class AppTranslations extends Translations {
     'profile_help': 'Help & Support',
     'profile_about': 'About',
     'profile_logout': 'Logout',
+    'profile_delete_account': 'Delete account',
+    'profile_delete_account_subtitle': 'Remove your sign-in details',
+    'profile_delete_account_confirm_title': 'Delete account?',
+    'profile_delete_account_confirm_message':
+        'Your sign-in details, addresses, and payment methods will be permanently removed. Order history needed for business records will be kept without your personal contact details. You cannot sign in again.',
+    'profile_delete_account_error': 'Could not delete account',
     'profile_member_since': 'Member since',
 
     // Edit Profile
@@ -263,7 +269,7 @@ class AppTranslations extends Translations {
   // Somali translations
   static const Map<String, String> soSO = {
     // Common
-    'app_name': 'GANACSADE',
+    'app_name': 'Ganacsade',
     'loading': 'Waa la soo rarayaa...',
     'error': 'Khalad',
     'success': 'Guul',
@@ -402,6 +408,12 @@ class AppTranslations extends Translations {
     'profile_help': 'Caawimaad',
     'profile_about': 'Ku saabsan',
     'profile_logout': 'Ka bax',
+    'profile_delete_account': 'Tirtir koontada',
+    'profile_delete_account_subtitle': 'Ka saar xogta gelitaanka',
+    'profile_delete_account_confirm_title': 'Ma tirtiraysaa koontada?',
+    'profile_delete_account_confirm_message':
+        'Xogta gelitaanka, cinwaannada, iyo hababka lacag-bixinta waa la tirtiri doonaa si joogto ah. Taariikhda dalabka ee loo baahan yahay ganacsiga waa la haynayaa iyada oo aan lahayn xiriirkaaga shakhsiyeed. Mar dambe ma geli kartid koontadan.',
+    'profile_delete_account_error': 'Koontada lama tirtiri karin',
     'profile_member_since': 'Xubin tan iyo',
 
     // Edit Profile
@@ -515,7 +527,7 @@ class AppTranslations extends Translations {
   // Arabic translations
   static const Map<String, String> arSA = {
     // Common
-    'app_name': 'قناقسادي',
+    'app_name': 'Ganacsade',
     'loading': 'جاري التحميل...',
     'error': 'خطأ',
     'success': 'نجاح',
@@ -652,6 +664,12 @@ class AppTranslations extends Translations {
     'profile_help': 'المساعدة والدعم',
     'profile_about': 'حول التطبيق',
     'profile_logout': 'تسجيل الخروج',
+    'profile_delete_account': 'حذف الحساب',
+    'profile_delete_account_subtitle': 'إزالة بيانات تسجيل الدخول',
+    'profile_delete_account_confirm_title': 'هل تريد حذف الحساب؟',
+    'profile_delete_account_confirm_message':
+        'سيتم حذف بيانات تسجيل الدخول والعناوين وطرق الدفع بشكل دائم. سيُحتفظ بسجل الطلبات المطلوب للأعمال دون بيانات التواصل الشخصية. لن تتمكن من تسجيل الدخول مرة أخرى.',
+    'profile_delete_account_error': 'تعذر حذف الحساب',
     'profile_member_since': 'عضو منذ',
 
     // Edit Profile

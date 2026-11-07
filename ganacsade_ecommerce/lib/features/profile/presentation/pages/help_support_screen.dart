@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_text_styles.dart';
 
@@ -93,20 +94,6 @@ class HelpSupportScreen extends StatelessWidget {
               children: [
                 Expanded(
                   child: _buildQuickActionCard(
-                    icon: Icons.chat_bubble_outline,
-                    title: 'Live Chat',
-                    subtitle: 'Chat with us',
-                    color: AppColors.primaryGreen,
-                    onTap: () {
-                      HapticFeedback.lightImpact();
-                      _showComingSoonDialog('Live Chat');
-                    },
-                    index: 0,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildQuickActionCard(
                     icon: Icons.phone,
                     title: 'Call Us',
                     subtitle: 'Direct support',
@@ -115,7 +102,7 @@ class HelpSupportScreen extends StatelessWidget {
                       HapticFeedback.lightImpact();
                       _showContactDialog();
                     },
-                    index: 1,
+                    index: 0,
                   ),
                 ),
               ],
@@ -221,18 +208,6 @@ class HelpSupportScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  _buildResourceItem(
-                    icon: Icons.article_outlined,
-                    title: 'User Guide',
-                    description: 'Learn how to use GANACSADE',
-                    onTap: () => _showComingSoonDialog('User Guide'),
-                  ),
-                  _buildResourceItem(
-                    icon: Icons.video_library_outlined,
-                    title: 'Video Tutorials',
-                    description: 'Watch step-by-step tutorials',
-                    onTap: () => _showComingSoonDialog('Video Tutorials'),
-                  ),
                   _buildResourceItem(
                     icon: Icons.feedback_outlined,
                     title: 'Send Feedback',
@@ -534,64 +509,18 @@ class HelpSupportScreen extends StatelessWidget {
     );
   }
 
-  void _showComingSoonDialog(String feature) {
-    Get.dialog(
-      AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: AppColors.info,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.schedule,
-                color: AppColors.white,
-                size: 40,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              'Coming Soon',
-              style: AppTextStyles.titleLarge.copyWith(
-                fontWeight: FontWeight.bold,
-                color: AppColors.grey900,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '$feature will be available in a future update. Stay tuned!',
-              textAlign: TextAlign.center,
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.grey600,
-              ),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Get.back(),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.info,
-                  foregroundColor: AppColors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text('Got it'),
-              ),
-            ),
-          ],
-        ),
-      ),
+  Future<void> _openMapsDirections() async {
+    final uri = Uri.parse(
+      'https://www.google.com/maps/search/?api=1&query=Hodan+District+Mogadishu+Somalia',
     );
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      Get.snackbar(
+        'Error',
+        'Could not open Maps',
+        backgroundColor: AppColors.error,
+        colorText: AppColors.white,
+      );
+    }
   }
 
   void _showContactDialog() {
@@ -692,7 +621,7 @@ class HelpSupportScreen extends StatelessWidget {
           ElevatedButton(
             onPressed: () {
               Get.back();
-              _showComingSoonDialog('Maps Integration');
+              _openMapsDirections();
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryGreen,

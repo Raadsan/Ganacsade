@@ -90,7 +90,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         const SizedBox(height: 8),
         
         Text(
-          'Join G-Store community today',
+          'Join Ganacsade community today',
           style: AppTextStyles.bodyLarge,
           textAlign: TextAlign.center,
         )

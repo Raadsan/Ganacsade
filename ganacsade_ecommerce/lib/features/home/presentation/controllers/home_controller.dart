@@ -162,7 +162,7 @@ class HomeController extends GetxController {
     promotionalBanners.value = [
       PromotionalBanner(
         id: '1',
-        title: 'Welcome to G-Store',
+        title: 'Welcome to Ganacsade',
         subtitle: 'Discover authentic Somali products',
         imageUrl: 'assets/images/banner_1.png',
         backgroundColor: const Color(0xFF7EB725),

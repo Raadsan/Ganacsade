@@ -68,7 +68,7 @@ class GStoreApp extends StatelessWidget {
       },
       child: GetBuilder<ThemeController>(
         builder: (themeController) => GetMaterialApp(
-          title: 'GANACSADE',
+          title: 'Ganacsade',
           debugShowCheckedModeBanner: false,
 
           // Theme

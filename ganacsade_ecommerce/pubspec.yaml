@@ -2,7 +2,7 @@ name: ganacsade
 description: "GANACSADE - Premium Somali E-commerce Platform"
 publish_to: 'none'
 
-version: 1.0.0+5
+version: 1.0.0+6
 
 environment:
   sdk: ^3.8.1
@@ -38,7 +38,6 @@ dependencies:
   # Authentication & Security
   firebase_core: ^3.8.1
   firebase_messaging: ^15.1.6
-  google_sign_in: ^6.2.2
   
   # Localization
   intl: ^0.20.2

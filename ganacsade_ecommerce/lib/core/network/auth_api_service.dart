@@ -6,14 +6,14 @@ class AuthApiService {
   final HttpClient _httpClient = HttpClient();
 
   /// Register a new user
-  /// 
+  ///
   /// Parameters:
   /// - email: User's email address
   /// - password: User's password (min 6 characters)
   /// - firstName: User's first name
   /// - lastName: User's last name
   /// - phoneNumber: User's phone number
-  /// 
+  ///
   /// Returns: Map containing user data, access token, and refresh token
   Future<Map<String, dynamic>> register({
     String? email,
@@ -62,11 +62,11 @@ class AuthApiService {
   }
 
   /// Login user
-  /// 
+  ///
   /// Parameters:
   /// - email: User's email address
   /// - password: User's password
-  /// 
+  ///
   /// Returns: Map containing user data, access token, and refresh token
   Future<Map<String, dynamic>> login({
     String? email,
@@ -112,50 +112,8 @@ class AuthApiService {
     }
   }
 
-  /// Google Sign-In / Sign-Up (customer)
-  Future<Map<String, dynamic>> signInWithGoogle({required String idToken}) async {
-    try {
-      final response = await _httpClient.post(
-        ApiConfig.googleSignInEndpoint,
-        data: {'idToken': idToken},
-        options: Options(
-          sendTimeout: const Duration(seconds: 45),
-          receiveTimeout: const Duration(seconds: 45),
-        ),
-      );
-
-      if (response.statusCode == 200 && response.data['success'] == true) {
-        final token = response.data['data']['token'];
-        final refreshToken = response.data['data']['refreshToken'];
-        await _httpClient.saveTokens(token, refreshToken);
-        return response.data;
-      }
-
-      throw DioException(
-        requestOptions: response.requestOptions,
-        response: response,
-        type: DioExceptionType.badResponse,
-        error: response.data['message'] ?? 'Google sign-in failed',
-      );
-    } on DioException catch (e) {
-      if (e.response != null) {
-        throw Exception(e.response!.data['message'] ?? 'Google sign-in failed');
-      }
-      if (e.type == DioExceptionType.connectionTimeout ||
-          e.type == DioExceptionType.receiveTimeout ||
-          e.type == DioExceptionType.sendTimeout) {
-        throw Exception(
-          'Server not responding. Start backend (npm run dev) on port 5002, then try again.',
-        );
-      }
-      throw Exception('Network error. Please check your connection and API URL.');
-    } catch (e) {
-      throw Exception('Google sign-in failed: ${e.toString()}');
-    }
-  }
-
   /// Get user profile
-  /// 
+  ///
   /// Returns: Map containing user profile data
   Future<Map<String, dynamic>> getProfile() async {
     try {
@@ -173,7 +131,9 @@ class AuthApiService {
       }
     } on DioException catch (e) {
       if (e.response != null) {
-        throw Exception(e.response!.data['message'] ?? 'Failed to fetch profile');
+        throw Exception(
+          e.response!.data['message'] ?? 'Failed to fetch profile',
+        );
       } else {
         throw Exception('Network error. Please check your connection.');
       }
@@ -183,12 +143,12 @@ class AuthApiService {
   }
 
   /// Update user profile
-  /// 
+  ///
   /// Parameters:
   /// - firstName: User's first name (optional)
   /// - lastName: User's last name (optional)
   /// - phoneNumber: User's phone number (optional)
-  /// 
+  ///
   /// Returns: Map containing updated user data
   Future<Map<String, dynamic>> updateProfile({
     String? firstName,
@@ -266,7 +226,7 @@ class AuthApiService {
   }
 
   /// Logout user
-  /// 
+  ///
   /// Returns: Success message
   Future<void> logout() async {
     try {
@@ -280,12 +240,40 @@ class AuthApiService {
     }
   }
 
+  /// Delete the signed-in account and its credentials.
+  Future<void> deleteAccount() async {
+    try {
+      final response = await _httpClient.delete(
+        ApiConfig.deleteAccountEndpoint,
+      );
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        return;
+      }
+
+      throw DioException(
+        requestOptions: response.requestOptions,
+        response: response,
+        type: DioExceptionType.badResponse,
+        error: response.data['message'] ?? 'Failed to delete account',
+      );
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw Exception(
+          e.response!.data['message'] ?? 'Failed to delete account',
+        );
+      }
+      throw Exception('Network error. Please check your connection.');
+    } catch (e) {
+      throw Exception('Failed to delete account: ${e.toString()}');
+    }
+  }
+
   /// Change password
-  /// 
+  ///
   /// Parameters:
   /// - currentPassword: User's current password
   /// - newPassword: User's new password
-  /// 
+  ///
   /// Returns: Success message
   Future<Map<String, dynamic>> changePassword({
     required String currentPassword,
@@ -294,10 +282,7 @@ class AuthApiService {
     try {
       final response = await _httpClient.post(
         '${ApiConfig.authEndpoint}/change-password',
-        data: {
-          'currentPassword': currentPassword,
-          'newPassword': newPassword,
-        },
+        data: {'currentPassword': currentPassword, 'newPassword': newPassword},
       );
 
       if (response.statusCode == 200 && response.data['success'] == true) {
@@ -312,7 +297,9 @@ class AuthApiService {
       }
     } on DioException catch (e) {
       if (e.response != null) {
-        throw Exception(e.response!.data['message'] ?? 'Failed to change password');
+        throw Exception(
+          e.response!.data['message'] ?? 'Failed to change password',
+        );
       } else {
         throw Exception('Network error. Please check your connection.');
       }
@@ -366,11 +353,7 @@ class AuthApiService {
     try {
       final response = await _httpClient.post(
         ApiConfig.resetPasswordEndpoint,
-        data: {
-          'email': email,
-          'otp': otp,
-          'newPassword': newPassword,
-        },
+        data: {'email': email, 'otp': otp, 'newPassword': newPassword},
       );
 
       if (response.data['success'] == true) {

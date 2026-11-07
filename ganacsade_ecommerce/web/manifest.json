@@ -1,6 +1,6 @@
 {
-    "name": "ganacsade_ecommerce",
-    "short_name": "ganacsade_ecommerce",
+    "name": "Ganacsade",
+    "short_name": "Ganacsade",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#ffffff",

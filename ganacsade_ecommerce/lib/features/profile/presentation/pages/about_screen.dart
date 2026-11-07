@@ -4,6 +4,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_text_styles.dart';
+import 'privacy_policy_screen.dart';
+import 'terms_of_service_screen.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
@@ -214,15 +216,15 @@ class AboutScreen extends StatelessWidget {
               icon: Icons.privacy_tip_outlined,
               title: 'Privacy Policy',
               description: 'How we protect your personal information',
-              onTap: () => _showComingSoonDialog('Privacy Policy'),
+              onTap: () => Get.to(() => const PrivacyPolicyScreen()),
               index: 0,
             ),
             
             _buildLegalCard(
               icon: Icons.description_outlined,
               title: 'Terms of Service',
-              description: 'Terms and conditions for using GANACSADE',
-              onTap: () => _showComingSoonDialog('Terms of Service'),
+              description: 'Terms and conditions for using Ganacsade',
+              onTap: () => Get.to(() => const TermsOfServiceScreen()),
               index: 1,
             ),
             
@@ -230,7 +232,7 @@ class AboutScreen extends StatelessWidget {
               icon: Icons.security_outlined,
               title: 'Data Security',
               description: 'How we keep your data safe and secure',
-              onTap: () => _showComingSoonDialog('Data Security'),
+              onTap: () => Get.to(() => const PrivacyPolicyScreen()),
               index: 2,
             ),
             
@@ -583,66 +585,6 @@ class AboutScreen extends StatelessWidget {
         .animate(delay: Duration(milliseconds: (index + 11) * 100))
         .fadeIn(duration: 600.ms)
         .slideX(begin: 0.3, end: 0);
-  }
-
-  void _showComingSoonDialog(String feature) {
-    Get.dialog(
-      AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: AppColors.info,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.schedule,
-                color: AppColors.white,
-                size: 40,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              'Coming Soon',
-              style: AppTextStyles.titleLarge.copyWith(
-                fontWeight: FontWeight.bold,
-                color: AppColors.grey900,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '$feature will be available in a future update.',
-              textAlign: TextAlign.center,
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.grey600,
-              ),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Get.back(),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.info,
-                  foregroundColor: AppColors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text('Got it'),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   void _copyToClipboard(String text, String message) {
